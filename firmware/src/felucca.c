@@ -102,4 +102,7 @@
 #include "console.c"
 #endif
 #include "master.c"              /* the MASTER pot (#137: read before the audio starts) */
+#if GOLANA
+#include "golana_ui.c"           /* Golana's interface (main.c calls it instead of Felucca's) */
+#endif
 #include "main.c"

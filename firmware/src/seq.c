@@ -169,6 +169,13 @@ static void arp_add(track_t *t, uint32_t note)
     for (i = 0; i < t->nheld; i++)
         if (t->held[i] == note)
             return;                                 /* repeated note-on: not a new note */
+#if GOLANA
+    if (t->engine == ENGI_GOLANA && t->p[GL_ARPKSYNC]) {   /* KEY SYNC: every new key starts the pattern again */
+        t->arp_pos = 0xFFFFFFF;
+        t->arp_idx = 0xFFFFFFFFu;
+        t->arp_st = 0;
+    }
+#endif
     if (t->nheld < 16u) {
         /* #191: a key the track's scale keyboard maps (not the DRUM grid, not an engine's own map) is kept as that
          * key, so TRN, ROOT, SCALE and QNT reach the notes the arp holds (arp_list); the octave stays the one it was
@@ -182,6 +189,7 @@ static void arp_add(track_t *t, uint32_t note)
     if (t->nheld == 1u) {
         t->arp_pos = 0xFFFFFFF;                     /* fire on this block */
         t->arp_idx = 0xFFFFFFFFu;
+        t->arp_st = 0;                              /* (Golana: from step 1) */
     }
 }
 
@@ -218,7 +226,11 @@ static int rec_on(const track_t *t) { return ((song.rec >> trk_index(t)) & 1u) &
  * C E C G (the bottom one); WALK a random step up or down the list (bouncing off its ends); CHORD all the held
  * notes together (the first 4), an octave higher each step through OCT */
 enum { AM_OFF, AM_UP, AM_DN, AM_UPDN, AM_RND, AM_ORD, AM_REPEAT, AM_DNUP, AM_UP8, AM_CONV, AM_DIVG, AM_PINKY,
-       AM_THUMB, AM_WALK, AM_CHORD };
+       AM_THUMB, AM_WALK, AM_CHORD, AM_ALT2 };    /* ALT2 (Golana): up and down, the top and the bottom notes twice */
+#if GOLANA
+_Static_assert(AM_UP == 1 && AM_DN == 2 && AM_UPDN == 3 && AM_RND == 4 && AM_CHORD == 14 && AM_ALT2 == 15,
+               "golana_prog.c GL_AM");
+#endif
 
 static void arp_forget(track_t *t)               /* (its notes ended otherwise: trk_all_off) */
 {
@@ -291,6 +303,9 @@ static __attribute__((noinline)) uint32_t arp_pick(track_t *t, uint32_t *list, u
         return k < len ? k : cyc - k;
     case AM_DNUP:
         return k < len ? len - 1u - k : k - (len - 1u);
+    case AM_ALT2:                                   /* C E G G E C: the ends twice */
+        k = i % (2u * len);
+        return k < len ? k : 2u * len - 1u - k;
     case AM_RND:
         return rng() % len;
     case AM_CONV:
@@ -396,6 +411,18 @@ static __attribute__((noinline)) void arp_fire(track_t *t, uint32_t period)
             arp_off(t);
         return;
     }
+#if GOLANA
+    if (t->engine == ENGI_GOLANA) {                 /* the step pattern: LAST STEP steps, each one on or a rest */
+        uint32_t last = (uint32_t)clamp(t->p[GL_ARPLAST], 1, 8), st = t->arp_st % last;
+        uint32_t mask = (uint32_t)(t->p[GL_ARPST_A] & 15) | (uint32_t)(t->p[GL_ARPST_B] & 15) << 4;
+        t->arp_st = (uint8_t)((st + 1u) % last);
+        if (!((mask >> st) & 1u)) {                 /* a rest: the note before ends, the order waits */
+            if (t->arp_note)
+                arp_off(t);
+            return;
+        }
+    }
+#endif
     t->arp_idx++;
     j = t->p[P_AMODE] == AM_CHORD ? 0u : arp_pick(t, list, len);
     if (t->arp_note)

@@ -13,6 +13,14 @@
 #define NTRK NPART               /* tracks (the formats and the protocol count these): every track is a part */
 #define NSTEP 64
 #define HALF_FRAMES 128          /* I2S half buffer: 2.9 ms at 44.1 kHz (a key waits 0..1 half, then plays 1 half later) */
+#ifndef GOLANA
+#define GOLANA 1                 /* Golana: a single analog-style synth (eng_golana.c) with its own interface
+                                  * (golana_ui.c); the other engines stay in the tree, none can be picked */
+#endif
+#if GOLANA
+#undef FELUCCA_SLICE
+#define FELUCCA_SLICE 0          /* Golana: engine 13 is GOLANA, in SLICE's place */
+#endif
 #ifndef FELUCCA_SLICE
 #define FELUCCA_SLICE 1          /* the SLICE engine (eng_slice.c), engine 13; FELUCCA_SLICE=0 builds without it */
 #endif
@@ -20,14 +28,15 @@
 #define FELUCCA_FM4 0            /* the DIGITAL engine (eng_digital.c, four-operator FM): kept in the tree, not built
                                   * by default; replaced by FM6, its sounds convert (fm4_convert.c) */
 #endif
-#define NENGINES (13 + FELUCCA_SLICE)   /* SLICE (13) comes last: the other engines keep their numbers */
-#define ENGI_DIGITAL 1u          /* reserved without FELUCCA_FM4: never selectable (eng_ok), its sounds load as FM6 */
-#ifndef GOLANA
-#define GOLANA 1                 /* Golana: a single analog-style synth; only the ANALOG engine can be picked (the
-                                  * other engines stay in the build for now, so old projects and presets still load) */
-#endif
 #if GOLANA
-#define NENG_SHOWN 1             /* Golana: ANALOG only (engines.c ENGINE_ORDER) */
+#define NENGINES 14              /* 0..12 as Felucca's, 13 GOLANA (SLICE's number: Golana builds without SLICE) */
+#define ENGI_GOLANA 13u
+#else
+#define NENGINES (13 + FELUCCA_SLICE)   /* SLICE (13) comes last: the other engines keep their numbers */
+#endif
+#define ENGI_DIGITAL 1u          /* reserved without FELUCCA_FM4: never selectable (eng_ok), its sounds load as FM6 */
+#if GOLANA
+#define NENG_SHOWN 1             /* Golana: GOLANA only (engines.c ENGINE_ORDER) */
 #else
 #define NENG_SHOWN (NENGINES - !FELUCCA_FM4)   /* the engines one can pick: PRESETS, the EDIT layer, the editor,
                                                 * in the display order of engines.c ENGINE_ORDER */
@@ -82,6 +91,60 @@ enum {                          /* per-track parameters */
     P_E0, P_E1, P_E2, P_E3, P_E4, P_E5, P_E6, P_E7,
     P_COUNT
 };
+
+#if GOLANA
+/* Golana's parameters (eng_golana.c GOL_TP, golana_ui.c). The GOLANA engine borrows the slots of what it does not use,
+ * so the stores (user presets, projects, the editor protocol) keep their layout: its 8 engine values, DIGITAL's
+ * retired operator envelopes (P_FM*), the DRUM lane levels (P_LN*), P_ED_FX (read by nothing), the track LFO's
+ * (the GOLANA engine has its own LFOs: voice.c leaves the track LFO's depths at 0 and mod.c skips the part) and
+ * the modulation matrix's slots (its PATCH). Never P_LD_* or P_ED_FLT / PIT / SHP: voice.c reads those directly */
+#define GL_O1WAVE P_E0
+#define GL_O1C1 P_E1
+#define GL_O1C2 P_E2
+#define GL_O2WAVE P_E3
+#define GL_O2MOD P_E4
+#define GL_O2SEMI P_E5
+#define GL_O2TUNE P_E6
+#define GL_CUTOFF P_E7
+#define GL_MIX1 P_FM1_ATK
+#define GL_MIX2 P_FM1_DEC
+#define GL_NOISE P_FM1_SUS
+#define GL_FTYPE P_FM1_REL
+#define GL_RESO P_FM1_LEVEL
+#define GL_FEGINT P_FM2_ATK
+#define GL_KTRK P_FM2_DEC
+#define GL_FA P_FM2_SUS
+#define GL_FD P_FM2_REL
+#define GL_FS P_FM2_LEVEL
+#define GL_FR P_FM3_ATK
+#define GL_DIST P_FM3_DEC
+#define GL_EGRESET P_FM3_SUS
+#define GL_L1WAVE P_FM3_REL
+#define GL_L1FREQ P_FM3_LEVEL
+#define GL_L1KEY P_FM4_ATK
+#define GL_L1SYNC P_FM4_DEC
+#define GL_L2WAVE P_FM4_SUS
+#define GL_L2FREQ P_FM4_REL
+#define GL_L2KEY P_FM4_LEVEL
+#define GL_L2SYNC P_LN0
+#define GL_ARPON P_LN1
+#define GL_ARPTYPE P_LN2
+#define GL_ARPKSYNC P_LN3
+#define GL_ARPLAST P_LN4
+#define GL_ARPST_A P_LN5                         /* steps 1..4 on (bit 0 = step 1) */
+#define GL_ARPST_B P_LN6                         /* steps 5..8 */
+#define GL_DTYPE P_LN7
+#define GL_DTIME P_ED_FX
+#define GL_DFDBK P_LRATE
+#define GL_RTYPE P_LWAVE
+#define GL_RSIZE P_LPHASE
+#define GL_RDAMP P_LFADE
+#define GL_MFX P_LTRIG
+#define GL_SPARE P_LPOL                          /* (kept 0: voice.c reads it with P_LD_AMP, which stays 0) */
+#define GL_P1SRC P_M1SRC                         /* PATCH k (0..3): SRC GL_P1SRC + 3k, DST + 1, INT + 2 */
+#define GL_P1DST P_M1DST
+#define GL_P1INT P_M1AMT
+#endif
 
 enum {                          /* global parameters */
     G_BPM, G_SWING, G_CLOCK, G_TUNE,
@@ -364,7 +427,8 @@ typedef struct track {
     int32_t dist_hp, dist_lp1, dist_lp2;   /* DIST insert state (fx.c) */
     uint8_t tail;                /* blocks to mix after the last voice (the DIST / INSERT tail) */
     uint8_t ins_run;             /* the INSERT still sounds (fx.c track_insert: its wet share above 0) */
-    uint8_t rsv_sz[15];          /* (sizeof(track_t) a multiple of 16: below) */
+    uint8_t arp_st;              /* Golana: the arp's step (0..7) the next fire plays (seq.c arp_fire) */
+    uint8_t rsv_sz[14];          /* (sizeof(track_t) a multiple of 16: below) */
     int16_t armp, aholdp;        /* P_AMODE / P_AHOLD as last seen by the ISR */
     /* engine switch (voice.c engine_block): the old engine's voices fade out, then it switches */
     uint8_t xf_on, xf;           /* fading; blocks of the fade still to render */

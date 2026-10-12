@@ -240,6 +240,9 @@ static void cdc_task(void) {}
 #define usb_retry(ms) ((void)(ms))
 #define usb_detach() ((void)0)
 #include "../../firmware/src/master.c"
+#if GOLANA
+#include "../../firmware/src/golana_ui.c"
+#endif
 #include "../../firmware/src/main.c"
 #undef usb_poll
 #undef usb_start
@@ -263,11 +266,16 @@ static void web_power_on(void)
     fm1_adc_init();
     panel_init();
     felucca_init();
+#if GOLANA
+    gu_boot();
+#endif
     master_boot();                        /* main.c (#137): the pot's level from the first block */
     kb_boot_hold = 1;                     /* main.c (#137): the keys silent under the splash */
     audio_init();
     boot_leds();                          /* main.c: the power-on LED sweep, from the scan's start */
+#if !GOLANA
     autosave_boot(boot_clean);            /* main.c: the last session's music (1.2, project.c) */
+#endif
     web_boot_ms = fm1_ms + 430u;         /* main.c: 30 + 400 ms before the first frame */
     web_booted = 1;
 }
@@ -280,11 +288,18 @@ static void web_frame(void)
         song.batt_raw = song.batt_raw ? song.batt_raw + (b - song.batt_raw) / 32 : b;
     master_poll();
     felucca_dbg.ui_frames++;
+#if GOLANA
+    gu_input();
+    settings_poll();
+    gu_leds();
+    gu_draw();
+#else
     ui_input();
     settings_poll();
     autosave_poll();
     ui_leds();
     ui_draw();
+#endif
 }
 
 /* output ring, stereo float, filled by web_ms, drained by web_render */
@@ -322,7 +337,11 @@ static void web_ms(void)
         web_last_frame = fm1_ms;
         web_frame();
     } else {
+#if GOLANA
+        gu_input();                                       /* main.c's wait loop */
+#else
         ui_input();                                       /* main.c's wait loop */
+#endif
     }
 }
 

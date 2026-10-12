@@ -529,6 +529,43 @@ static __attribute__((noinline)) void rev_switch(const int32_t *rev_in, int32_t 
 }
 
 /* process the three buses for one block; sends in, wet stereo-equal out */
+#if GOLANA
+/* Golana's delay TYPE (core.h GL_DTYPE, of part 1's program): STEREO the bus as Felucca's (both sides alike); CROSS
+ * the echoes left and right in turn (taps at TIME and 2 x TIME, the loop through the second: L R L R ..); L/R the left
+ * echo at TIME and the right one at 3/4 of it, one loop. The stereo part goes out as a side signal (dly_side: added
+ * to the left, taken from the right, as HALL's) */
+static int32_t dly_side[CTL];
+static uint8_t dly_side_on;
+static __attribute__((noinline)) void dly_golana(const int32_t *dly_in, int32_t *wet, uint32_t n, uint32_t dl,
+                                                 int32_t fb, int32_t col, int32_t dmix, uint32_t ty)
+{
+    uint32_t i, d2;
+    if (ty == 1u) {
+        if (2u * dl >= DLY_LEN)
+            dl = (DLY_LEN - 1u) / 2u;
+        d2 = 2u * dl;
+    } else {
+        d2 = dl * 3u / 4u;
+    }
+    for (i = 0; i < n; i++) {
+        int32_t a = dly_buf[(fx.dly_w - dl) & (DLY_LEN - 1u)], b = dly_buf[(fx.dly_w - d2) & (DLY_LEN - 1u)];
+        int32_t back = ty == 1u ? b : (a + b) >> 1, l, r;
+        fx.dly_lp += mulq15(back - fx.dly_lp, col);
+        dly_buf[fx.dly_w & (DLY_LEN - 1u)] = (int16_t)clamp((dly_in[i] >> 1) + mulq15(fx.dly_lp, fb), -32768, 32767);
+        fx.dly_w++;
+        l = mulq15(a << 1, dmix);
+        r = mulq15(b << 1, dmix);
+        wet[i] += (l + r) >> 1;
+        dly_side[i] = (l - r) >> 1;
+    }
+    dly_side_on = 1;
+}
+static uint32_t gl_dtype(void)
+{
+    return trk[0].engine == ENGI_GOLANA ? (uint32_t)clamp(trk[0].p[GL_DTYPE], 0, 2) : 0u;
+}
+#endif
+
 static void fx_buses(const int32_t *cho_in, const int32_t *dly_in, const int32_t *rev_in, int32_t *wet,
                      uint32_t n)
 {
@@ -540,7 +577,30 @@ static void fx_buses(const int32_t *cho_in, const int32_t *dly_in, const int32_t
     if (pf.ew1 && fb < THR_FB)
         fb += mulq16(THR_FB - fb, (uint32_t)pf.ew1 << 1);   /* ECHO THROW (perform.c): more feedback while held, 0.7
                                                              * at most (the loop's gain below 1: it never runs away) */
+#if GOLANA
+    dly_side_on = 0;
+    if (gl_dtype()) {                                   /* CROSS, L/R: the chorus bus alone here, then the delay */
+        for (i = 0; i < n; i++) {
+            int32_t y = 0, r;
+            cho_buf[fx.cho_w & (CHO_LEN - 1u)] = (int16_t)clamp(cho_in[i] >> 1, -32768, 32767);
+            fx.cho_ph += cinc;
+            r = (400 << 8) + ((osc_sine(fx.cho_ph) + 32768) * cdepth >> 8);
+            {
+                uint32_t ri = (uint32_t)r >> 8;
+                int32_t f = r & 255, c0 = cho_buf[(fx.cho_w - ri) & (CHO_LEN - 1u)];
+                int32_t c1 = cho_buf[(fx.cho_w - ri - 1u) & (CHO_LEN - 1u)];
+                y += (c0 + (((c1 - c0) * f) >> 8)) << 1;
+            }
+            fx.cho_w++;
+            wet[i] = y;
+        }
+        dly_golana(dly_in, wet, n, dl, fb, col, dmix, gl_dtype());
+        i = n;
+    }
+    for (i = dly_side_on ? n : 0u; i < n; i++) {
+#else
     for (i = 0; i < n; i++) {
+#endif
         int32_t y = 0, x, r;
         /* chorus: modulated short delay, 5..15 ms */
         cho_buf[fx.cho_w & (CHO_LEN - 1u)] = (int16_t)clamp(cho_in[i] >> 1, -32768, 32767);
@@ -609,7 +669,12 @@ static __attribute__((noinline)) void rev_side_mix(int32_t *l, int32_t *r, uint3
  * recordings) comes after, so its edges stay sharp (no flanger feedback or phaser ringing smears them) and a STUT
  * repeats the processed sound. State in the pool, per track (ins[], 580 B each); noinline, its own loops: the audio
  * ISR's inlined path gains one test per part (track_t ins_run) */
-enum { IT_OFF, IT_SOFT, IT_HARD, IT_FOLD, IT_FUZZ, IT_CRUSH, IT_PHASER, IT_FLANGER, IT_CHORUS, IT_N };
+enum { IT_OFF, IT_SOFT, IT_HARD, IT_FOLD, IT_FUZZ, IT_CRUSH, IT_PHASER, IT_FLANGER, IT_CHORUS,
+#if GOLANA
+       IT_ENSEMBLE,                     /* (Golana's MOD FX) three chorus taps a third of a turn apart, no feedback */
+#endif
+       IT_N };
+_Static_assert(IT_N == NELEM(N_ITYPE), "N_ITYPE: one name per IT_*");
 #define IL_LEN 256u                     /* FLANG / CHOR: the line, samples (a power of 2: masked) */
 static const uint8_t INS_HOLD[16] = {64, 48, 40, 32, 24, 20, 16, 12, 10, 8, 6, 5, 4, 3, 2, 1};   /* CRUSH RATE */
 typedef struct {
@@ -722,6 +787,28 @@ static __attribute__((noinline)) void ins_swept(ins_t *s, const track_t *t, int3
         return;
     }
     {
+#if GOLANA
+        if (s->type == IT_ENSEMBLE) {                   /* three taps around 3.6 ms, swept 120 degrees apart */
+            for (i = 0; i < n; i++, s->ph += inc) {
+                int32_t x = b[i], v = 0, k;
+                s->w += clamp(tw - s->w, -SL_SLOPE, SL_SLOPE);
+                s->line[s->wp] = (int16_t)clamp(x >> 2, -32767, 32767);
+                for (k = 0; k < 3; k++) {
+                    uint32_t d = (uint32_t)((160 << 16) + ((osc_sine(s->ph + (uint32_t)k * 0x55555555u) *
+                                                             (int32_t)dep * 44) >> 5));
+                    int32_t r0 = (int32_t)(s->wp - (d >> 16)) & (int32_t)(IL_LEN - 1u), r1 = (r0 - 1) & (int32_t)(IL_LEN - 1u);
+                    int32_t fr = (int32_t)((d >> 1) & 0x7FFFu);
+                    v += s->line[r0] + (((s->line[r1] - s->line[r0]) * fr) >> 15);
+                }
+                s->wp = (uint16_t)((s->wp + 1u) & (IL_LEN - 1u));
+                v = (v * 21845) >> 15;                  /* (the three: their mean, at a quarter) */
+                v <<= 1;
+                s->dc += ((v << 8) - s->dc) >> 9;
+                b[i] = pf_mix(x, (x >> 1) + v - (s->dc >> 8), s->w);
+            }
+            return;
+        }
+#endif
         int32_t chorus = s->type == IT_CHORUS, fbk = c * (chorus ? 103 : 219);   /* 0 .. 0.4 / 0 .. 0.85, Q15 */
         uint32_t dq = dep * 516u;                       /* DEPTH, Q16 */
         for (i = 0; i < n; i++, s->ph += inc) {
@@ -935,6 +1022,13 @@ static void mix_block(int32_t *out, uint32_t n)
     fx_buses(send_c, send_d, send_r, wet, n);
     if (hl.side)
         rev_side_mix(mix_l, mix_r, n);                  /* HALL: stereo */
+#if GOLANA
+    if (dly_side_on)
+        for (i = 0; i < n; i++) {                       /* the delay's CROSS / L/R: stereo */
+            mix_l[i] += dly_side[i];
+            mix_r[i] -= dly_side[i];
+        }
+#endif
     if (scope_mix)
         scope_take_mix(n);
     if (perf) {

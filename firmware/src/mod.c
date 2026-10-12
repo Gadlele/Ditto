@@ -157,6 +157,10 @@ static __attribute__((noinline)) int mod_begin(track_t *t)
     int32_t lfo, off[NMSLOT];
     uint32_t k, j;
     mod.on = 0;
+#if GOLANA
+    if (t->engine == ENGI_GOLANA)
+        return 0;                                       /* (its PATCH is in these slots: eng_golana.c) */
+#endif
     for (k = 0; k < NMSLOT; k++)
         if (p[P_M1SRC + 3u * k] && p[P_M1DST + 3u * k] && p[P_M1AMT + 3u * k])
             break;
