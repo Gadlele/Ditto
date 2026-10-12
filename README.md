@@ -1,3 +1,13 @@
+# Golana
+
+Golana is a personal fork of [Felucca](https://github.com/hugelton/Felucca) for the M-VAVE FM-1 by Gadlele:
+a single analog-style synth inspired by the classic microKORG (two oscillators, multimode filter, envelopes,
+LFOs, a modulation patch, a full arpeggiator and effects), with its own interface. Work in progress.
+
+Golana is free software under the GPL-3.0, like Felucca; Felucca's original README follows.
+
+---
+
 # Felucca
 
 [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue.svg)](LICENSE)

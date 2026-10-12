@@ -1567,7 +1567,11 @@ static void draw(int s)
     }
     if (s == S_SPLASH) {                          /* the power-on splash (main.c, before the UI): its lines, the version
                                                    * shown FELUCCA_VERSION (run_tests.sh: src/felucca.c's) */
+#if GOLANA
+        static const char WANT[] = "Golana|" FELUCCA_VERSION "|by Gadlele|based on Felucca";
+#else
         static const char WANT[] = "Felucca|" FELUCCA_VERSION "|H\xFCgelton Instruments|with community";
+#endif
         splash_seen[0] = 0;
         in_splash = 1;
         draw_splash();

@@ -22,8 +22,16 @@
 #endif
 #define NENGINES (13 + FELUCCA_SLICE)   /* SLICE (13) comes last: the other engines keep their numbers */
 #define ENGI_DIGITAL 1u          /* reserved without FELUCCA_FM4: never selectable (eng_ok), its sounds load as FM6 */
+#ifndef GOLANA
+#define GOLANA 1                 /* Golana: a single analog-style synth; only the ANALOG engine can be picked (the
+                                  * other engines stay in the build for now, so old projects and presets still load) */
+#endif
+#if GOLANA
+#define NENG_SHOWN 1             /* Golana: ANALOG only (engines.c ENGINE_ORDER) */
+#else
 #define NENG_SHOWN (NENGINES - !FELUCCA_FM4)   /* the engines one can pick: PRESETS, the EDIT layer, the editor,
                                                 * in the display order of engines.c ENGINE_ORDER */
+#endif
 #define UP_SLOTS 32u             /* user presets (upreset.c) */
 #define NELEM(a) (sizeof(a) / sizeof((a)[0]))
 
