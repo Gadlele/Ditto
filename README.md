@@ -1,12 +1,63 @@
 # Golana
 
 Golana is a personal fork of [Felucca](https://github.com/hugelton/Felucca) for the M-VAVE FM-1 by Gadlele:
-a single analog-style synth inspired by the classic microKORG (two oscillators, multimode filter, envelopes,
-LFOs, a modulation patch, a full arpeggiator and effects), with its own interface. Work in progress.
+a single analog-style synth laid out like the classic microKORG, with its own interface (the MATRIX).
+Golana is free software under the GPL-3.0, like Felucca. Felucca's original README follows further down.
 
-Golana is free software under the GPL-3.0, like Felucca; Felucca's original README follows.
+## The synth
+
+| Section | Parameters |
+| --- | --- |
+| OSC 1 | WAVE (SAW, PULSE, TRI, SINE), CTRL 1 (SAW: an octave-up saw blended in; PULSE: width; TRI: wavefold; SINE: cross modulation from OSC 2), CTRL 2 (LFO 1 on CTRL 1) |
+| OSC 2 | WAVE (SAW, SQR, TRI), MOD (OFF, RING, SYNC, R+S), SEMITONE, TUNE |
+| MIXER | OSC 1, OSC 2, NOISE |
+| FILTER | TYPE (LPF24, LPF12, BPF, HPF), CUTOFF, RESO, EG INT, KEY TRACK |
+| FILTER EG / AMP EG | ATTACK, DECAY, SUSTAIN, RELEASE |
+| AMP | LEVEL, PANPOT, DIST |
+| VOICE | ASSIGN (POLY, MONO, LEGATO, UNISON; 4 voices), DETUNE, PORTA, EG RESET |
+| LFO 1 / LFO 2 | WAVE (SAW, SQR, TRI, SIN, S&H), FREQ, KEY SYNC (OFF, TIMBRE, VOICE), TEMPO (sync to a note value) |
+| PATCH 1-4 | SOURCE (FEG, AEG, LFO1, LFO2, VELO, KBD, MODW), DEST (PITCH, OSC2, CTRL1, NOISE, CUTOFF, AMP, LFO2F), INTENSITY |
+| ARP | ON, TYPE (UP, DOWN, ALT1, ALT2, RANDOM, TRIGGER), RANGE 1-4, RES, GATE, SWING, LATCH, KEY SYNC, LAST STEP and steps on/off |
+| MOD FX | TYPE (CHORUS, FLANGER, ENSEMBLE, PHASER), SPEED, DEPTH, MIX |
+| DELAY | TYPE (STEREO, CROSS, L/R), TIME (tempo), FEEDBACK, LEVEL |
+| REVERB | TYPE (ROOM, SPRING, HALL), SIZE, DAMP, LEVEL |
+| GLOBAL | TEMPO, TUNE, CLOCK (INT, USB, TRS), MIDI IN (ALL, CH 1) |
+
+32 programs: 1-16 hold the factory sounds until written over (FAT BASS, ACID LINE, GLIDE LEAD, UNISON SAW,
+SYNC PAD, BRIGHT ARP, 80S BRASS, ORGAN, SOFT PAD, PHASE PAD, SLOW ARP, SOFT BELLS, DRONE, WARM LEAD, DARK UNISON,
+S&H TEXTURE), 17-32 start as INIT. MIDI Program Change 0-31 picks a program.
+
+## The controls
+
+| Control | What it does |
+| --- | --- |
+| SELECT | the section (and its pages: FILTER 1-2, PATCH 1-4, ARP 1-3) |
+| KNOB 1-4 | the four parameters on the cards |
+| ALGORITHM | CUTOFF, from any page |
+| PRESETS | the program (it loads as you turn; edits not written are lost, as on the original) |
+| HOME | PERFORM: cutoff, resonance, EG int, LFO 1 rate |
+| EDIT / SCL / ENV / LFO | OSC 1, OSC 2, MIXER / FILTER / FILTER EG, AMP EG / LFO 1, LFO 2 (press again for the next) |
+| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL / PATCH 1-4 / the ARP pages / MOD FX, DELAY, REVERB |
+| ARP | the arpeggiator on / off |
+| PLAY | LATCH on / off |
+| SAVE | WRITE: PRESETS picks the slot, KNOB 1 the letter, KNOB 2 changes it, SAVE writes, HOME cancels |
+| OCT- / OCT+ | the keys' octave (both held 5 s: update mode, as in Felucca) |
+
+## Building and testing
+
+The firmware builds exactly as Felucca does (`./build.sh`, see BUILDING.md); the package is still called
+`felucca.fwsc`. Host tests of Golana:
+
+```
+cc -O2 -w -Ibuild/gen -Ifirmware/src -Itests -o build/host/golana_sound tests/golana_sound.c -lm
+build/host/golana_sound build/golana_wav        # every factory program to a WAV, with levels
+cc -O2 -w -Ibuild/gen -Ifirmware/src -o build/host/golana_sim tests/golana_sim.c -lm
+build/host/golana_sim build/golana_sim           # the whole firmware on a simulated FM-1, screenshots
+web/emu/build_wasm.sh                            # the browser version: build/emu/golana.html
+```
 
 ---
+
 
 # Felucca
 
