@@ -19,21 +19,50 @@
  * 17..32 INIT. MIDI Program Change 0..31 loads a program. */
 
 /* ---------------------------------------------------------------- colours --- */
-#define GC_BG RGB(14, 17, 24)
-#define GC_SURF RGB(26, 30, 40)
-#define GC_RAISE RGB(38, 44, 58)
-#define GC_LINE RGB(48, 54, 70)
-#define GC_TEXT RGB(232, 230, 225)
-#define GC_MID RGB(150, 156, 172)
-#define GC_DIM RGB(88, 94, 110)
-#define GC_AMBER RGB(255, 181, 71)
-#define GC_TEAL RGB(92, 200, 192)
-#define GC_PINK RGB(232, 122, 144)
-#define GC_INK RGB(14, 17, 24)
+/* the palettes (GLO SETUP PALETTE): the grounds, the text, and one colour per page button (its tabs, its meters, its
+ * drawing), in the order HOME EDIT SCL ENV LFO GLO REC SEQ FX */
+typedef struct {
+    uint16_t bg, surf, raise, line, text, mid, dim, ink;
+    uint8_t light;
+    uint16_t btn[9];
+} gu_pal_t;
+static const char *const N_GPAL[] = {"NIGHT", "CRT", "PAPER", "NEON"};
+static const char *const N_GVIEW[] = {"RING", "ORBIT", "RIDGE"};
+static const gu_pal_t GU_PALS[4] = {
+    {RGB(14, 17, 24), RGB(26, 30, 40), RGB(38, 44, 58), RGB(48, 54, 70), RGB(232, 230, 225), RGB(150, 156, 172),
+     RGB(88, 94, 110), RGB(14, 17, 24), 0,
+     {RGB(255, 181, 71), RGB(255, 128, 92), RGB(236, 214, 96), RGB(240, 122, 156), RGB(176, 146, 255),
+      RGB(92, 206, 170), RGB(150, 214, 104), RGB(102, 170, 255), RGB(112, 214, 238)}},
+    {RGB(4, 10, 6), RGB(10, 22, 13), RGB(18, 36, 24), RGB(26, 52, 34), RGB(186, 245, 200), RGB(96, 164, 116),
+     RGB(46, 90, 61), RGB(4, 10, 6), 0,                 /* CRT: phosphors, green the main one */
+     {RGB(255, 190, 80), RGB(255, 150, 70), RGB(220, 240, 120), RGB(120, 255, 170), RGB(90, 230, 220),
+      RGB(70, 240, 120), RGB(170, 255, 110), RGB(110, 220, 255), RGB(140, 255, 210)}},
+    {RGB(230, 227, 220), RGB(244, 242, 238), RGB(216, 212, 204), RGB(196, 191, 181), RGB(34, 32, 28),
+     RGB(107, 102, 93), RGB(163, 158, 148), RGB(250, 249, 246), 1,   /* PAPER: light, the colours deeper */
+     {RGB(206, 120, 0), RGB(214, 76, 40), RGB(160, 130, 0), RGB(200, 50, 100), RGB(110, 70, 210),
+      RGB(0, 140, 110), RGB(70, 140, 30), RGB(30, 100, 210), RGB(0, 130, 170)}},
+    {RGB(18, 11, 30), RGB(29, 20, 48), RGB(42, 30, 68), RGB(58, 43, 88), RGB(242, 236, 255), RGB(169, 155, 200),
+     RGB(94, 81, 128), RGB(18, 11, 30), 0,              /* NEON */
+     {RGB(255, 225, 77), RGB(255, 154, 60), RGB(182, 255, 59), RGB(255, 79, 160), RGB(176, 124, 255),
+      RGB(60, 255, 194), RGB(255, 92, 240), RGB(92, 140, 255), RGB(63, 232, 255)}},
+};
+static uint8_t gu_pi, gu_view;                  /* the palette, HOME's drawing (kept with the settings: gu_prefs) */
+#define GU_P (&GU_PALS[gu_pi & 3u])
+#define GC_BG (GU_P->bg)
+#define GC_SURF (GU_P->surf)
+#define GC_RAISE (GU_P->raise)
+#define GC_LINE (GU_P->line)
+#define GC_TEXT (GU_P->text)
+#define GC_MID (GU_P->mid)
+#define GC_DIM (GU_P->dim)
+#define GC_INK (GU_P->ink)
+#define GC_AMBER (GU_P->btn[0])
+#define GC_TEAL (GU_P->btn[5])
+#define GC_PINK (GU_P->btn[3])
 
 /* ------------------------------------------------------------ the matrix --- */
 /* virtual parameters (not a track parameter of part 1) */
-enum { GV_NONE = 0xFF, GV_RES = 200, GV_BPM, GV_TUNE, GV_CLOCK, GV_STEP, GV_STEPON, GV_MIDI,
+enum { GV_NONE = 0xFF, GV_RES = 200, GV_BPM, GV_TUNE, GV_CLOCK, GV_STEP, GV_STEPON, GV_MIDI, GV_PAL, GV_VIEW,
        GV_SSTEP, GV_SNOTE, GV_STYPE, GV_SFLAG, GV_SLEN };   /* (the step sequencer: REC) */
 typedef struct { uint8_t id; const char *label; const char *const *names; } gu_par_t;
 typedef struct { uint8_t btn; const char *tab, *tshort; gu_par_t k[4]; } gu_page_t;
@@ -48,10 +77,10 @@ static const char *const N_GSFLAG[] = {"OFF", "ACCENT", "SLIDE", "BOTH"};
  * tab when it is open (after the button's name), tshort: on its tab while another page of the button is open */
 static const gu_page_t GU_PAGES[] = {
     {B_HOME, "PERFORM", "PERFORM",
-     {{GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}, {GL_L1FREQ, "LFO1 FREQ", 0}}},
+     {{GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}, {GL_L1FREQ, "LFO 1", 0}}},
     {B_EDIT, "OSC 1", "OSC 1", {{GL_O1WAVE, "WAVE", 0}, {GL_O1C1, "CTRL 1", 0}, {GL_O1C2, "CTRL 2", 0}, {GV_NONE, 0, 0}}},
     {B_EDIT, "OSC 2", "OSC 2",
-     {{GL_O2WAVE, "WAVE", 0}, {GL_O2MOD, "MOD", 0}, {GL_O2SEMI, "SEMITONE", 0}, {GL_O2TUNE, "TUNE", 0}}},
+     {{GL_O2WAVE, "WAVE", 0}, {GL_O2MOD, "MOD", 0}, {GL_O2SEMI, "SEMI", 0}, {GL_O2TUNE, "TUNE", 0}}},
     {B_EDIT, "MIXER", "MIXER", {{GL_MIX1, "OSC 1", 0}, {GL_MIX2, "OSC 2", 0}, {GL_NOISE, "NOISE", 0}, {GL_FOLD, "FOLD", 0}}},
     {B_SCL, "FILTER", "FILTER",
      {{GL_FTYPE, "TYPE", 0}, {GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}}},
@@ -73,7 +102,7 @@ static const gu_page_t GU_PAGES[] = {
      {{P_VOICE, "ASSIGN", N_GVOICE}, {P_DETUNE, "DETUNE", 0}, {P_GLIDE, "PORTA", 0}, {GL_EGRESET, "EG RESET", 0}}},
     {B_GLO, "GLOBAL", "GLOB",
      {{GV_BPM, "TEMPO", 0}, {GV_TUNE, "TUNE", 0}, {GV_CLOCK, "CLOCK", N_GCLOCK}, {GV_MIDI, "MIDI IN", N_GMIDI}}},
-    {B_GLO, "ROUTE", "ROUTE", {{GL_ROUTE, "FX ORDER", 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}}},
+    {B_GLO, "SETUP", "SETUP", {{GL_ROUTE, "FX ORDER", 0}, {GV_PAL, "PALETTE", 0}, {GV_VIEW, "HOME", 0}, {GV_NONE, 0, 0}}},
     {B_SEQ, "ARP", "ARP", {{GL_ARPON, "ARP", 0}, {GL_ARPTYPE, "TYPE", 0}, {P_AOCT, "RANGE", 0}, {GV_RES, "RES", N_GRES}}},
     {B_SEQ, "TIMING", "TIMING",
      {{P_AGATE, "GATE", 0}, {P_ASWING, "SWING", 0}, {P_AHOLD, "LATCH", N_GONOFF}, {GL_ARPKSYNC, "KEY SYNC", 0}}},
@@ -93,17 +122,9 @@ static const gu_page_t GU_PAGES[] = {
 /* each page button's own colour: its tabs and its cards' meters, every time its pages are open */
 static uint16_t gu_btn_col(uint32_t b)
 {
-    switch (b) {
-    case B_HOME: return RGB(255, 181, 71);          /* amber */
-    case B_EDIT: return RGB(255, 128, 92);          /* coral */
-    case B_SCL: return RGB(236, 214, 96);           /* yellow */
-    case B_ENV: return RGB(240, 122, 156);          /* pink */
-    case B_LFO: return RGB(176, 146, 255);          /* violet */
-    case B_GLO: return RGB(92, 206, 170);           /* green-teal */
-    case B_REC: return RGB(150, 214, 104);          /* lime */
-    case B_SEQ: return RGB(102, 170, 255);          /* blue */
-    default: return RGB(112, 214, 238);             /* FX: cyan */
-    }
+    static const uint8_t IX[NB] = {[B_HOME] = 0, [B_EDIT] = 1, [B_SCL] = 2, [B_ENV] = 3, [B_LFO] = 4, [B_GLO] = 5,
+                                   [B_REC] = 6, [B_SEQ] = 7, [B_FX] = 8};
+    return GU_P->btn[b < NB ? IX[b] : 8u];
 }
 
 static struct {
@@ -179,6 +200,20 @@ static int gu_store(uint32_t k, const char *name)
     return rc == 0 || rc == 3 ? 0 : rc;
 }
 
+/* the palette and HOME's drawing, with the settings (flash): in two of Felucca's settings this interface does not
+ * use, HOLD (the layers' hold time) and LEDS (the idle glow) */
+static void gu_prefs_load(void)
+{
+    gu_pi = (uint8_t)((settings_hold + 3u) & 3u);       /* (HOLD's default, 1: NIGHT) */
+    gu_view = (uint8_t)(settings_leds < 3u ? settings_leds : 0u);
+}
+static void gu_prefs_save(void)
+{
+    settings_hold = (uint8_t)((gu_pi + 1u) & 3u);
+    settings_leds = gu_view;
+    settings_save();                                     /* (written when the sequencer is stopped: settings_poll) */
+}
+
 /* ------------------------------------------------------------- parameters --- */
 static const param_desc_t *gu_desc(uint32_t id) { return param_desc_of(ENGI_GOLANA, id); }
 
@@ -203,6 +238,8 @@ static void gu_range(const gu_par_t *q, int32_t *lo, int32_t *hi)
     case GV_STEP: *lo = 1; *hi = 8; return;
     case GV_STEPON: *lo = 0; *hi = 1; return;
     case GV_MIDI: *lo = 0; *hi = 1; return;
+    case GV_PAL: *lo = 0; *hi = 3; return;
+    case GV_VIEW: *lo = 0; *hi = 2; return;
     case GV_SSTEP: *lo = 1; *hi = gu_slen(); return;
     case GV_SNOTE: *lo = 0; *hi = 127; return;
     case GV_STYPE: *lo = 0; *hi = 2; return;
@@ -245,6 +282,8 @@ static int32_t gu_get(const gu_par_t *q)
     case GV_STEP: return gu.step + 1;
     case GV_STEPON: return (int32_t)((gu_steps() >> gu.step) & 1u);
     case GV_MIDI: return song.g[G_ROUTE] == 1 ? 0 : 1;
+    case GV_PAL: return gu_pi;
+    case GV_VIEW: return gu_view;
     case GV_SSTEP: return gu.sstep + 1;
     case GV_SNOTE: return gu_sst()->n ? gu_sst()->note[0] : 60;
     case GV_STYPE: return gu_stype(gu_sst());
@@ -268,6 +307,15 @@ static void gu_set(const gu_par_t *q, int32_t v)
     case GV_CLOCK: song.g[G_CLOCK] = (int16_t)v; return;
     case GV_STEP: gu.step = (uint8_t)(v - 1); return;
     case GV_MIDI: song.g[G_ROUTE] = (int16_t)(v ? 0 : 1); return;
+    case GV_PAL:
+    case GV_VIEW:
+        if (q->id == GV_PAL)
+            gu_pi = (uint8_t)v;
+        else
+            gu_view = (uint8_t)v;
+        gu_prefs_save();
+        ui.force = 1;                                   /* (everything drawn again in the new colours) */
+        return;
     case GV_SSTEP: gu.sstep = (uint8_t)(v - 1); return;
     case GV_SNOTE: gu_snote_set(gu_sst(), (uint32_t)v); gu.dirty = 1; return;
     case GV_STYPE: {
@@ -314,6 +362,10 @@ static void gu_text(const gu_par_t *q, char *b)
     const char *const *names = q->names;
     if (q->id == GV_NONE) {
         b[0] = 0;
+        return;
+    }
+    if (q->id == GV_PAL || q->id == GV_VIEW) {
+        str_cpy(b, q->id == GV_PAL ? N_GPAL[v & 3] : N_GVIEW[v % 3], 8);
         return;
     }
     if (q->id == GV_SNOTE) {                           /* a note name (C4 = 60), "--" on a rest or a tie */
@@ -470,15 +522,16 @@ static void gu_draw_tabs(void)
 }
 
 /* card k of the page: the label, the value (big when it fits), a meter (a bar, a centred bar, or a dot per name) */
-#define GU_CW 114
-#define GU_CH 86
+#include "golana_gfx.c"                         /* the pages' drawings */
+/* the cards: two by two (114 x 86), or on a page with a drawing four in a row under it (57 wide) */
 static void gu_draw_card(uint32_t k)
 {
     const gu_page_t *pg = &GU_PAGES[gu.page];
     const gu_par_t *q = gu_pk(pg, k);
     char b[16];
-    int32_t v = gu_get(q), lo = 0, hi = 0, x = 4 + (int32_t)(k & 1u) * (GU_CW + 4);
-    int32_t y = GU_TAB_Y + GU_TAB_H + 4 + (int32_t)(k >> 1) * (GU_CH + 4);
+    int32_t gh = gu_graph_h(gu_graph_of(pg)), GU_CW = gh ? 57 : 114, GU_CH = gh ? 240 - 60 - gh - 4 - 1 : 86;
+    int32_t v = gu_get(q), lo = 0, hi = 0, x = gh ? 3 + (int32_t)k * 59 : 4 + (int32_t)(k & 1u) * (GU_CW + 4);
+    int32_t y = gh ? 60 + gh + 4 : GU_TAB_Y + GU_TAB_H + 4 + (int32_t)(k >> 1) * (GU_CH + 4), dy = GU_CH - 86;
     uint32_t h = 0x811C9DC5u;
     int hot = gu.hot == (int8_t)k && fm1_ms - gu.hot_t < 700u;
     uint16_t acc = gu_btn_col(pg->btn), surf = hot ? GC_RAISE : GC_SURF;
@@ -506,18 +559,21 @@ static void gu_draw_card(uint32_t k)
     }
     cv_rrect(0, 0, GU_CW, GU_CH, -8, surf, GC_BG);
     if (hot)
-        cv_rect(14, 0, GU_CW - 28, 2, acc);
-    cv_text_on(10, 6, &AF_S, q->label, GC_MID, surf);
+        cv_rect(10, 0, GU_CW - 20, 2, acc);
+    if (gh)                                             /* (narrow: the label centred) */
+        cv_text_on((GU_CW - text_w(&AF_S, q->label)) / 2, 6, &AF_S, q->label, GC_MID, surf);
+    else
+        cv_text_on(10, 6, &AF_S, q->label, GC_MID, surf);
     gu_range(q, &lo, &hi);
     {
-        int big = gu_fits_l(b) && text_w(&AF_L, b) <= GU_CW - 12;
+        int big = gu_fits_l(b) && text_w(&AF_L, b) <= GU_CW - (gh ? 6 : 12);
         const aafont_t *f = big ? &AF_L : &AF_M;
         int32_t w = text_w(f, b);
-        if (w > GU_CW - 8) {
+        if (w > GU_CW - (gh ? 4 : 8)) {
             f = &AF_S;
             w = text_w(f, b);
         }
-        cv_text_on((GU_CW - w) / 2, big ? 22 : 32, f, b, GC_TEXT, surf);
+        cv_text_on((GU_CW - w) / 2, (big ? 22 : f == &AF_M ? 32 : 36) + dy / 2, f, b, GC_TEXT, surf);
     }
     if (q->id == GV_SSTEP || q->id == GV_SLEN) {        /* the sequencer's 16 steps */
         uint32_t st, len = gu_slen(), play = song.playing ? gu_t()->seq_idx % len : 99u;
@@ -541,25 +597,25 @@ static void gu_draw_card(uint32_t k)
                 cv_rect(sx, 76, 8, 2, GC_TEXT);
         }
     } else if (q->names || (q->id < P_COUNT && gu_desc(q->id)->fmt == F_ENUM) || hi - lo < 2) {
-        int32_t n = hi - lo + 1, i, dx = n > 1 ? (GU_CW - 24) / (n - 1) : 0;
+        int32_t n = hi - lo + 1, i, dx = n > 1 ? (GU_CW - 14) / (n - 1) : 0, ds = dx < 8 ? 4 : 6;
         if (dx > 14)
             dx = 14;
         for (i = 0; i < n && n <= 12; i++) {
             int32_t cx = GU_CW / 2 - (dx * (n - 1)) / 2 + i * dx;
-            cv_rrect(cx - 3, 68, 6, 6, -3, i == v - lo ? acc : GC_LINE, surf);
+            cv_rrect(cx - ds / 2, 68 + dy, ds, ds, -3, i == v - lo ? acc : GC_LINE, surf);
         }
     } else if (lo < 0) {                             /* bipolar: from the middle */
-        int32_t mid = GU_CW / 2, len = (v * (GU_CW / 2 - 12)) / (hi > 0 ? hi : 1);
-        cv_rect(12, 70, GU_CW - 24, 3, GC_LINE);
-        cv_rect(mid - 1, 67, 2, 9, GC_MID);
+        int32_t m0 = gh ? 7 : 12, mid = GU_CW / 2, len = (v * (GU_CW / 2 - m0)) / (hi > 0 ? hi : 1);
+        cv_rect(m0, 70 + dy, GU_CW - 2 * m0, 3, GC_LINE);
+        cv_rect(mid - 1, 67 + dy, 2, 9, GC_MID);
         if (len > 0)
-            cv_rect(mid, 70, len, 3, acc);
+            cv_rect(mid, 70 + dy, len, 3, acc);
         else if (len < 0)
-            cv_rect(mid + len, 70, -len, 3, acc);
+            cv_rect(mid + len, 70 + dy, -len, 3, acc);
     } else {
-        int32_t len = ((v - lo) * (GU_CW - 24)) / (hi - lo > 0 ? hi - lo : 1);
-        cv_rect(12, 70, GU_CW - 24, 3, GC_LINE);
-        cv_rect(12, 70, len, 3, acc);
+        int32_t m0 = gh ? 7 : 12, len = ((v - lo) * (GU_CW - 2 * m0)) / (hi - lo > 0 ? hi - lo : 1);
+        cv_rect(m0, 70 + dy, GU_CW - 2 * m0, 3, GC_LINE);
+        cv_rect(m0, 70 + dy, len, 3, acc);
     }
     cv_blit((uint32_t)x, (uint32_t)y);
 }
@@ -629,6 +685,7 @@ static void gu_redraw_all(void)
         gu.sig_card[k] = 0;
     gu.shown_save = 0;
     gu.shown_uboot = 0xFF;
+    gu_sig_graph = 0;
     lcd_fill(0, 0, 240, 240, GC_BG);
 }
 
@@ -637,9 +694,9 @@ static void gu_draw(void)
     uint32_t k;
     if (!gu.ready)
         return;
-    if (ux.mono || ux.light || ux.style != ST_FLAT) {   /* Golana's own colours: full colour, dark, rounded (a stored */
-        ux.mono = 0;                                     /* Felucca palette, GREY or PAPER, would grey or invert them) */
-        ux.light = 0;
+    if (ux.mono || ux.light != GU_P->light || ux.style != ST_FLAT) {   /* Golana's own colours (a stored Felucca */
+        ux.mono = 0;                                     /* palette, GREY or PAPER, would grey or invert them) */
+        ux.light = GU_P->light;
         ux.style = ST_FLAT;
         ux.gen++;
         ui.force = 1;
@@ -666,6 +723,21 @@ static void gu_draw(void)
     if (gu.shown_save) {
         gu.shown_save = 0;
         lcd_fill(0, 32, 240, 208, GC_BG);
+    }
+    {   /* a page of another layout (with a drawing or not, or of another height): the body cleared */
+        static int32_t shown_gh = -1;
+        int32_t gh = gu_graph_h(gu_graph_of(&GU_PAGES[gu.page]));
+        if (gh != shown_gh) {
+            shown_gh = gh;
+            lcd_fill(0, 58, 240, 182, GC_BG);
+            gu.sig_card[0] = gu.sig_card[1] = gu.sig_card[2] = gu.sig_card[3] = 0;
+            gu_sig_graph = 0;
+        }
+        if (gh) {
+            if (gu.sig_list == 0)
+                gu_sig_graph = 0;
+            gu_draw_graph(gu_graph_of(&GU_PAGES[gu.page]));
+        }
     }
     gu_draw_tabs();
     for (k = 0; k < 4u; k++)
@@ -922,6 +994,7 @@ static void gu_boot(void)
     song.sel = 0;
     gu.hot = -1;
     gu.shown_uboot = 0xFF;
+    gu_prefs_load();
     gu_load(0);
     gu.ready = 1;
 }

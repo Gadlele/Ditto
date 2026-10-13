@@ -23,7 +23,7 @@ Golana is free software under the GPL-3.0, like Felucca. Felucca's original READ
 | DELAY | TYPE (STEREO, CROSS, L/R), TIME (tempo), FEEDBACK, LEVEL |
 | REVERB | TYPE (ROOM, SPRING, HALL), SIZE, DAMP, LEVEL |
 | GLOBAL | TEMPO, TUNE, CLOCK (INT, USB, TRS), MIDI IN (ALL, CH 1) |
-| ROUTE | FX ORDER, saved with the program: MFX>DLY>REV (the default), DLY>MFX>REV (the MOD FX after the delay, the reverb fed from it), DLY>REV>MFX (the MOD FX last) |
+| SETUP | FX ORDER, saved with the program: MFX>DLY>REV (the default), DLY>MFX>REV (the MOD FX after the delay, the reverb fed from it), DLY>REV>MFX (the MOD FX last) |
 
 32 programs: 1-16 hold the factory sounds until written over (FAT BASS, ACID LINE, GLIDE LEAD, UNISON SAW,
 SYNC PAD, BRIGHT ARP, 80S BRASS, ORGAN, SOFT PAD, PHASE PAD, SLOW ARP, SOFT BELLS, DRONE, WARM LEAD, DARK UNISON,
@@ -39,7 +39,12 @@ S&H TEXTURE), 17-32 start as INIT. MIDI Program Change 0-31 picks a program.
 | PRESETS | the program (it loads as you turn; edits not written are lost, as on the original) |
 | HOME | PERFORM: cutoff, resonance, EG int, LFO 1 rate |
 | EDIT / SCL / ENV / LFO | OSC 1, OSC 2, MIXER / FILTER, KEY TRACK / FILTER EG, AMP EG / LFO 1, LFO 2, PATCH 1-4 (press again for the next) |
-| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL, ROUTE / the sequencer: PATTERN, SETUP / the arpeggiator: ARP, TIMING, STEPS / MOD FX, DELAY, REVERB |
+| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL, SETUP (FX ORDER, PALETTE, HOME) / the sequencer: PATTERN, SETUP / the arpeggiator: ARP, TIMING, STEPS / MOD FX, DELAY, REVERB |
+
+The pages that set a shape draw it above their four knobs, from the values themselves: OSC 1 and OSC 2 their wave,
+FILTER its response curve, FILTER EG and AMP EG the envelope, LFO 1 and LFO 2 the running wave. HOME draws the sound
+playing, three ways (GLO · SETUP · HOME): RING (the wave round a circle), ORBIT (the wave against itself a moment
+later) and RIDGE (the last waves stacked). GLO · SETUP · PALETTE: NIGHT, CRT, PAPER, NEON (kept with the settings).
 
 The screen shows the open page as a tab, "BUTTON · PAGE" in that button's own colour, with the button's other pages as dark tabs beside it.
 | ARP | the arpeggiator on / off |
