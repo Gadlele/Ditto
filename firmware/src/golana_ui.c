@@ -205,12 +205,12 @@ static int gu_store(uint32_t k, const char *name)
 static void gu_prefs_load(void)
 {
     gu_pi = (uint8_t)((settings_hold + 3u) & 3u);       /* (HOLD's default, 1: NIGHT) */
-    gu_view = (uint8_t)(settings_leds < 3u ? settings_leds : 0u);
+    gu_view = (uint8_t)((settings_leds < 3u ? settings_leds + 2u : 2u) % 3u);   /* (LEDS's default, 0: RIDGE) */
 }
 static void gu_prefs_save(void)
 {
     settings_hold = (uint8_t)((gu_pi + 1u) & 3u);
-    settings_leds = gu_view;
+    settings_leds = (uint8_t)((gu_view + 1u) % 3u);
     settings_save();                                     /* (written when the sequencer is stopped: settings_poll) */
 }
 

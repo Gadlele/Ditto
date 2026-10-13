@@ -43,8 +43,8 @@ S&H TEXTURE), 17-32 start as INIT. MIDI Program Change 0-31 picks a program.
 
 The pages that set a shape draw it above their four knobs, from the values themselves: OSC 1 and OSC 2 their wave,
 FILTER its response curve, FILTER EG and AMP EG the envelope, LFO 1 and LFO 2 the running wave. HOME draws the sound
-playing, three ways (GLO · SETUP · HOME): RING (the wave round a circle), ORBIT (the wave against itself a moment
-later) and RIDGE (the last waves stacked). GLO · SETUP · PALETTE: NIGHT, CRT, PAPER, NEON (kept with the settings).
+playing, three ways (GLO · SETUP · HOME): RIDGE, the default (the last waves stacked), RING (the wave round a circle) and ORBIT (the wave against itself a moment
+later). GLO · SETUP · PALETTE: NIGHT, CRT, PAPER, NEON (kept with the settings).
 
 The screen shows the open page as a tab, "BUTTON · PAGE" in that button's own colour, with the button's other pages as dark tabs beside it.
 | ARP | the arpeggiator on / off |
