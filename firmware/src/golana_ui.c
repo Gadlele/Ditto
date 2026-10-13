@@ -9,10 +9,11 @@
  *   KNOB 1..4  the four parameters on the cards
  *   ALGORITHM  CUTOFF, whatever the page (as the original's cutoff knob)
  *   PRESETS    the program, 1..32: it loads as the knob turns (edits not written are lost, as on the original)
- *   HOME       the PERFORM page; EDIT OSC 1 / OSC 2 / MIXER; SCL FILTER; ENV FILTER EG / AMP EG; LFO LFO 1 / LFO 2;
- *              GLO AMP / VOICE / GLOBAL; REC PATCH 1..4; SEQ ARP pages; FX MOD FX / DELAY / REVERB
+ *   HOME       the PERFORM page; EDIT OSC 1 / OSC 2 / MIXER; SCL FILTER; ENV FILTER EG / AMP EG; LFO LFO 1 / LFO 2 /
+ *              PATCH 1..4; GLO AMP / VOICE / GLOBAL / ROUTE; SEQ the ARP pages; REC the sequencer; FX MOD FX / DELAY / REVERB
  *              (a second press: the next one of the group)
- *   ARP        the arpeggiator on / off;  PLAY  LATCH on / off;  OCT- OCT+  the keys' octave
+ *   ARP        the arpeggiator on / off;  PLAY  the step sequencer: play / stop;  OCT- OCT+  the keys' octave
+ *   REC        the step sequencer: PATTERN (a key writes its note into the step and moves on), SETUP
  *   SAVE       WRITE: PRESETS picks the slot, KNOB 1 the letter, KNOB 2 changes it, SAVE writes, HOME cancels
  * Programs: 32 slots in the user preset store (upreset.c); slots 1..16 play the factory sounds until written over,
  * 17..32 INIT. MIDI Program Change 0..31 loads a program. */
@@ -32,7 +33,8 @@
 
 /* ------------------------------------------------------------ the matrix --- */
 /* virtual parameters (not a track parameter of part 1) */
-enum { GV_NONE = 0xFF, GV_RES = 200, GV_BPM, GV_TUNE, GV_CLOCK, GV_STEP, GV_STEPON, GV_MIDI };
+enum { GV_NONE = 0xFF, GV_RES = 200, GV_BPM, GV_TUNE, GV_CLOCK, GV_STEP, GV_STEPON, GV_MIDI,
+       GV_SSTEP, GV_SNOTE, GV_STYPE, GV_SFLAG, GV_SLEN };   /* (the step sequencer: REC) */
 typedef struct { uint8_t id; const char *label; const char *const *names; } gu_par_t;
 typedef struct { uint8_t btn; const char *tab, *tshort; gu_par_t k[4]; } gu_page_t;
 static const char *const N_GVOICE[] = {"POLY", "MONO", "LEGATO", "UNISON"};
@@ -40,6 +42,8 @@ static const char *const N_GRES[] = {"1/32", "1/24", "1/16", "1/12", "1/8", "1/4
 static const uint8_t GU_RES_DIV[6] = {3, 5, 2, 4, 1, 0};    /* N_GRES -> P_ARATE (params.c N_DIV) */
 static const char *const N_GCLOCK[] = {"INT", "USB", "TRS"};
 static const char *const N_GMIDI[] = {"ALL", "CH 1"};
+static const char *const N_GSTYPE[] = {"REST", "NOTE", "TIE"};
+static const char *const N_GSFLAG[] = {"OFF", "ACCENT", "SLIDE", "BOTH"};
 /* the pages, grouped by the button that opens them (its pages side by side: the tabs). tab: the page's name on its
  * tab when it is open (after the button's name), tshort: on its tab while another page of the button is open */
 static const gu_page_t GU_PAGES[] = {
@@ -48,33 +52,37 @@ static const gu_page_t GU_PAGES[] = {
     {B_EDIT, "OSC 1", "OSC 1", {{GL_O1WAVE, "WAVE", 0}, {GL_O1C1, "CTRL 1", 0}, {GL_O1C2, "CTRL 2", 0}, {GV_NONE, 0, 0}}},
     {B_EDIT, "OSC 2", "OSC 2",
      {{GL_O2WAVE, "WAVE", 0}, {GL_O2MOD, "MOD", 0}, {GL_O2SEMI, "SEMITONE", 0}, {GL_O2TUNE, "TUNE", 0}}},
-    {B_EDIT, "MIXER", "MIXER", {{GL_MIX1, "OSC 1", 0}, {GL_MIX2, "OSC 2", 0}, {GL_NOISE, "NOISE", 0}, {GV_NONE, 0, 0}}},
+    {B_EDIT, "MIXER", "MIXER", {{GL_MIX1, "OSC 1", 0}, {GL_MIX2, "OSC 2", 0}, {GL_NOISE, "NOISE", 0}, {GL_FOLD, "FOLD", 0}}},
     {B_SCL, "FILTER", "FILTER",
      {{GL_FTYPE, "TYPE", 0}, {GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}}},
     {B_SCL, "KEY TRACK", "KEY TRK", {{GL_KTRK, "KEY TRACK", 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}}},
     {B_ENV, "FILTER EG", "FILTER EG",
      {{GL_FA, "ATTACK", 0}, {GL_FD, "DECAY", 0}, {GL_FS, "SUSTAIN", 0}, {GL_FR, "RELEASE", 0}}},
     {B_ENV, "AMP EG", "AMP EG", {{P_ATK, "ATTACK", 0}, {P_DEC, "DECAY", 0}, {P_SUS, "SUSTAIN", 0}, {P_REL, "RELEASE", 0}}},
-    {B_LFO, "LFO 1", "LFO 1",
+    {B_LFO, "LFO 1", "L1",
      {{GL_L1WAVE, "WAVE", 0}, {GL_L1FREQ, "FREQ", 0}, {GL_L1KEY, "KEY SYNC", 0}, {GL_L1SYNC, "TEMPO", 0}}},
-    {B_LFO, "LFO 2", "LFO 2",
+    {B_LFO, "LFO 2", "L2",
      {{GL_L2WAVE, "WAVE", 0}, {GL_L2FREQ, "FREQ", 0}, {GL_L2KEY, "KEY SYNC", 0}, {GL_L2SYNC, "TEMPO", 0}}},
-    {B_GLO, "AMP", "AMP", {{P_LEVEL, "LEVEL", 0}, {P_PAN, "PANPOT", 0}, {GL_DIST, "DIST", 0}, {GV_NONE, 0, 0}}},
+#define GU_PATCH(k, n, sh) {B_LFO, n, sh, {{GL_P1SRC + 3 * (k), "SOURCE", 0}, {GL_P1DST + 3 * (k), "DEST", 0}, \
+                                          {GL_P1INT + 3 * (k), "INTENSITY", 0}, {GV_NONE, 0, 0}}}
+    GU_PATCH(0, "PATCH 1", "P1"), GU_PATCH(1, "PATCH 2", "P2"), GU_PATCH(2, "PATCH 3", "P3"),
+    GU_PATCH(3, "PATCH 4", "P4"),
+#undef GU_PATCH
+    {B_GLO, "AMP", "AMP", {{P_LEVEL, "LEVEL", 0}, {P_PAN, "PANPOT", 0}, {GL_DIST, "DIST", 0}, {P_SPRD, "SPREAD", 0}}},
     {B_GLO, "VOICE", "VOICE",
      {{P_VOICE, "ASSIGN", N_GVOICE}, {P_DETUNE, "DETUNE", 0}, {P_GLIDE, "PORTA", 0}, {GL_EGRESET, "EG RESET", 0}}},
     {B_GLO, "GLOBAL", "GLOB",
      {{GV_BPM, "TEMPO", 0}, {GV_TUNE, "TUNE", 0}, {GV_CLOCK, "CLOCK", N_GCLOCK}, {GV_MIDI, "MIDI IN", N_GMIDI}}},
     {B_GLO, "ROUTE", "ROUTE", {{GL_ROUTE, "FX ORDER", 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}}},
-#define GU_PATCH(k, n, sh) {B_REC, n, sh, {{GL_P1SRC + 3 * (k), "SOURCE", 0}, {GL_P1DST + 3 * (k), "DEST", 0}, \
-                                          {GL_P1INT + 3 * (k), "INTENSITY", 0}, {GV_NONE, 0, 0}}}
-    GU_PATCH(0, "PATCH 1", "P1"), GU_PATCH(1, "PATCH 2", "P2"), GU_PATCH(2, "PATCH 3", "P3"),
-    GU_PATCH(3, "PATCH 4", "P4"),
-#undef GU_PATCH
     {B_SEQ, "ARP", "ARP", {{GL_ARPON, "ARP", 0}, {GL_ARPTYPE, "TYPE", 0}, {P_AOCT, "RANGE", 0}, {GV_RES, "RES", N_GRES}}},
     {B_SEQ, "TIMING", "TIMING",
      {{P_AGATE, "GATE", 0}, {P_ASWING, "SWING", 0}, {P_AHOLD, "LATCH", N_GONOFF}, {GL_ARPKSYNC, "KEY SYNC", 0}}},
     {B_SEQ, "STEPS", "STEPS",
      {{GL_ARPLAST, "LAST STEP", 0}, {GV_STEP, "STEP", 0}, {GV_STEPON, "ON / OFF", N_GONOFF}, {GV_NONE, 0, 0}}},
+    {B_REC, "PATTERN", "PATTERN",
+     {{GV_SSTEP, "STEP", 0}, {GV_SNOTE, "NOTE", 0}, {GV_STYPE, "TYPE", N_GSTYPE}, {GV_SFLAG, "ACC / SLIDE", N_GSFLAG}}},
+    {B_REC, "SETUP", "SETUP",
+     {{GV_SLEN, "LENGTH", 0}, {P_SDIV, "RES", 0}, {P_SGATE, "GATE", 0}, {P_SSWING, "SWING", 0}}},
     {B_FX, "MOD FX", "MOD FX", {{GL_MFX, "TYPE", 0}, {P_IA, "SPEED", 0}, {P_IB, "DEPTH", 0}, {P_IMIX, "MIX", 0}}},
     {B_FX, "DELAY", "DELAY",
      {{GL_DTYPE, "TYPE", 0}, {GL_DTIME, "TIME", 0}, {GL_DFDBK, "FEEDBACK", 0}, {P_DLY, "LEVEL", 0}}},
@@ -102,6 +110,7 @@ static struct {
     uint8_t page, prog, dirty, ready;
     uint8_t save, save_slot, cur;                /* WRITE: open, its slot, the letter KNOB 2 changes */
     uint8_t step;                                /* ARP 3: the step KNOB 2 points at (0..7) */
+    uint8_t sstep;                               /* REC STEPS: the sequencer step being edited (0..15) */
     char name[13], sname[13];
     char toast[24];
     uint32_t toast_t, hot_t;
@@ -133,6 +142,18 @@ static void gu_load(uint32_t k)
     panic_req |= 1u;                              /* what part 1 sounds ends (the voice mode may change) */
     fm1_irq_off();
     gl_apply(gu_t(), v);
+    if (gu_user(k)) {                                 /* its sequencer pattern (16 steps), its LENGTH */
+        load_pat16(gu_t(), up_rec(k)->note, up_rec(k)->flags);
+    } else {
+        static const uint8_t NONE[16];
+        const uint8_t *nt = NONE, *fl = NONE;
+        if (k == 1u) {                                /* ACID LINE: Felucca's ACID pattern */
+            nt = PATTERNS[0].note;
+            fl = PATTERNS[0].flags;
+        }
+        load_pat16(gu_t(), nt, fl);
+    }
+    gu_t()->p[P_SLEN] = (int16_t)clamp(v[P_SLEN], 1, 16);
     fm1_irq_on();
     gu.prog = (uint8_t)k;
     str_cpy(gu.name, nm, 13);
@@ -153,6 +174,7 @@ static int gu_store(uint32_t k, const char *name)
     up_set_name(&r, k, name);
     for (i = 0; i < P_COUNT; i++)
         up_set_value(&r, i, (int16_t)clamp(gu_t()->p[i], -64, 191));
+    up_pat_from(&r, gu_t()->step);                    /* the sequencer's 16 steps with the sound */
     rc = up_put(k, &r);
     return rc == 0 || rc == 3 ? 0 : rc;
 }
@@ -160,6 +182,17 @@ static int gu_store(uint32_t k, const char *name)
 /* ------------------------------------------------------------- parameters --- */
 static const param_desc_t *gu_desc(uint32_t id) { return param_desc_of(ENGI_GOLANA, id); }
 
+/* the step sequencer (seq.c plays part 1's steps): 16 steps, saved with the program (upreset.c's pattern) */
+static uint32_t gu_slen(void) { return (uint32_t)clamp(gu_t()->p[P_SLEN], 1, 16); }
+static step_t *gu_sst(void) { return &gu_t()->step[gu.sstep % 16u]; }
+static int32_t gu_stype(const step_t *st) { return st->time == ST_TIE ? 2 : st->time == ST_NOTE && st->n ? 1 : 0; }
+static void gu_snote_set(step_t *st, uint32_t note)   /* the step a NOTE of note (velocity 96, as a pattern's) */
+{
+    st->note[0] = (uint8_t)note;
+    st->n = 1;
+    st->vel = 96;
+    st->time = ST_NOTE;
+}
 static void gu_range(const gu_par_t *q, int32_t *lo, int32_t *hi)
 {
     switch (q->id) {
@@ -170,6 +203,11 @@ static void gu_range(const gu_par_t *q, int32_t *lo, int32_t *hi)
     case GV_STEP: *lo = 1; *hi = 8; return;
     case GV_STEPON: *lo = 0; *hi = 1; return;
     case GV_MIDI: *lo = 0; *hi = 1; return;
+    case GV_SSTEP: *lo = 1; *hi = gu_slen(); return;
+    case GV_SNOTE: *lo = 0; *hi = 127; return;
+    case GV_STYPE: *lo = 0; *hi = 2; return;
+    case GV_SFLAG: *lo = 0; *hi = 3; return;
+    case GV_SLEN: *lo = 1; *hi = 16; return;
     default:
         if (q->names) {
             uint32_t n = 0;
@@ -207,6 +245,11 @@ static int32_t gu_get(const gu_par_t *q)
     case GV_STEP: return gu.step + 1;
     case GV_STEPON: return (int32_t)((gu_steps() >> gu.step) & 1u);
     case GV_MIDI: return song.g[G_ROUTE] == 1 ? 0 : 1;
+    case GV_SSTEP: return gu.sstep + 1;
+    case GV_SNOTE: return gu_sst()->n ? gu_sst()->note[0] : 60;
+    case GV_STYPE: return gu_stype(gu_sst());
+    case GV_SFLAG: return gu_sst()->flags & 3;
+    case GV_SLEN: return (int32_t)gu_slen();
     case GV_NONE: return 0;
     default: return p[q->id];
     }
@@ -225,6 +268,28 @@ static void gu_set(const gu_par_t *q, int32_t v)
     case GV_CLOCK: song.g[G_CLOCK] = (int16_t)v; return;
     case GV_STEP: gu.step = (uint8_t)(v - 1); return;
     case GV_MIDI: song.g[G_ROUTE] = (int16_t)(v ? 0 : 1); return;
+    case GV_SSTEP: gu.sstep = (uint8_t)(v - 1); return;
+    case GV_SNOTE: gu_snote_set(gu_sst(), (uint32_t)v); gu.dirty = 1; return;
+    case GV_STYPE: {
+        step_t *st = gu_sst();
+        if (v == 1)
+            gu_snote_set(st, st->n ? st->note[0] : 60);
+        else {
+            st->time = v == 2 ? ST_TIE : ST_REST;
+            st->n = 0;
+            st->flags &= (uint8_t)~3u;
+        }
+        gu.dirty = 1;
+        return;
+    }
+    case GV_SFLAG: {
+        step_t *st = gu_sst();
+        if (gu_stype(st) == 1)
+            st->flags = (uint8_t)((st->flags & ~3u) | (uint32_t)v);
+        gu.dirty = 1;
+        return;
+    }
+    case GV_SLEN: t->p[P_SLEN] = (int16_t)v; gu.sstep = (uint8_t)(gu.sstep % (uint32_t)v); gu.dirty = 1; return;
     case GV_STEPON: {
         uint32_t m = (gu_steps() & ~(1u << gu.step)) | (uint32_t)(v != 0) << gu.step;
         t->p[GL_ARPST_A] = (int16_t)(m & 15u);
@@ -249,6 +314,16 @@ static void gu_text(const gu_par_t *q, char *b)
     const char *const *names = q->names;
     if (q->id == GV_NONE) {
         b[0] = 0;
+        return;
+    }
+    if (q->id == GV_SNOTE) {                           /* a note name (C4 = 60), "--" on a rest or a tie */
+        static const char *const NN[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        if (gu_stype(gu_sst()) != 1) {
+            str_cpy(b, "--", 4);
+            return;
+        }
+        str_cpy(b, NN[v % 12], 4);
+        fmt_int(b + str_len(b), v / 12 - 1);
         return;
     }
     if (!names && q->id < P_COUNT && gu_desc(q->id)->fmt == F_ENUM)
@@ -314,7 +389,8 @@ static void gu_draw_head(void)
     n[3] = 0;
     h = gu_hash(h, toast ? gu.toast : gu.name);
     h = gu_hashv(h, (int32_t)(gu.prog | gu.dirty << 8 | toast << 9 | (t->p[GL_ARPON] != 0) << 10 |
-                              (t->p[P_AHOLD] != 0) << 11 | (uint32_t)(song.octave + 8) << 12));
+                              (t->p[P_AHOLD] != 0) << 11 | (uint32_t)(song.octave + 8) << 12 |
+                              (uint32_t)(song.playing != 0) << 16));
     if (h == gu.sig_head)
         return;
     gu.sig_head = h;
@@ -331,6 +407,8 @@ static void gu_draw_head(void)
     }
     if (t->p[P_AHOLD])
         gu_chip(x, 8, "LATCH", GC_TEAL, GC_INK, &x);
+    if (song.playing)
+        gu_chip(x, 8, "PLAY", gu_btn_col(B_REC), GC_INK, &x);
     gu_chip(x, 8, "ARP", t->p[GL_ARPON] ? GC_AMBER : GC_RAISE, t->p[GL_ARPON] ? GC_INK : GC_DIM, &x);
     if (toast) {
         cv_text(8, 7, &AF_M, gu.toast, GC_AMBER);
@@ -360,7 +438,7 @@ static void gu_draw_tabs(void)
 {
     uint32_t btn = GU_PAGES[gu.page].btn, pi, h = 0x811C9DC5u;
     uint16_t col = gu_btn_col(btn);
-    int32_t x = 4, ax = 4, aw = 0;
+    int32_t x = 3, ax = 3, aw = 0;
     char lab[32];
     h = gu_hashv(h, (int32_t)gu.page);
     if (h == gu.sig_list)
@@ -376,18 +454,18 @@ static void gu_draw_tabs(void)
             continue;
         if (pi == gu.page) {
             ax = x;
-            aw = text_w(&AF_S, lab) + 16;
-            x += aw + 3;
+            aw = text_w(&AF_S, lab) + 14;
+            x += aw + 2;
             continue;
         }
-        w = text_w(&AF_S, GU_PAGES[pi].tshort) + 14;
+        w = text_w(&AF_S, GU_PAGES[pi].tshort) + 10;
         cv_rrect(x, 6, w, GU_TAB_H, -6, GC_RAISE, GC_BG);
-        cv_text_on(x + 7, 8, &AF_S, GU_PAGES[pi].tshort, GC_MID, GC_RAISE);
-        x += w + 3;
+        cv_text_on(x + 5, 8, &AF_S, GU_PAGES[pi].tshort, GC_MID, GC_RAISE);
+        x += w + 2;
     }
     cv_rect(0, GU_TAB_H - 2, 240, 2, col);
     cv_rrect(ax, 1, aw, GU_TAB_H + 6, -6, col, GC_BG);
-    cv_text_on(ax + 8, 5, &AF_S, lab, GC_INK, col);
+    cv_text_on(ax + 7, 5, &AF_S, lab, GC_INK, col);
     cv_blit(0, GU_TAB_Y);
 }
 
@@ -411,6 +489,12 @@ static void gu_draw_card(uint32_t k)
     h = gu_hashv(h, (int32_t)(gu.page | k << 8));
     if (q->id == GV_STEP || q->id == GV_STEPON || q->id == GL_ARPLAST)
         h = gu_hashv(h, (int32_t)(gu_steps() | (uint32_t)gu_t()->p[GL_ARPLAST] << 8 | (uint32_t)gu.step << 12));
+    if (q->id == GV_SSTEP || q->id == GV_SLEN) {        /* the 16 steps, the one edited, the one playing */
+        uint32_t i;
+        for (i = 0; i < 16u; i++)
+            h = gu_hashv(h, gu_stype(&gu_t()->step[i]) | (gu_t()->step[i].flags & 3) << 2);
+        h = gu_hashv(h, (int32_t)(gu.sstep | gu_slen() << 8 | (song.playing ? gu_t()->seq_idx % gu_slen() : 31u) << 16));
+    }
     if (h == gu.sig_card[k])
         return;
     gu.sig_card[k] = h;
@@ -435,7 +519,19 @@ static void gu_draw_card(uint32_t k)
         }
         cv_text_on((GU_CW - w) / 2, big ? 22 : 32, f, b, GC_TEXT, surf);
     }
-    if (q->id == GV_STEP || q->id == GV_STEPON || q->id == GL_ARPLAST) {   /* the 8 steps: on, off, past LAST */
+    if (q->id == GV_SSTEP || q->id == GV_SLEN) {        /* the sequencer's 16 steps */
+        uint32_t st, len = gu_slen(), play = song.playing ? gu_t()->seq_idx % len : 99u;
+        for (st = 0; st < 16u; st++) {
+            int32_t sx = 7 + (int32_t)st * 6 + (int32_t)(st / 4u) * 2;
+            int32_t ty = gu_stype(&gu_t()->step[st]);
+            uint16_t c = st >= len ? GC_BG : ty == 1 ? acc : ty == 2 ? ux_mix(acc, surf, 55) : GC_LINE;
+            cv_rect(sx, 64, 5, 9, c);
+            if (st == play)
+                cv_rect(sx, 60, 5, 2, GC_TEXT);
+            if (st == gu.sstep && q->id == GV_SSTEP)
+                cv_rect(sx, 76, 5, 2, GC_TEXT);
+        }
+    } else if (q->id == GV_STEP || q->id == GV_STEPON || q->id == GL_ARPLAST) {   /* the 8 steps: on, off, past LAST */
         uint32_t st, m = gu_steps(), last = (uint32_t)clamp(gu_t()->p[GL_ARPLAST], 1, 8);
         for (st = 0; st < 8u; st++) {
             int32_t sx = 13 + (int32_t)st * 11;
@@ -596,7 +692,8 @@ static void gu_leds(void)
         led_put(nd, 14u + k, 1);
     led_put(nl, panel.btn[gu.save ? B_SAVE : gu_group_btn()], 1);
     led_put(nl, panel.btn[B_ARP], gu_t()->p[GL_ARPON] != 0);
-    led_put(nl, panel.btn[B_PLAY], gu_t()->p[P_AHOLD] != 0);
+    if (song.playing)                                   /* PLAY: its green LED while the sequencer plays */
+        nl[LED_PLAY_GREEN >> 3] |= (uint8_t)(1u << (LED_PLAY_GREEN & 7u));
     led_put(nl, panel.btn[B_OCTDN], song.octave < 0);
     led_put(nl, panel.btn[B_OCTUP], song.octave > 0);
     for (k = 0; k < 27u; k++)
@@ -688,9 +785,9 @@ static void gu_letter(int32_t s)
 
 static void gu_input(void)
 {
-    uint32_t pressed = fm1_input_edges(0), id, b, k;
+    uint32_t pressed = fm1_input_edges(0), id, b, k, notes;
     int32_t s;
-    (void)fm1_input_note_edges();                    /* (the keys play in the audio ISR: seq.c) */
+    notes = fm1_input_note_edges();                  /* (the keys sound from the audio ISR: seq.c) */
     if (!gu.ready)
         return;
     for (k = 0; k < NTRK; k++)                       /* MIDI Program Change: a program */
@@ -704,6 +801,14 @@ static void gu_input(void)
         }
     if (ui.uboot)
         return;
+    if (notes && !gu.save && GU_PAGES[gu.page].k[0].id == GV_SSTEP) {   /* REC PATTERN: a key writes its note */
+        for (k = 0; k < 27u; k++)                         /* into the step and moves on (step entry) */
+            if ((notes >> k) & 1u) {
+                gu_snote_set(gu_sst(), kb_map(gu_t(), k));
+                gu.sstep = (uint8_t)((gu.sstep + 1u) % gu_slen());
+                gu.dirty = 1;
+            }
+    }
     s = panel_enc(EN_PRESET);
     if (s) {
         if (gu.save) {
@@ -785,12 +890,10 @@ static void gu_input(void)
             gu_say("ARP ", gu_get(&A) ? "ON" : "OFF");
             break;
         }
-        case B_PLAY: {
-            static const gu_par_t L = {P_AHOLD, "LATCH", 0};
-            gu_set(&L, !gu_get(&L));
-            gu_say("LATCH ", gu_get(&L) ? "ON" : "OFF");
+        case B_PLAY:                                     /* the sequencer: play / stop */
+            transport_req = song.playing || seq_counting() ? 2u : 1u;
+            gu_say(song.playing ? "STOP" : "PLAY", 0);
             break;
-        }
         case B_OCTDN:
         case B_OCTUP:
             if ((fm1_in.buttons & ((1u << panel.btn[B_OCTDN]) | (1u << panel.btn[B_OCTUP]))) ==

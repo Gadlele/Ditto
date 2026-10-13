@@ -10,13 +10,14 @@ Golana is free software under the GPL-3.0, like Felucca. Felucca's original READ
 | --- | --- |
 | OSC 1 | WAVE (SAW, PULSE, TRI, SINE), CTRL 1 (SAW: an octave-up saw blended in; PULSE: width; TRI: wavefold; SINE: cross modulation from OSC 2), CTRL 2 (LFO 1 on CTRL 1) |
 | OSC 2 | WAVE (SAW, SQR, TRI), MOD (OFF, RING, SYNC, R+S), SEMITONE, TUNE |
-| MIXER | OSC 1, OSC 2, NOISE |
-| FILTER | TYPE (LPF24, LPF12, BPF, HPF), CUTOFF, RESO, EG INT, KEY TRACK |
+| MIXER | OSC 1, OSC 2, NOISE, FOLD (a wavefolder on the mix, before the filter) |
+| FILTER | TYPE (LPF24, LPF12, BPF, HPF, MS20: a driven 12 dB low-pass whose resonance screams), CUTOFF, RESO, EG INT, KEY TRACK |
 | FILTER EG / AMP EG | ATTACK, DECAY, SUSTAIN, RELEASE |
-| AMP | LEVEL, PANPOT, DIST |
-| VOICE | ASSIGN (POLY, MONO, LEGATO, UNISON; 4 voices), DETUNE, PORTA, EG RESET |
+| AMP | LEVEL, PANPOT, DIST, SPREAD (the voices across the stereo field) |
+| VOICE | ASSIGN (POLY, MONO, LEGATO, UNISON; 4 voices; in UNISON each voice's OSC 2 is detuned the other way: 8 detuned oscillators), DETUNE, PORTA, EG RESET |
 | LFO 1 / LFO 2 | WAVE (SAW, SQR, TRI, SIN, S&H), FREQ, KEY SYNC (OFF, TIMBRE, VOICE), TEMPO (sync to a note value) |
 | PATCH 1-4 | SOURCE (FEG, AEG, LFO1, LFO2, VELO, KBD), DEST (PITCH, OSC2, CTRL1, NOISE, CUTOFF, AMP, LFO2F), INTENSITY |
+| SEQUENCER | 16 steps saved with the program. PATTERN: STEP, NOTE, TYPE (REST, NOTE, TIE), ACC / SLIDE; a key writes its note into the step and moves on. SETUP: LENGTH 1-16, RES, GATE, SWING |
 | ARP | ON, TYPE (UP, DOWN, ALT1, ALT2, RANDOM, TRIGGER), RANGE 1-4, RES, GATE, SWING, LATCH, KEY SYNC, LAST STEP and steps on/off |
 | MOD FX | TYPE (CHORUS, FLANGER, ENSEMBLE, PHASER), SPEED, DEPTH, MIX; TYPE METAL (a high-gain distortion with a strong mid hump): GAIN, MID, MID FREQ (200 Hz - 5 kHz) |
 | DELAY | TYPE (STEREO, CROSS, L/R), TIME (tempo), FEEDBACK, LEVEL |
@@ -37,14 +38,22 @@ S&H TEXTURE), 17-32 start as INIT. MIDI Program Change 0-31 picks a program.
 | ALGORITHM | CUTOFF, from any page |
 | PRESETS | the program (it loads as you turn; edits not written are lost, as on the original) |
 | HOME | PERFORM: cutoff, resonance, EG int, LFO 1 rate |
-| EDIT / SCL / ENV / LFO | OSC 1, OSC 2, MIXER / FILTER, KEY TRACK / FILTER EG, AMP EG / LFO 1, LFO 2 (press again for the next) |
-| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL, ROUTE / PATCH 1-4 / ARP, TIMING, STEPS / MOD FX, DELAY, REVERB |
+| EDIT / SCL / ENV / LFO | OSC 1, OSC 2, MIXER / FILTER, KEY TRACK / FILTER EG, AMP EG / LFO 1, LFO 2, PATCH 1-4 (press again for the next) |
+| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL, ROUTE / the sequencer: PATTERN, SETUP / the arpeggiator: ARP, TIMING, STEPS / MOD FX, DELAY, REVERB |
 
 The screen shows the open page as a tab, "BUTTON · PAGE" in that button's own colour, with the button's other pages as dark tabs beside it.
 | ARP | the arpeggiator on / off |
-| PLAY | LATCH on / off |
+| PLAY | the step sequencer: play / stop (LATCH is on SEQ · TIMING) |
 | SAVE | WRITE: PRESETS picks the slot, KNOB 1 the letter, KNOB 2 changes it, SAVE writes, HOME cancels |
 | OCT- / OCT+ | the keys' octave (both held 5 s: update mode, as in Felucca) |
+
+## When something goes wrong
+
+- **USB rescue** (after [dinghy](https://github.com/zvenson/dinghy)'s): hold **OCT-** alone while switching on. The FM-1
+  starts with no sound and no interface, only the updater: install a working build from the web installer or the
+  FM-1 Firmware Hub. If Golana crashes twice in a row while starting, the FM-1 goes there by itself; if the rescue
+  itself fails, the next start goes to the chip's own update mode (UBOOT).
+- A crash shows GOLANA CRASH with where it happened, then the FM-1 restarts.
 
 ## Building and testing
 

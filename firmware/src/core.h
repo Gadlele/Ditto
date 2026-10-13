@@ -17,6 +17,13 @@
 #define GOLANA 1                 /* Golana: a single analog-style synth (eng_golana.c) with its own interface
                                   * (golana_ui.c); the other engines stay in the tree, none can be picked */
 #endif
+#ifndef GOLANA_RESCUE                   /* main.c golana_rescue: the USB rescue (the device build, with the updater) */
+#if GOLANA && FELUCCA_OTA && !defined(FELUCCA_WEB)
+#define GOLANA_RESCUE 1
+#else
+#define GOLANA_RESCUE 0
+#endif
+#endif
 #if GOLANA
 #undef FELUCCA_SLICE
 #define FELUCCA_SLICE 0          /* Golana: engine 13 is GOLANA, in SLICE's place */
@@ -142,6 +149,7 @@ enum {                          /* per-track parameters */
 #define GL_MFX P_LTRIG
 #define GL_ROUTE P_LPOL                          /* the effects' order (fx.c gl_route); voice.c reads P_LPOL only
                                                   * with P_LD_AMP (0 here) and for the track LFO (unused here) */
+#define GL_FOLD P_FTYPE                          /* the wavefolder (ANALOG's filter TYPE: not this engine's) */
 #define GL_P1SRC P_M1SRC                         /* PATCH k (0..3): SRC GL_P1SRC + 3k, DST + 1, INT + 2 */
 #define GL_P1DST P_M1DST
 #define GL_P1INT P_M1AMT

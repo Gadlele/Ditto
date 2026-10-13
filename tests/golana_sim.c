@@ -164,6 +164,58 @@ int main(int argc, char **argv)
     web_midi(0xC0, 2, 0);
     render(100);
     check(gu.prog == 2, "Program Change loads program 3");
+    /* LFO: LFO 1, LFO 2, then PATCH 1 */
+    press(B_LFO);
+    press(B_LFO);
+    press(B_LFO);
+    check(GU_PAGES[gu.page].btn == B_LFO && GU_PAGES[gu.page].k[0].id == GL_P1SRC, "LFO third press: PATCH 1");
+    render(80);
+    shot("40_lfo_patch1");
+    /* the step sequencer: REC, three keys entered, PLAY, it sounds, STOP; written and loaded back */
+    press(B_REC);
+    check(GU_PAGES[gu.page].btn == B_REC && GU_PAGES[gu.page].k[0].id == GV_SSTEP, "REC: the sequencer");
+    {
+        static const uint32_t K[3] = {0, 4, 7};
+        uint32_t i;
+        int16_t len;
+        for (i = 0; i < 3u; i++) {
+            web_keys(1u << K[i]);
+            render(80);
+            web_keys(0);
+            render(80);
+        }
+        check(gu.sstep == 3 && trk[0].step[0].time == ST_NOTE && trk[0].step[2].time == ST_NOTE &&
+              trk[0].step[1].note[0] == trk[0].step[0].note[0] + 4, "keys write steps 1..3 and move on");
+        turn(EN_K1, 0);
+        turn(EN_SELECT, 1);
+        turn(EN_K1, -12);                         /* LENGTH 16 -> 4 */
+        len = trk[0].p[P_SLEN];
+        check(len == 4, "SETUP LENGTH 4");
+        turn(EN_SELECT, -1);
+        render(80);
+        shot("41_rec_pattern");
+        web_buttons(1u << B_PLAY);
+        render(60);
+        web_buttons(0);
+        peak = 0;
+        render(1500);
+        check(song.playing && peak > 0.01f, "PLAY: the sequencer plays");
+        render(10);
+        shot("42_rec_playing");
+        web_buttons(1u << B_PLAY);
+        render(60);
+        web_buttons(0);
+        render(200);
+        check(!song.playing, "PLAY again: stop");
+        press(B_SAVE);
+        turn(EN_PRESET, 30 - (int32_t)gu.save_slot);
+        press(B_SAVE);
+        check(gu.prog == 30 && up_rec(30)->note[0] == trk[0].step[0].note[0], "the pattern written with the program");
+        turn(EN_PRESET, -1);
+        check(trk[0].step[0].time == ST_REST, "another program: its own (empty) pattern");
+        turn(EN_PRESET, 1);
+        check(trk[0].step[1].time == ST_NOTE && trk[0].p[P_SLEN] == 4, "loaded back: the steps and LENGTH");
+    }
     /* (UPDATE MODE's countdown is main.c's loop: not in the browser build) */
     printf("%s: %d failures\n", fails ? "FAIL" : "ok", fails);
     return fails ? 1 : 0;

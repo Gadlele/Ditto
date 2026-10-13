@@ -7,7 +7,9 @@
  *           CTRL2: LFO 1 on CTRL1 (PWM, a moving fold, a moving cross mod)
  *   OSC 2   SAW / SQR / TRI, MOD OFF / RING (OSC 1 x OSC 2) / SYNC (restarts with OSC 1) / R+S, SEMI +-24, TUNE +-63 ct
  *   MIXER   OSC 1, OSC 2 and NOISE levels into the filter
- *   FILTER  LPF24 (two state-variable stages, the resonance on the second), LPF12, BPF, HPF; CUTOFF, RESO, the
+ *   FOLD    a wavefolder on the mix before the filter (Buchla / Serge style): 0 off, up to ~8x into the folds
+ *   FILTER  LPF24 (two state-variable stages, the resonance on the second), LPF12, BPF, HPF, MS20 (a 12 dB low-pass
+ *           driven at its input whose resonance saturates and screams, after the Korg MS-20's); CUTOFF, RESO, the
  *           filter EG's INT (+-), KEY TRACK (+-63, 63 = the cutoff follows the keys exactly)
  *   FILTER EG  its own ADSR per voice; EG RESET ON starts both envelopes from 0 on a retrigger
  *   AMP     the part's level, pan and ADSR (voice.c), DIST ON a soft drive after the filter
@@ -21,7 +23,7 @@
 static const char *const N_GO1WAVE[] = {"SAW", "PULSE", "TRI", "SINE"};
 static const char *const N_GO2WAVE[] = {"SAW", "SQR", "TRI"};
 static const char *const N_GO2MOD[] = {"OFF", "RING", "SYNC", "R+S"};
-static const char *const N_GFTYPE[] = {"LPF24", "LPF12", "BPF", "HPF"};
+static const char *const N_GFTYPE[] = {"LPF24", "LPF12", "BPF", "HPF", "MS20"};
 static const char *const N_GLWAVE[] = {"SAW", "SQR", "TRI", "SIN", "S&H"};
 static const char *const N_GLKEY[] = {"OFF", "TIMBRE", "VOICE"};
 static const char *const N_GLSYNC[] = {"OFF", "4BAR", "2BAR", "1/1", "1/2", "1/4", "1/8", "1/8T", "1/16", "16T", "1/32"};
@@ -47,6 +49,7 @@ enum { GM_OFF, GM_RING, GM_SYNC, GM_RSYNC };
  * engine (label 0: the slot keeps Felucca's own descriptor) */
 static const param_desc_t GOL_TP[P_COUNT] = {
     [GL_MIX1] = GPD("OSC1", F_PCT, 0, 127, 127),
+    [GL_FOLD] = GPD("FOLD", F_PCT, 0, 127, 0),
     [GL_MIX2] = GPD("OSC2", F_PCT, 0, 127, 0),
     [GL_NOISE] = GPD("NOISE", F_PCT, 0, 127, 0),
     [GL_FTYPE] = GPE("TYPE", N_GFTYPE, 0),
@@ -243,9 +246,9 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
     glv_t *s = &g->v[(uint32_t)(v - t->v) % NVOICE];
     const int16_t *p = t->p;
     uint32_t w1 = (uint32_t)gp(t, GL_O1WAVE, 0, 3), w2 = (uint32_t)gp(t, GL_O2WAVE, 0, 2);
-    uint32_t md = (uint32_t)gp(t, GL_O2MOD, 0, 3), ft = (uint32_t)gp(t, GL_FTYPE, 0, 3), k, i;
+    uint32_t md = (uint32_t)gp(t, GL_O2MOD, 0, 3), ft = (uint32_t)gp(t, GL_FTYPE, 0, 4), k, i;
     int32_t feg, lfo1, lfo2, src[GS_N], d[GD_N], ctrl1, cut, reso, x1, x2, xn, gain;
-    int32_t pitch1, pitch2;
+    int32_t pitch1, pitch2, fold;
     uint32_t inc1, inc2;
     tsvf_t f1c, f2c;
     int32_t k2, ring = md == GM_RING || md == GM_RSYNC, sync = md == GM_SYNC || md == GM_RSYNC;
@@ -281,7 +284,9 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
     pitch1 = m->pitch16 + ((d[GD_PITCH] * 3) >> 15);
     pitch2 = pitch1 + gp(t, GL_O2SEMI, -24, 24) * 16 + ((d[GD_OSC2] * 3) >> 15);
     inc1 = d[GD_PITCH] ? cents_inc(clamp(pitch1, 0, 2047), 0, m->fine) : m->inc;
-    inc2 = cents_inc(clamp(pitch2, 0, 2047), gp(t, GL_O2TUNE, -63, 63), m->fine);
+    /* UNISON: OSC 2 detuned the other way from OSC 1 (each voice two detuned oscillators: 8 for 4 voices) */
+    inc2 = cents_inc(clamp(pitch2, 0, 2047), gp(t, GL_O2TUNE, -63, 63),
+                     t->p[P_VOICE] == V_UNISON ? m->fine - 2 * v->fine : m->fine);
     if (inc1 > 0x40000000u)
         inc1 = 0x40000000u;
     if (inc2 > 0x40000000u)
@@ -300,12 +305,15 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
     k2 = 8192 - reso * 7600 / 127;
     if (ft == 0u)
         tsvf_coef_k(&f1c, cut, 6000);                   /* LPF24: the first stage without the peak */
+    else if (ft == 4u)
+        tsvf_coef_k(&f1c, cut, 8192 - reso * 8140 / 127);   /* MS20: up to a ringing, near self-oscillating peak */
+    fold = gp(t, GL_FOLD, 0, 127) ? 4096 + gp(t, GL_FOLD, 0, 127) * 230 : 0;   /* FOLD: the gain into the folds, Q12 */
     gain = clamp(32767 + (d[GD_AMP] >> 6), 0, 49151);  /* AMP: the patch's gain, up to 1.5 */
     {
         uint32_t ph0 = v->ph[0], ph1 = v->ph[1], pw;
         int32_t a1 = s->f1, a2 = s->f2, b1 = s->f3, b2 = s->f4, nst = s->nst, jl = s->jl;
         int32_t xm = ctrl1 * 380;                       /* SINE: the cross modulation's depth (phase, Q16 of a cycle) */
-        int32_t fold = 32768 + ctrl1 * 768;             /* TRI: the fold's gain, Q15 (1 .. 4) */
+        int32_t tfold = 32768 + ctrl1 * 768;            /* TRI: the fold's gain, Q15 (1 .. 4) */
         int32_t oct = ctrl1 * 129;                      /* SAW: the octave-up saw's share */
         pw = 0x80000000u + (uint32_t)ctrl1 * 0xF00000u; /* PULSE: 50 % .. ~6 % */
         for (i = 0; i < n; i++) {
@@ -328,7 +336,7 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
                 o1 = osc_pulse(ph0, inc1, pw);
                 break;
             case GO_TRI: {
-                int32_t u = (osc_tri(ph0) * (fold >> 4)) >> 11;
+                int32_t u = (osc_tri(ph0) * (tfold >> 4)) >> 11;
                 u = (int32_t)((uint32_t)(u + 32768) & 0x1FFFFu);   /* reflect at the edges: a triangle of period 131072 */
                 u = u < 65536 ? u - 32768 : 98303 - u;
                 o1 = u;
@@ -357,6 +365,12 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
             if (xn)
                 sx += mulq15((int32_t)(noise32(&nst) >> 17) - 16384, xn);
             sx = (sx * 3) >> 3;                         /* one oscillator ~12 k into the filter, all three ~32 k */
+            if (fold) {                                 /* FOLD: the wave reflected at +-16384, more folds the harder */
+                int32_t u = (clamp(sx, -65535, 65535) * (fold >> 2)) >> 10;
+                u = (int32_t)((uint32_t)(u + 16384) & 0xFFFFu) - 32768;
+                u = 16384 - (u < 0 ? -u : u);
+                sx = u + (u >> 2);                      /* (x 1.25: about the level it came in at) */
+            }
             switch (ft) {
             case 0:
                 y = tsvf_lp(&f1c, sx, &a1, &a2);
@@ -368,6 +382,15 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
             case 3:
                 y = analog_tap(&f2c, k2, sx, &b1, &b2, 2u);
                 break;
+            case 4: {                                   /* MS20: driven in, the resonating state saturated */
+                int32_t in = softclip(clamp(sx * 2, -65535, 65535)) >> 1, v1, v2, v3 = in - b2;
+                v1 = (f1c.a1 * b1 + f1c.a2 * v3) >> 13;
+                v2 = b2 + ((f1c.a2 * b1 + f1c.a3 * v3) >> 13);
+                b1 = softclip(clamp((2 * v1 - b1) >> 1, -65535, 65535)) << 1;   /* the scream: saturated, not runaway */
+                b2 = clamp(2 * v2 - b2, -150000, 150000);
+                y = clamp(v2, -65535, 65535);
+                break;
+            }
             default:
                 y = tsvf_lp(&f2c, sx, &b1, &b2);
                 break;
