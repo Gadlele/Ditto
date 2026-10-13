@@ -3,8 +3,8 @@
 /* Golana's interface: the MATRIX. In place of Felucca's UI (main.c and the browser build call gu_input, gu_leds and
  * gu_draw instead of ui_input, ui_leds and ui_draw; the rest of Felucca's UI code is never called).
  *
- * The screen (240 x 240): a header (the program, its name, ARP / LATCH / the octave), on the left the matrix's
- * sections (the one being edited lit), on the right four cards, one per knob: the section's parameters.
+ * The screen (240 x 240): a header (the program, its name, PLAY / the octave, the battery), the tabs, four cards and a
+ * service strip at the bottom (the arpeggiator left, the tempo right).
  *   SELECT     the section (and its pages: FILTER 1-2, PATCH 1-4, ARP 1-3), one turn a page
  *   KNOB 1..4  the four parameters on the cards
  *   ALGORITHM  CUTOFF, whatever the page (as the original's cutoff knob)

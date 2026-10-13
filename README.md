@@ -47,6 +47,8 @@ playing, three ways (GLO · SETUP · HOME): RIDGE, the default (the last waves s
 later). GLO · SETUP · PALETTE: NIGHT, CRT, PAPER, NEON (kept with the settings).
 
 The screen shows the open page as a tab, "BUTTON · PAGE" in that button's own colour, with the button's other pages as dark tabs beside it.
+The header shows the program, its name and the battery (a bolt on USB power); a thin strip at the bottom shows the arpeggiator (a light, ARP, LATCH) on the left and the tempo (BPM, EXT on an external clock) on the right.
+
 | ARP | the arpeggiator on / off |
 | PLAY | the step sequencer: play / stop (LATCH is on SEQ · TIMING) |
 | SAVE | WRITE: PRESETS picks the slot, KNOB 1 the letter, KNOB 2 changes it, SAVE writes, HOME cancels |
