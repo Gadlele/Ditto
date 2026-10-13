@@ -449,9 +449,9 @@ static void gu_draw_head(void)
     cv_begin(240, 32, GC_BG);
     {   /* the battery (or the bolt on USB power), right */
         int32_t lvl = batt_shown();
-        cv_icon_mid(240 - 22, 16, 24, batt_icon(lvl), lvl == 1 ? GC_PINK : lvl == 0 ? GC_MID : GC_TEXT, GC_BG);
+        cv_icon_mid(240 - 30, 16, 24, batt_icon(lvl), lvl == 1 ? GC_PINK : lvl == 0 ? GC_MID : GC_TEXT, GC_BG);
     }
-    x = 240 - 36;
+    x = 240 - 44;
     if (song.octave) {
         b[0] = 'O';
         b[1] = 'C';
