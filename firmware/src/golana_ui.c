@@ -136,7 +136,7 @@ static struct {
     char toast[24];
     uint32_t toast_t, hot_t;
     int8_t hot;                                  /* the card last turned (lit for a moment), -1 none */
-    uint32_t sig_head, sig_list, sig_card[4], sig_body;
+    uint32_t sig_head, sig_list, sig_card[4], sig_body, sig_foot;
     uint8_t shown_save, shown_uboot;
 } gu;
 
@@ -441,13 +441,17 @@ static void gu_draw_head(void)
     n[3] = 0;
     h = gu_hash(h, toast ? gu.toast : gu.name);
     h = gu_hashv(h, (int32_t)(gu.prog | gu.dirty << 8 | toast << 9 | (t->p[GL_ARPON] != 0) << 10 |
-                              (t->p[P_AHOLD] != 0) << 11 | (uint32_t)(song.octave + 8) << 12 |
-                              (uint32_t)(song.playing != 0) << 16));
+                              (uint32_t)(song.octave + 8) << 12 | (uint32_t)(song.playing != 0) << 16 |
+                              (uint32_t)batt_shown() << 20));
     if (h == gu.sig_head)
         return;
     gu.sig_head = h;
     cv_begin(240, 32, GC_BG);
-    x = 240 - 6;
+    {   /* the battery (or the bolt on USB power), right */
+        int32_t lvl = batt_shown();
+        cv_icon_mid(240 - 22, 16, 24, batt_icon(lvl), lvl == 1 ? GC_PINK : lvl == 0 ? GC_MID : GC_TEXT, GC_BG);
+    }
+    x = 240 - 36;
     if (song.octave) {
         b[0] = 'O';
         b[1] = 'C';
@@ -457,11 +461,8 @@ static void gu_draw_head(void)
         b[5] = 0;
         gu_chip(x, 8, b, GC_RAISE, GC_TEXT, &x);
     }
-    if (t->p[P_AHOLD])
-        gu_chip(x, 8, "LATCH", GC_TEAL, GC_INK, &x);
     if (song.playing)
         gu_chip(x, 8, "PLAY", gu_btn_col(B_REC), GC_INK, &x);
-    gu_chip(x, 8, "ARP", t->p[GL_ARPON] ? GC_AMBER : GC_RAISE, t->p[GL_ARPON] ? GC_INK : GC_DIM, &x);
     if (toast) {
         cv_text(8, 7, &AF_M, gu.toast, GC_AMBER);
     } else {
@@ -472,6 +473,32 @@ static void gu_draw_head(void)
     }
     cv_rect(0, 31, 240, 1, GC_LINE);
     cv_blit(0, 0);
+}
+
+/* the service strip at the bottom: the arpeggiator (a light, ARP, LATCH when held) left, the tempo right */
+#define GU_FOOT_Y 224
+#define GU_FOOT_H 16
+static void gu_draw_foot(void)
+{
+    const track_t *t = gu_t();
+    int on = t->p[GL_ARPON] != 0, ext = song.g[G_CLOCK] != 0;
+    uint32_t h = gu_hashv(0x811C9DC5u, (int32_t)(on | (t->p[P_AHOLD] != 0) << 1 | ext << 2 |
+                                                   (uint32_t)song.g[G_BPM] << 4));
+    char b[16];
+    int32_t x;
+    if (h == gu.sig_foot)
+        return;
+    gu.sig_foot = h;
+    cv_begin(240, GU_FOOT_H, GC_BG);
+    cv_rect(0, 0, 240, 1, GC_LINE);
+    cv_rrect(8, 5, 8, 8, -4, on ? GC_AMBER : GC_RAISE, GC_BG);
+    x = cv_text(21, 1, &AF_S, "ARP", on ? GC_TEXT : GC_DIM);
+    if (t->p[P_AHOLD])
+        cv_text(x + 6, 1, &AF_S, "LATCH", GC_TEAL);
+    fmt_int(b, song.g[G_BPM]);
+    str_cpy(b + str_len(b), ext ? " BPM EXT" : " BPM", sizeof b - str_len(b));
+    cv_text(240 - 8 - text_w(&AF_S, b), 1, &AF_S, b, GC_TEXT);
+    cv_blit(0, GU_FOOT_Y);
 }
 
 /* the tabs, as on a card index: the pages of the button whose page is open. The open one in the button's colour,
@@ -529,7 +556,7 @@ static void gu_draw_card(uint32_t k)
     const gu_page_t *pg = &GU_PAGES[gu.page];
     const gu_par_t *q = gu_pk(pg, k);
     char b[16];
-    int32_t gh = gu_graph_h(gu_graph_of(pg)), GU_CW = gh ? 57 : 114, GU_CH = gh ? 240 - 60 - gh - 4 - 1 : 86;
+    int32_t gh = gu_graph_h(gu_graph_of(pg)), GU_CW = gh ? 57 : 114, GU_CH = gh ? GU_FOOT_Y - 2 - 60 - gh - 4 : 78;
     int32_t v = gu_get(q), lo = 0, hi = 0, x = gh ? 3 + (int32_t)k * 59 : 4 + (int32_t)(k & 1u) * (GU_CW + 4);
     int32_t y = gh ? 60 + gh + 4 : GU_TAB_Y + GU_TAB_H + 4 + (int32_t)(k >> 1) * (GU_CH + 4), dy = GU_CH - 86;
     uint32_t h = 0x811C9DC5u;
@@ -680,7 +707,7 @@ static void gu_draw_uboot(void)
 static void gu_redraw_all(void)
 {
     uint32_t k;
-    gu.sig_head = gu.sig_list = gu.sig_body = 0;
+    gu.sig_head = gu.sig_list = gu.sig_body = gu.sig_foot = 0;
     for (k = 0; k < 4u; k++)
         gu.sig_card[k] = 0;
     gu.shown_save = 0;
@@ -707,7 +734,7 @@ static void gu_draw(void)
     }
     if (ui.uboot) {
         gu_draw_uboot();
-        gu.sig_list = gu.sig_card[0] = gu.sig_card[1] = gu.sig_card[2] = gu.sig_card[3] = 0;
+        gu.sig_list = gu.sig_card[0] = gu.sig_card[1] = gu.sig_card[2] = gu.sig_card[3] = gu.sig_foot = 0;
         gu.shown_save = 0;
         return;
     }
@@ -723,13 +750,14 @@ static void gu_draw(void)
     if (gu.shown_save) {
         gu.shown_save = 0;
         lcd_fill(0, 32, 240, 208, GC_BG);
+        gu.sig_foot = 0;
     }
     {   /* a page of another layout (with a drawing or not, or of another height): the body cleared */
         static int32_t shown_gh = -1;
         int32_t gh = gu_graph_h(gu_graph_of(&GU_PAGES[gu.page]));
         if (gh != shown_gh) {
             shown_gh = gh;
-            lcd_fill(0, 58, 240, 182, GC_BG);
+            lcd_fill(0, 58, 240, GU_FOOT_Y - 58, GC_BG);
             gu.sig_card[0] = gu.sig_card[1] = gu.sig_card[2] = gu.sig_card[3] = 0;
             gu_sig_graph = 0;
         }
@@ -742,6 +770,7 @@ static void gu_draw(void)
     gu_draw_tabs();
     for (k = 0; k < 4u; k++)
         gu_draw_card(k);
+    gu_draw_foot();
 }
 
 /* ---------------------------------------------------------------- LEDs --- */

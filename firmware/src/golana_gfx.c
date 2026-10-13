@@ -28,7 +28,7 @@ static uint32_t gu_graph_of(const gu_page_t *pg)
     default: return GG_NONE;
     }
 }
-static int32_t gu_graph_h(uint32_t g) { return g == GG_HOME ? 98 : g ? 72 : 0; }
+static int32_t gu_graph_h(uint32_t g) { return g == GG_HOME ? 84 : g ? 72 : 0; }
 
 /* a polyline of n points (x[], y[]) 2 px thick */
 static void gu_poly(const int16_t *x, const int16_t *y, uint32_t n, uint16_t c)
