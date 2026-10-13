@@ -153,6 +153,85 @@ static void gu_home_ridge(int32_t w, int32_t h, uint16_t acc, uint16_t surf)
     }
 }
 
+
+/* DUST: the sound as dust in the air. Specks float, each its own slow drift and wander; a sound gathers them onto its
+ * wave, the louder the tighter (the quiet left adrift), and lights the ones that settled on it. Three depths: far,
+ * small and faint; near, bigger and bright */
+#define GU_NDUST 150
+static struct {
+    int16_t x, y, vx, vy;         /* Q6 px */
+    uint8_t d, ph;                /* depth 0..2, its own wander phase */
+} gd[GU_NDUST];
+static uint32_t gd_seed = 0x9E3779B9u, gd_on;
+static int32_t gd_rnd(int32_t n)                     /* 0..n-1 */
+{
+    gd_seed ^= gd_seed << 13;
+    gd_seed ^= gd_seed >> 17;
+    gd_seed ^= gd_seed << 5;
+    return (int32_t)((gd_seed >> 8) % (uint32_t)n);
+}
+static int32_t gu_level(int32_t pk)                  /* how loud, 0..256 (the gain left out: silence is silence) */
+{
+    static int32_t lv;
+    int32_t want = clamp(pk / 40, 0, 256);
+    lv = want > lv ? want : lv - ((lv - want) >> 3) - 1;
+    return lv < 0 ? (lv = 0) : lv;
+}
+static void gu_home_dust(int32_t w, int32_t h, uint16_t acc, uint16_t surf, int motes)
+{
+    int16_t s[224];
+    int32_t pk = gu_scope_take(s, 224), g = gu_scope_gain(pk), lv = gu_level(pk), cy = h / 2, amp = h / 2 - 10, i;
+    if (!gd_on) {
+        gd_on = 1;
+        for (i = 0; i < GU_NDUST; i++) {
+            gd[i].x = (int16_t)((6 + gd_rnd(w - 12)) << 6);
+            gd[i].y = (int16_t)((4 + gd_rnd(h - 8)) << 6);
+            gd[i].d = (uint8_t)(i % 7 == 0 ? 2 : i % 3 == 0 ? 1 : 0);
+            gd[i].ph = (uint8_t)gd_rnd(256);
+        }
+    }
+    for (i = 0; i < GU_NDUST; i++) {
+        int32_t x = gd[i].x >> 6, y, d = gd[i].d, v, ty, dist, br, sp = 3 + d * 3;
+        uint32_t ph = (uint32_t)(gd[i].ph += (uint8_t)(1 + d)) << 24;
+        v = clamp((s[clamp(x * 223 / w, 0, 223)] * g) >> 8, -32767, 32767);
+        ty = (cy - (v * amp >> 15)) << 6;
+        /* the wander (its own slow sine, a little noise), the drift to the right, nearer faster */
+        gd[i].vx = (int16_t)((gd[i].vx * 7 >> 3) + sp + (osc_sine(ph) * 6 >> 15) + gd_rnd(9) - 4);
+        gd[i].vy = (int16_t)((gd[i].vy * 7 >> 3) + (osc_sine(ph + 0x40000000u) * 5 >> 15) + gd_rnd(9) - 4);
+        if (motes) {                                     /* MOTES: the sound stirs them, no wave */
+            gd[i].vx = (int16_t)(gd[i].vx + ((gd_rnd(33) - 16) * lv >> 8));
+            gd[i].vy = (int16_t)(gd[i].vy + ((gd_rnd(33) - 16) * lv >> 8) - (lv >> 6));
+        } else {                                         /* DUST: pulled onto the wave as loud as it is */
+            gd[i].vy = (int16_t)(gd[i].vy + (((ty - gd[i].y) >> 3) * lv >> 8));
+        }
+        gd[i].x = (int16_t)(gd[i].x + gd[i].vx);
+        gd[i].y = (int16_t)(gd[i].y + gd[i].vy);
+        if (gd[i].x >= (w - 6) << 6)
+            gd[i].x = (int16_t)(gd[i].x - ((w - 12) << 6));
+        if (gd[i].x < 6 << 6)
+            gd[i].x = (int16_t)(gd[i].x + ((w - 12) << 6));
+        if (gd[i].y < 3 << 6)
+            gd[i].y = (int16_t)(gd[i].y + ((h - 6) << 6));
+        if (gd[i].y >= (h - 3) << 6)
+            gd[i].y = (int16_t)(gd[i].y - ((h - 6) << 6));
+        x = gd[i].x >> 6;
+        y = gd[i].y >> 6;
+        dist = (gd[i].y - ty) >> 6;
+        dist = dist < 0 ? -dist : dist;
+        br = 22 + d * 22;                                /* far faint, near bright; lit on the wave, or by the sound */
+        if (motes)
+            br += lv * (20 + d * 15) >> 8;
+        else if (dist < 10)
+            br += (10 - dist) * lv * (3 + d) >> 8 >> 1;
+        if (br > 100)
+            br = 100;
+        if (d == 2)
+            cv_rect(x, y, 2, 2, ux_mix(surf, acc, br));
+        else
+            cv_pset(x, y, ux_mix(surf, acc, br));
+    }
+}
+
 /* -------------------------------------------------------------- OSC 1 / 2 --- */
 static int32_t gu_osc1_at(const int16_t *p, uint32_t ph, uint32_t ph2)
 {
@@ -322,6 +401,8 @@ static void gu_draw_graph(uint32_t g)
             gu_home_orbit(w, h, acc, surf);
         else if (gu_view == 2u)
             gu_home_ridge(w, h, acc, surf);
+        else if (gu_view >= 3u)
+            gu_home_dust(w, h, acc, surf, gu_view == 4u);
         else
             gu_home_ring(w, h, acc, surf);
         break;
