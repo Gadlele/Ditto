@@ -16,7 +16,7 @@ Golana is free software under the GPL-3.0, like Felucca. Felucca's original READ
 | AMP | LEVEL, PANPOT, DIST |
 | VOICE | ASSIGN (POLY, MONO, LEGATO, UNISON; 4 voices), DETUNE, PORTA, EG RESET |
 | LFO 1 / LFO 2 | WAVE (SAW, SQR, TRI, SIN, S&H), FREQ, KEY SYNC (OFF, TIMBRE, VOICE), TEMPO (sync to a note value) |
-| PATCH 1-4 | SOURCE (FEG, AEG, LFO1, LFO2, VELO, KBD, MODW), DEST (PITCH, OSC2, CTRL1, NOISE, CUTOFF, AMP, LFO2F), INTENSITY |
+| PATCH 1-4 | SOURCE (FEG, AEG, LFO1, LFO2, VELO, KBD), DEST (PITCH, OSC2, CTRL1, NOISE, CUTOFF, AMP, LFO2F), INTENSITY |
 | ARP | ON, TYPE (UP, DOWN, ALT1, ALT2, RANDOM, TRIGGER), RANGE 1-4, RES, GATE, SWING, LATCH, KEY SYNC, LAST STEP and steps on/off |
 | MOD FX | TYPE (CHORUS, FLANGER, ENSEMBLE, PHASER), SPEED, DEPTH, MIX |
 | DELAY | TYPE (STEREO, CROSS, L/R), TIME (tempo), FEEDBACK, LEVEL |
@@ -31,13 +31,15 @@ S&H TEXTURE), 17-32 start as INIT. MIDI Program Change 0-31 picks a program.
 
 | Control | What it does |
 | --- | --- |
-| SELECT | the section (and its pages: FILTER 1-2, PATCH 1-4, ARP 1-3) |
+| SELECT | every page, one after another |
 | KNOB 1-4 | the four parameters on the cards |
 | ALGORITHM | CUTOFF, from any page |
 | PRESETS | the program (it loads as you turn; edits not written are lost, as on the original) |
 | HOME | PERFORM: cutoff, resonance, EG int, LFO 1 rate |
-| EDIT / SCL / ENV / LFO | OSC 1, OSC 2, MIXER / FILTER / FILTER EG, AMP EG / LFO 1, LFO 2 (press again for the next) |
-| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL / PATCH 1-4 / the ARP pages / MOD FX, DELAY, REVERB |
+| EDIT / SCL / ENV / LFO | OSC 1, OSC 2, MIXER / FILTER, KEY TRACK / FILTER EG, AMP EG / LFO 1, LFO 2 (press again for the next) |
+| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL / PATCH 1-4 / ARP, TIMING, STEPS / MOD FX, DELAY, REVERB |
+
+The screen shows the open page as a tab, "BUTTON · PAGE" in that button's own colour, with the button's other pages as dark tabs beside it.
 | ARP | the arpeggiator on / off |
 | PLAY | LATCH on / off |
 | SAVE | WRITE: PRESETS picks the slot, KNOB 1 the letter, KNOB 2 changes it, SAVE writes, HOME cancels |

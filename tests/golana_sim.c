@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     check(gu.prog == 0 && gu.ready, "program 1 at power-on");
     /* every page, by SELECT */
     for (p = 0; p < GU_NPAGE; p++) {
-        snprintf(nm, sizeof nm, "%02u_page_%s", p + 1u, GU_SEC[GU_PAGES[gu.page].sec]);
+        snprintf(nm, sizeof nm, "%02u_%s_%s", p + 1u, B_NAME[GU_PAGES[gu.page].btn], GU_PAGES[gu.page].tab);
         for (char *c = nm; *c; c++)
             if (*c == ' ')
                 *c = '_';
@@ -107,11 +107,14 @@ int main(int argc, char **argv)
     }
     /* the buttons */
     press(B_EDIT);
-    check(GU_PAGES[gu.page].sec == SE_OSC1, "EDIT: OSC 1");
+    check(GU_PAGES[gu.page].btn == B_EDIT && gu.page == 1, "EDIT: OSC 1");
     press(B_EDIT);
-    check(GU_PAGES[gu.page].sec == SE_OSC2, "EDIT again: OSC 2");
+    check(GU_PAGES[gu.page].btn == B_EDIT && gu.page == 2, "EDIT again: OSC 2");
+    press(B_EDIT);
+    press(B_EDIT);
+    check(gu.page == 1, "EDIT wraps to OSC 1");
     press(B_FX);
-    check(GU_PAGES[gu.page].sec == SE_MFX, "FX: MOD FX");
+    check(GU_PAGES[gu.page].btn == B_FX && !strcmp(GU_PAGES[gu.page].tab, "MOD FX"), "FX: MOD FX");
     press(B_ARP);
     check(trk[0].p[GL_ARPON] == 1 && trk[0].p[P_AMODE] != 0, "ARP on");
     render(100);

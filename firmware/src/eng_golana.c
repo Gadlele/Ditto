@@ -13,7 +13,7 @@
  *   AMP     the part's level, pan and ADSR (voice.c), DIST ON a soft drive after the filter
  *   LFO 1/2 per voice: SAW SQR TRI SIN S&H, FREQ or a SYNC note value of the tempo, KEY SYNC OFF (free, in step
  *           with the part's clock), TIMBRE (from 0 when the first key goes down), VOICE (from 0 every note)
- *   PATCH   4 routes SRC -> DST by INT (+-63): sources FEG AEG LFO1 LFO2 VELO KBD MODW, destinations PITCH OSC2
+ *   PATCH   4 routes SRC -> DST by INT (+-63): sources FEG AEG LFO1 LFO2 VELO KBD, destinations PITCH OSC2
  *           (OSC 2's pitch) CTRL1 NOISE CUTOFF AMP LFO2F (LFO 2's rate)
  * Felucca's track LFO, LFO DEST and matrix are not used by this engine (mod.c leaves it alone): their parameter
  * slots hold Golana's own values (core.h GL_*). At most 4 voices (POLY and UNISON). */
@@ -26,7 +26,7 @@ static const char *const N_GLWAVE[] = {"SAW", "SQR", "TRI", "SIN", "S&H"};
 static const char *const N_GLKEY[] = {"OFF", "TIMBRE", "VOICE"};
 static const char *const N_GLSYNC[] = {"OFF", "4BAR", "2BAR", "1/1", "1/2", "1/4", "1/8", "1/8T", "1/16", "16T", "1/32"};
 static const uint8_t GL_SYNC_DIV[11] = {0, 9, 8, 7, 6, 0, 1, 4, 2, 5, 3};   /* N_GLSYNC -> fx.c div_samples */
-static const char *const N_GPSRC[] = {"FEG", "AEG", "LFO1", "LFO2", "VELO", "KBD", "MODW"};
+static const char *const N_GPSRC[] = {"FEG", "AEG", "LFO1", "LFO2", "VELO", "KBD"};
 static const char *const N_GPDST[] = {"PITCH", "OSC2", "CTRL1", "NOISE", "CUTOFF", "AMP", "LFO2F"};
 static const char *const N_GARPT[] = {"UP", "DOWN", "ALT1", "ALT2", "RANDOM", "TRIGGER"};
 static const char *const N_GDTYPE[] = {"STEREO", "CROSS", "L/R"};
@@ -35,7 +35,7 @@ static const char *const N_GMFX[] = {"OFF", "CHORUS", "FLANGER", "ENSEMBL", "PHA
 static const char *const N_GONOFF[] = {"OFF", "ON"};
 static const char *const N_GDTIME[] = {"1/4", "1/8", "1/16", "1/32", "1/8T", "16T", "1/2", "1/1", "2BAR", "4BAR",
                                        "1/8D", "16D", "1/4D"};
-enum { GS_FEG, GS_AEG, GS_LFO1, GS_LFO2, GS_VELO, GS_KBD, GS_MODW, GS_N };
+enum { GS_FEG, GS_AEG, GS_LFO1, GS_LFO2, GS_VELO, GS_KBD, GS_N };
 enum { GD_PITCH, GD_OSC2, GD_CTRL1, GD_NOISE, GD_CUT, GD_AMP, GD_LFO2F, GD_N };
 enum { GO_SAW, GO_PULSE, GO_TRI, GO_SINE };
 enum { GM_OFF, GM_RING, GM_SYNC, GM_RSYNC };
@@ -257,7 +257,6 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
     src[GS_AEG] = m->envq15;
     src[GS_VELO] = v->vel * 258;
     src[GS_KBD] = clamp(((int32_t)v->note - 60) * 512, -32767, 32767);
-    src[GS_MODW] = t->mw * 258;
     lfo1 = gl_lfo_step(&s->l1, &s->s1, g->inc1, (uint32_t)gp(t, GL_L1WAVE, 0, 4), &g->seed);
     src[GS_LFO1] = lfo1;
     {   /* LFO 2's rate may be patched: the routes to LFO2F first, from the sources known so far */

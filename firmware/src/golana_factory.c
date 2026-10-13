@@ -5,7 +5,7 @@
  * soft bells, a drone, a sweet lead, textures).
  * Time values: 40 ~ 20 ms, 60 ~ 80 ms, 80 ~ 0.3 s, 90 ~ 0.7 s, 100 ~ 1.4 s, 110 ~ 3 s, 120 ~ 6 s (gen_tables.py).
  * LFO FREQ: 20 ~ 0.15 Hz, 40 ~ 0.4 Hz, 60 ~ 1.2 Hz, 85 ~ 4.4 Hz, 90 ~ 5.6 Hz.
- * PATCH k (0..3): SRC FEG AEG LFO1 LFO2 VELO KBD MODW, DST PITCH OSC2 CTRL1 NOISE CUTOFF AMP LFO2F, INT +-63 */
+ * PATCH k (0..3): SRC FEG AEG LFO1 LFO2 VELO KBD, DST PITCH OSC2 CTRL1 NOISE CUTOFF AMP LFO2F, INT +-63 */
 #define S(i, v) {(uint8_t)(i), (int16_t)(v)}
 #define PROG(n, a) {n, a, (uint8_t)NELEM(a)}
 #define PSRC(k) (GL_P1SRC + 3 * (k))
@@ -15,7 +15,7 @@ enum { W_SAW, W_PULSE, W_TRI, W_SINE };
 enum { X_SAW, X_SQR, X_TRI };
 enum { L_SAW, L_SQR, L_TRI, L_SIN, L_SH };
 enum { F_LPF24, F_LPF12, F_BPF, F_HPF };
-enum { Q_FEG, Q_AEG, Q_LFO1, Q_LFO2, Q_VELO, Q_KBD, Q_MODW };
+enum { Q_FEG, Q_AEG, Q_LFO1, Q_LFO2, Q_VELO, Q_KBD };
 enum { D_PITCH, D_OSC2, D_CTRL1, D_NOISE, D_CUT, D_AMP, D_LFO2F };
 
 /* ------------------------------------------------------------- classic --- */

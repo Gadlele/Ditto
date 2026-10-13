@@ -34,50 +34,68 @@
 /* virtual parameters (not a track parameter of part 1) */
 enum { GV_NONE = 0xFF, GV_RES = 200, GV_BPM, GV_TUNE, GV_CLOCK, GV_STEP, GV_STEPON, GV_MIDI };
 typedef struct { uint8_t id; const char *label; const char *const *names; } gu_par_t;
-typedef struct { uint8_t sec; uint8_t accent; gu_par_t k[4]; } gu_page_t;
-enum { SE_PERF, SE_OSC1, SE_OSC2, SE_MIX, SE_FILT, SE_FEG, SE_AMP, SE_AEG, SE_VOICE, SE_LFO1, SE_LFO2, SE_PATCH,
-       SE_ARP, SE_MFX, SE_DLY, SE_REV, SE_GLOB, SE_N };
-static const char *const GU_SEC[SE_N] = {"PERFORM", "OSC 1", "OSC 2", "MIXER", "FILTER", "FILTER EG", "AMP", "AMP EG",
-                                         "VOICE", "LFO 1", "LFO 2", "PATCH", "ARP", "MOD FX", "DELAY", "REVERB",
-                                         "GLOBAL"};
+typedef struct { uint8_t btn; const char *tab, *tshort; gu_par_t k[4]; } gu_page_t;
 static const char *const N_GVOICE[] = {"POLY", "MONO", "LEGATO", "UNISON"};
 static const char *const N_GRES[] = {"1/32", "1/24", "1/16", "1/12", "1/8", "1/4"};
 static const uint8_t GU_RES_DIV[6] = {3, 5, 2, 4, 1, 0};    /* N_GRES -> P_ARATE (params.c N_DIV) */
 static const char *const N_GCLOCK[] = {"INT", "USB", "TRS"};
 static const char *const N_GMIDI[] = {"ALL", "CH 1"};
-#define C0 0                     /* card colours: amber, teal, pink */
-#define C1 1
-#define C2 2
+/* the pages, grouped by the button that opens them (its pages side by side: the tabs). tab: the page's name on its
+ * tab when it is open (after the button's name), tshort: on its tab while another page of the button is open */
 static const gu_page_t GU_PAGES[] = {
-    {SE_PERF, C0, {{GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}, {GL_L1FREQ, "LFO1 FREQ", 0}}},
-    {SE_OSC1, C0, {{GL_O1WAVE, "WAVE", 0}, {GL_O1C1, "CTRL 1", 0}, {GL_O1C2, "CTRL 2", 0}, {GV_NONE, 0, 0}}},
-    {SE_OSC2, C0, {{GL_O2WAVE, "WAVE", 0}, {GL_O2MOD, "MOD", 0}, {GL_O2SEMI, "SEMITONE", 0}, {GL_O2TUNE, "TUNE", 0}}},
-    {SE_MIX, C1, {{GL_MIX1, "OSC 1", 0}, {GL_MIX2, "OSC 2", 0}, {GL_NOISE, "NOISE", 0}, {GV_NONE, 0, 0}}},
-    {SE_FILT, C0, {{GL_FTYPE, "TYPE", 0}, {GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}}},
-    {SE_FILT, C0, {{GL_KTRK, "KEY TRACK", 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}}},
-    {SE_FEG, C2, {{GL_FA, "ATTACK", 0}, {GL_FD, "DECAY", 0}, {GL_FS, "SUSTAIN", 0}, {GL_FR, "RELEASE", 0}}},
-    {SE_AMP, C1, {{P_LEVEL, "LEVEL", 0}, {P_PAN, "PANPOT", 0}, {GL_DIST, "DIST", 0}, {GV_NONE, 0, 0}}},
-    {SE_AEG, C2, {{P_ATK, "ATTACK", 0}, {P_DEC, "DECAY", 0}, {P_SUS, "SUSTAIN", 0}, {P_REL, "RELEASE", 0}}},
-    {SE_VOICE, C1, {{P_VOICE, "ASSIGN", N_GVOICE}, {P_DETUNE, "DETUNE", 0}, {P_GLIDE, "PORTA", 0},
-                    {GL_EGRESET, "EG RESET", 0}}},
-    {SE_LFO1, C1, {{GL_L1WAVE, "WAVE", 0}, {GL_L1FREQ, "FREQ", 0}, {GL_L1KEY, "KEY SYNC", 0}, {GL_L1SYNC, "TEMPO", 0}}},
-    {SE_LFO2, C1, {{GL_L2WAVE, "WAVE", 0}, {GL_L2FREQ, "FREQ", 0}, {GL_L2KEY, "KEY SYNC", 0}, {GL_L2SYNC, "TEMPO", 0}}},
-#define GU_PATCH(k) {SE_PATCH, C2, {{GL_P1SRC + 3 * (k), "SOURCE", 0}, {GL_P1DST + 3 * (k), "DEST", 0}, \
-                                    {GL_P1INT + 3 * (k), "INTENSITY", 0}, {GV_NONE, 0, 0}}}
-    GU_PATCH(0), GU_PATCH(1), GU_PATCH(2), GU_PATCH(3),
+    {B_HOME, "PERFORM", "PERFORM",
+     {{GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}, {GL_L1FREQ, "LFO1 FREQ", 0}}},
+    {B_EDIT, "OSC 1", "OSC 1", {{GL_O1WAVE, "WAVE", 0}, {GL_O1C1, "CTRL 1", 0}, {GL_O1C2, "CTRL 2", 0}, {GV_NONE, 0, 0}}},
+    {B_EDIT, "OSC 2", "OSC 2",
+     {{GL_O2WAVE, "WAVE", 0}, {GL_O2MOD, "MOD", 0}, {GL_O2SEMI, "SEMITONE", 0}, {GL_O2TUNE, "TUNE", 0}}},
+    {B_EDIT, "MIXER", "MIXER", {{GL_MIX1, "OSC 1", 0}, {GL_MIX2, "OSC 2", 0}, {GL_NOISE, "NOISE", 0}, {GV_NONE, 0, 0}}},
+    {B_SCL, "FILTER", "FILTER",
+     {{GL_FTYPE, "TYPE", 0}, {GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}}},
+    {B_SCL, "KEY TRACK", "KEY TRK", {{GL_KTRK, "KEY TRACK", 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}}},
+    {B_ENV, "FILTER EG", "FILTER EG",
+     {{GL_FA, "ATTACK", 0}, {GL_FD, "DECAY", 0}, {GL_FS, "SUSTAIN", 0}, {GL_FR, "RELEASE", 0}}},
+    {B_ENV, "AMP EG", "AMP EG", {{P_ATK, "ATTACK", 0}, {P_DEC, "DECAY", 0}, {P_SUS, "SUSTAIN", 0}, {P_REL, "RELEASE", 0}}},
+    {B_LFO, "LFO 1", "LFO 1",
+     {{GL_L1WAVE, "WAVE", 0}, {GL_L1FREQ, "FREQ", 0}, {GL_L1KEY, "KEY SYNC", 0}, {GL_L1SYNC, "TEMPO", 0}}},
+    {B_LFO, "LFO 2", "LFO 2",
+     {{GL_L2WAVE, "WAVE", 0}, {GL_L2FREQ, "FREQ", 0}, {GL_L2KEY, "KEY SYNC", 0}, {GL_L2SYNC, "TEMPO", 0}}},
+    {B_GLO, "AMP", "AMP", {{P_LEVEL, "LEVEL", 0}, {P_PAN, "PANPOT", 0}, {GL_DIST, "DIST", 0}, {GV_NONE, 0, 0}}},
+    {B_GLO, "VOICE", "VOICE",
+     {{P_VOICE, "ASSIGN", N_GVOICE}, {P_DETUNE, "DETUNE", 0}, {P_GLIDE, "PORTA", 0}, {GL_EGRESET, "EG RESET", 0}}},
+    {B_GLO, "GLOBAL", "GLOBAL",
+     {{GV_BPM, "TEMPO", 0}, {GV_TUNE, "TUNE", 0}, {GV_CLOCK, "CLOCK", N_GCLOCK}, {GV_MIDI, "MIDI IN", N_GMIDI}}},
+#define GU_PATCH(k, n, sh) {B_REC, n, sh, {{GL_P1SRC + 3 * (k), "SOURCE", 0}, {GL_P1DST + 3 * (k), "DEST", 0}, \
+                                          {GL_P1INT + 3 * (k), "INTENSITY", 0}, {GV_NONE, 0, 0}}}
+    GU_PATCH(0, "PATCH 1", "P1"), GU_PATCH(1, "PATCH 2", "P2"), GU_PATCH(2, "PATCH 3", "P3"),
+    GU_PATCH(3, "PATCH 4", "P4"),
 #undef GU_PATCH
-    {SE_ARP, C0, {{GL_ARPON, "ARP", 0}, {GL_ARPTYPE, "TYPE", 0}, {P_AOCT, "RANGE", 0}, {GV_RES, "RES", N_GRES}}},
-    {SE_ARP, C0, {{P_AGATE, "GATE", 0}, {P_ASWING, "SWING", 0}, {P_AHOLD, "LATCH", N_GONOFF}, {GL_ARPKSYNC, "KEY SYNC", 0}}},
-    {SE_ARP, C0, {{GL_ARPLAST, "LAST STEP", 0}, {GV_STEP, "STEP", 0}, {GV_STEPON, "ON / OFF", N_GONOFF},
-                  {GV_NONE, 0, 0}}},
-    {SE_MFX, C1, {{GL_MFX, "TYPE", 0}, {P_IA, "SPEED", 0}, {P_IB, "DEPTH", 0}, {P_IMIX, "MIX", 0}}},
-    {SE_DLY, C1, {{GL_DTYPE, "TYPE", 0}, {GL_DTIME, "TIME", 0}, {GL_DFDBK, "FEEDBACK", 0}, {P_DLY, "LEVEL", 0}}},
-    {SE_REV, C1, {{GL_RTYPE, "TYPE", 0}, {GL_RSIZE, "SIZE", 0}, {GL_RDAMP, "DAMP", 0}, {P_REV, "LEVEL", 0}}},
-    {SE_GLOB, C2, {{GV_BPM, "TEMPO", 0}, {GV_TUNE, "TUNE", 0}, {GV_CLOCK, "CLOCK", N_GCLOCK},
-                   {GV_MIDI, "MIDI IN", N_GMIDI}}},
+    {B_SEQ, "ARP", "ARP", {{GL_ARPON, "ARP", 0}, {GL_ARPTYPE, "TYPE", 0}, {P_AOCT, "RANGE", 0}, {GV_RES, "RES", N_GRES}}},
+    {B_SEQ, "TIMING", "TIMING",
+     {{P_AGATE, "GATE", 0}, {P_ASWING, "SWING", 0}, {P_AHOLD, "LATCH", N_GONOFF}, {GL_ARPKSYNC, "KEY SYNC", 0}}},
+    {B_SEQ, "STEPS", "STEPS",
+     {{GL_ARPLAST, "LAST STEP", 0}, {GV_STEP, "STEP", 0}, {GV_STEPON, "ON / OFF", N_GONOFF}, {GV_NONE, 0, 0}}},
+    {B_FX, "MOD FX", "MOD FX", {{GL_MFX, "TYPE", 0}, {P_IA, "SPEED", 0}, {P_IB, "DEPTH", 0}, {P_IMIX, "MIX", 0}}},
+    {B_FX, "DELAY", "DELAY",
+     {{GL_DTYPE, "TYPE", 0}, {GL_DTIME, "TIME", 0}, {GL_DFDBK, "FEEDBACK", 0}, {P_DLY, "LEVEL", 0}}},
+    {B_FX, "REVERB", "REVERB",
+     {{GL_RTYPE, "TYPE", 0}, {GL_RSIZE, "SIZE", 0}, {GL_RDAMP, "DAMP", 0}, {P_REV, "LEVEL", 0}}},
 };
 #define GU_NPAGE NELEM(GU_PAGES)
-static const uint16_t GU_ACC[3] = {GC_AMBER, GC_TEAL, GC_PINK};
+/* each page button's own colour: its tabs and its cards' meters, every time its pages are open */
+static uint16_t gu_btn_col(uint32_t b)
+{
+    switch (b) {
+    case B_HOME: return RGB(255, 181, 71);          /* amber */
+    case B_EDIT: return RGB(255, 128, 92);          /* coral */
+    case B_SCL: return RGB(236, 214, 96);           /* yellow */
+    case B_ENV: return RGB(240, 122, 156);          /* pink */
+    case B_LFO: return RGB(176, 146, 255);          /* violet */
+    case B_GLO: return RGB(92, 206, 170);           /* green-teal */
+    case B_REC: return RGB(150, 214, 104);          /* lime */
+    case B_SEQ: return RGB(102, 170, 255);          /* blue */
+    default: return RGB(112, 214, 238);             /* FX: cyan */
+    }
+}
 
 static struct {
     uint8_t page, prog, dirty, ready;
@@ -325,61 +343,58 @@ static void gu_draw_head(void)
     cv_blit(0, 0);
 }
 
-/* the sections: a window of 10 rows (20 px) around the one being edited; a section of several pages shows them as
- * dots */
-#define GU_LIST_W 76
-#define GU_ROW 20
-#define GU_ROWS 10
-static void gu_draw_list(void)
+/* the tabs, as on a card index: the pages of the button whose page is open. The open one in the button's colour,
+ * "BUTTON · PAGE", joined to the line under the tabs; the button's other pages beside it, dark, by short names */
+#define GU_TAB_Y 32
+#define GU_TAB_H 26
+static void gu_draw_tabs(void)
 {
-    uint32_t sec = GU_PAGES[gu.page].sec, top, r, h = 0x811C9DC5u, pi, np = 0, first = 0;
-    for (pi = 0; pi < GU_NPAGE; pi++)
-        if (GU_PAGES[pi].sec == sec) {
-            if (!np)
-                first = pi;
-            np++;
-        }
-    h = gu_hashv(h, (int32_t)(gu.page | sec << 8));
+    uint32_t btn = GU_PAGES[gu.page].btn, pi, h = 0x811C9DC5u;
+    uint16_t col = gu_btn_col(btn);
+    int32_t x = 4, ax = 4, aw = 0;
+    char lab[32];
+    h = gu_hashv(h, (int32_t)gu.page);
     if (h == gu.sig_list)
         return;
     gu.sig_list = h;
-    top = sec < GU_ROWS / 2u ? 0u : sec - GU_ROWS / 2u;
-    if (top + GU_ROWS > SE_N)
-        top = SE_N - GU_ROWS;
-    cv_begin(GU_LIST_W, GU_ROWS * GU_ROW + 8, GC_BG);
-    for (r = 0; r < GU_ROWS; r++) {
-        uint32_t s = top + r;
-        int32_t y = 4 + (int32_t)r * GU_ROW;
-        if (s == sec) {
-            cv_rrect(4, y, GU_LIST_W - 8, GU_ROW - 2, -5, GU_ACC[GU_PAGES[gu.page].accent], GC_BG);
-            cv_text_on(9, y + 2, &AF_S, GU_SEC[s], GC_INK, GU_ACC[GU_PAGES[gu.page].accent]);
-            if (np > 1u) {                           /* the pages: dots under the name */
-                uint32_t k;
-                for (k = 0; k < np; k++)
-                    cv_rect(GU_LIST_W - 10 - (int32_t)(np - k) * 5, y + 14, 3, 2,
-                            first + k == gu.page ? GC_INK : ux_mix(GU_ACC[GU_PAGES[gu.page].accent], GC_INK, 45));
-            }
-        } else {
-            cv_text(9, y + 2, &AF_S, GU_SEC[s], GC_MID);
+    cv_begin(240, GU_TAB_H, GC_BG);
+    str_cpy(lab, btn < NB ? B_NAME[btn] : "", sizeof lab);
+    str_cpy(lab + str_len(lab), " \xB7 ", sizeof lab - str_len(lab));
+    str_cpy(lab + str_len(lab), GU_PAGES[gu.page].tab, sizeof lab - str_len(lab));
+    for (pi = 0; pi < GU_NPAGE; pi++) {
+        int32_t w;
+        if (GU_PAGES[pi].btn != btn)
+            continue;
+        if (pi == gu.page) {
+            ax = x;
+            aw = text_w(&AF_S, lab) + 16;
+            x += aw + 3;
+            continue;
         }
+        w = text_w(&AF_S, GU_PAGES[pi].tshort) + 14;
+        cv_rrect(x, 6, w, GU_TAB_H, -6, GC_RAISE, GC_BG);
+        cv_text_on(x + 7, 8, &AF_S, GU_PAGES[pi].tshort, GC_MID, GC_RAISE);
+        x += w + 3;
     }
-    cv_rect(GU_LIST_W - 1, 0, 1, GU_ROWS * GU_ROW + 8, GC_LINE);
-    cv_blit(0, 32);
+    cv_rect(0, GU_TAB_H - 2, 240, 2, col);
+    cv_rrect(ax, 1, aw, GU_TAB_H + 6, -6, col, GC_BG);
+    cv_text_on(ax + 8, 5, &AF_S, lab, GC_INK, col);
+    cv_blit(0, GU_TAB_Y);
 }
 
 /* card k of the page: the label, the value (big when it fits), a meter (a bar, a centred bar, or a dot per name) */
-#define GU_CX 82
-#define GU_CW 76
-#define GU_CH 100
+#define GU_CW 114
+#define GU_CH 86
 static void gu_draw_card(uint32_t k)
 {
     const gu_page_t *pg = &GU_PAGES[gu.page];
     const gu_par_t *q = &pg->k[k];
     char b[16];
-    int32_t v = gu_get(q), lo = 0, hi = 0, x = GU_CX + (int32_t)(k & 1u) * (GU_CW + 4), y = 34 + (int32_t)(k >> 1) * (GU_CH + 4);
+    int32_t v = gu_get(q), lo = 0, hi = 0, x = 4 + (int32_t)(k & 1u) * (GU_CW + 4);
+    int32_t y = GU_TAB_Y + GU_TAB_H + 4 + (int32_t)(k >> 1) * (GU_CH + 4);
     uint32_t h = 0x811C9DC5u;
     int hot = gu.hot == (int8_t)k && fm1_ms - gu.hot_t < 700u;
-    uint16_t acc = GU_ACC[pg->accent], surf = GC_SURF;
+    uint16_t acc = gu_btn_col(pg->btn), surf = hot ? GC_RAISE : GC_SURF;
     gu_text(q, b);
     h = gu_hash(h, b);
     h = gu_hash(h, q->label ? q->label : "");
@@ -396,50 +411,50 @@ static void gu_draw_card(uint32_t k)
         cv_blit((uint32_t)x, (uint32_t)y);
         return;
     }
-    cv_rrect(0, 0, GU_CW, GU_CH, -8, hot ? GC_RAISE : surf, GC_BG);
+    cv_rrect(0, 0, GU_CW, GU_CH, -8, surf, GC_BG);
     if (hot)
-        cv_rect(10, 0, GU_CW - 20, 2, acc);
-    cv_text_on(8, 6, &AF_S, q->label, GC_MID, hot ? GC_RAISE : surf);
+        cv_rect(14, 0, GU_CW - 28, 2, acc);
+    cv_text_on(10, 6, &AF_S, q->label, GC_MID, surf);
     gu_range(q, &lo, &hi);
     {
-        int big = gu_fits_l(b) && text_w(&AF_L, b) <= GU_CW - 8;
+        int big = gu_fits_l(b) && text_w(&AF_L, b) <= GU_CW - 12;
         const aafont_t *f = big ? &AF_L : &AF_M;
         int32_t w = text_w(f, b);
-        if (w > GU_CW - 6) {                        /* (a long name: the small face) */
+        if (w > GU_CW - 8) {
             f = &AF_S;
             w = text_w(f, b);
         }
-        cv_text_on((GU_CW - w) / 2, big ? 30 : 40, f, b, GC_TEXT, hot ? GC_RAISE : surf);
+        cv_text_on((GU_CW - w) / 2, big ? 22 : 32, f, b, GC_TEXT, surf);
     }
     if (q->id == GV_STEP || q->id == GV_STEPON || q->id == GL_ARPLAST) {   /* the 8 steps: on, off, past LAST */
-        uint32_t s, m = gu_steps(), last = (uint32_t)clamp(gu_t()->p[GL_ARPLAST], 1, 8);
-        for (s = 0; s < 8u; s++) {
-            int32_t sx = 6 + (int32_t)s * 8;
-            uint16_t c = s >= last ? GC_LINE : (m >> s) & 1u ? acc : GC_DIM;
-            cv_rect(sx, 80, 6, 8, c);
-            if (s == gu.step && q->id != GL_ARPLAST)
-                cv_rect(sx, 91, 6, 2, GC_TEXT);
+        uint32_t st, m = gu_steps(), last = (uint32_t)clamp(gu_t()->p[GL_ARPLAST], 1, 8);
+        for (st = 0; st < 8u; st++) {
+            int32_t sx = 13 + (int32_t)st * 11;
+            uint16_t c = st >= last ? GC_LINE : (m >> st) & 1u ? acc : GC_DIM;
+            cv_rect(sx, 64, 8, 9, c);
+            if (st == gu.step && q->id != GL_ARPLAST)
+                cv_rect(sx, 76, 8, 2, GC_TEXT);
         }
     } else if (q->names || (q->id < P_COUNT && gu_desc(q->id)->fmt == F_ENUM) || hi - lo < 2) {
-        int32_t n = hi - lo + 1, s, dx = n > 1 ? (GU_CW - 20) / (n - 1) : 0;
-        if (dx > 12)
-            dx = 12;
-        for (s = 0; s < n && n <= 12; s++) {
-            int32_t cx = GU_CW / 2 - (dx * (n - 1)) / 2 + s * dx;
-            cv_rrect(cx - 2, 84, 5, 5, -2, s == v - lo ? acc : GC_LINE, hot ? GC_RAISE : surf);
+        int32_t n = hi - lo + 1, i, dx = n > 1 ? (GU_CW - 24) / (n - 1) : 0;
+        if (dx > 14)
+            dx = 14;
+        for (i = 0; i < n && n <= 12; i++) {
+            int32_t cx = GU_CW / 2 - (dx * (n - 1)) / 2 + i * dx;
+            cv_rrect(cx - 3, 68, 6, 6, -3, i == v - lo ? acc : GC_LINE, surf);
         }
     } else if (lo < 0) {                             /* bipolar: from the middle */
-        int32_t mid = GU_CW / 2, len = (v * (GU_CW / 2 - 10)) / (hi > 0 ? hi : 1);
-        cv_rect(10, 85, GU_CW - 20, 3, GC_LINE);
-        cv_rect(mid - 1, 82, 2, 9, GC_MID);
+        int32_t mid = GU_CW / 2, len = (v * (GU_CW / 2 - 12)) / (hi > 0 ? hi : 1);
+        cv_rect(12, 70, GU_CW - 24, 3, GC_LINE);
+        cv_rect(mid - 1, 67, 2, 9, GC_MID);
         if (len > 0)
-            cv_rect(mid, 85, len, 3, acc);
+            cv_rect(mid, 70, len, 3, acc);
         else if (len < 0)
-            cv_rect(mid + len, 85, -len, 3, acc);
+            cv_rect(mid + len, 70, -len, 3, acc);
     } else {
-        int32_t len = ((v - lo) * (GU_CW - 20)) / (hi - lo > 0 ? hi - lo : 1);
-        cv_rect(10, 85, GU_CW - 20, 3, GC_LINE);
-        cv_rect(10, 85, len, 3, acc);
+        int32_t len = ((v - lo) * (GU_CW - 24)) / (hi - lo > 0 ? hi - lo : 1);
+        cv_rect(12, 70, GU_CW - 24, 3, GC_LINE);
+        cv_rect(12, 70, len, 3, acc);
     }
     cv_blit((uint32_t)x, (uint32_t)y);
 }
@@ -547,26 +562,13 @@ static void gu_draw(void)
         gu.shown_save = 0;
         lcd_fill(0, 32, 240, 208, GC_BG);
     }
-    gu_draw_list();
+    gu_draw_tabs();
     for (k = 0; k < 4u; k++)
         gu_draw_card(k);
 }
 
 /* ---------------------------------------------------------------- LEDs --- */
-static uint32_t gu_group_btn(void)
-{
-    switch (GU_PAGES[gu.page].sec) {
-    case SE_PERF: return B_HOME;
-    case SE_OSC1: case SE_OSC2: case SE_MIX: return B_EDIT;
-    case SE_FILT: return B_SCL;
-    case SE_FEG: case SE_AEG: return B_ENV;
-    case SE_LFO1: case SE_LFO2: return B_LFO;
-    case SE_AMP: case SE_VOICE: case SE_GLOB: return B_GLO;
-    case SE_PATCH: return B_REC;
-    case SE_ARP: return B_SEQ;
-    default: return B_FX;
-    }
-}
+static uint32_t gu_group_btn(void) { return GU_PAGES[gu.page].btn; }
 
 static void gu_leds(void)
 {
@@ -590,7 +592,7 @@ static void gu_leds(void)
     led_put(nl, panel.btn[B_OCTUP], song.octave > 0);
     for (k = 0; k < 27u; k++)
         led_put(nl, 14u + k, (int)((fm1_in.notes >> k) & 1u));
-    if (GU_PAGES[gu.page].sec == SE_ARP && gu.page == GU_NPAGE - 5u) {   /* ARP 3: the first 8 keys show the steps */
+    if (GU_PAGES[gu.page].k[1].id == GV_STEP) {           /* SEQ STEPS: the first 8 keys show the steps */
         uint32_t m = gu_steps(), last = (uint32_t)clamp(gu_t()->p[GL_ARPLAST], 1, 8);
         for (k = 0; k < 8u; k++)
             led_put(nl, 14u + k, k < last && ((m >> k) & 1u));
@@ -612,24 +614,23 @@ static void gu_go(uint32_t page)
     gu.page = (uint8_t)(page % GU_NPAGE);
 }
 
-/* a group button: its first page, or (on one of its pages) the next of the group */
-static void gu_group(const uint8_t *secs, uint32_t n)
+/* a page button: its first page, or (on one of its pages) the next of them, round */
+static void gu_button(uint32_t b)
 {
-    uint32_t cur = GU_PAGES[gu.page].sec, i, pi;
-    for (i = 0; i < n && secs[i] != cur; i++)
-        ;
-    if (i < n) {                                     /* on the group: the page after this one, else the next section */
-        if (gu.page + 1u < GU_NPAGE && GU_PAGES[gu.page + 1u].sec == cur) {
-            gu_go(gu.page + 1u);
-            return;
+    uint32_t pi, first = GU_NPAGE;
+    for (pi = 0; pi < GU_NPAGE; pi++)
+        if (GU_PAGES[pi].btn == b) {
+            first = pi;
+            break;
         }
-        i = (i + 1u) % n;
+    if (first == GU_NPAGE)
+        return;
+    if (GU_PAGES[gu.page].btn == b) {
+        pi = gu.page + 1u;
+        gu_go(pi < GU_NPAGE && GU_PAGES[pi].btn == b ? pi : first);
     } else {
-        i = 0;
+        gu_go(first);
     }
-    for (pi = 0; pi < GU_NPAGE && GU_PAGES[pi].sec != secs[i]; pi++)
-        ;
-    gu_go(pi);
 }
 
 static int32_t gu_accel(int32_t s, int32_t range)
@@ -759,48 +760,16 @@ static void gu_input(void)
         }
         switch (b) {
         case B_HOME:
-            gu_go(0);
+        case B_EDIT:
+        case B_SCL:
+        case B_ENV:
+        case B_LFO:
+        case B_GLO:
+        case B_REC:
+        case B_SEQ:
+        case B_FX:
+            gu_button(b);
             break;
-        case B_EDIT: {
-            static const uint8_t G[3] = {SE_OSC1, SE_OSC2, SE_MIX};
-            gu_group(G, 3);
-            break;
-        }
-        case B_SCL: {
-            static const uint8_t G[1] = {SE_FILT};
-            gu_group(G, 1);
-            break;
-        }
-        case B_ENV: {
-            static const uint8_t G[2] = {SE_FEG, SE_AEG};
-            gu_group(G, 2);
-            break;
-        }
-        case B_LFO: {
-            static const uint8_t G[2] = {SE_LFO1, SE_LFO2};
-            gu_group(G, 2);
-            break;
-        }
-        case B_GLO: {
-            static const uint8_t G[3] = {SE_AMP, SE_VOICE, SE_GLOB};
-            gu_group(G, 3);
-            break;
-        }
-        case B_REC: {
-            static const uint8_t G[1] = {SE_PATCH};
-            gu_group(G, 1);
-            break;
-        }
-        case B_SEQ: {
-            static const uint8_t G[1] = {SE_ARP};
-            gu_group(G, 1);
-            break;
-        }
-        case B_FX: {
-            static const uint8_t G[3] = {SE_MFX, SE_DLY, SE_REV};
-            gu_group(G, 3);
-            break;
-        }
         case B_ARP: {
             static const gu_par_t A = {GL_ARPON, "ARP", 0};
             gu_set(&A, !gu_get(&A));
