@@ -62,8 +62,9 @@ static const gu_page_t GU_PAGES[] = {
     {B_GLO, "AMP", "AMP", {{P_LEVEL, "LEVEL", 0}, {P_PAN, "PANPOT", 0}, {GL_DIST, "DIST", 0}, {GV_NONE, 0, 0}}},
     {B_GLO, "VOICE", "VOICE",
      {{P_VOICE, "ASSIGN", N_GVOICE}, {P_DETUNE, "DETUNE", 0}, {P_GLIDE, "PORTA", 0}, {GL_EGRESET, "EG RESET", 0}}},
-    {B_GLO, "GLOBAL", "GLOBAL",
+    {B_GLO, "GLOBAL", "GLOB",
      {{GV_BPM, "TEMPO", 0}, {GV_TUNE, "TUNE", 0}, {GV_CLOCK, "CLOCK", N_GCLOCK}, {GV_MIDI, "MIDI IN", N_GMIDI}}},
+    {B_GLO, "ROUTE", "ROUTE", {{GL_ROUTE, "FX ORDER", 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}}},
 #define GU_PATCH(k, n, sh) {B_REC, n, sh, {{GL_P1SRC + 3 * (k), "SOURCE", 0}, {GL_P1DST + 3 * (k), "DEST", 0}, \
                                           {GL_P1INT + 3 * (k), "INTENSITY", 0}, {GV_NONE, 0, 0}}}
     GU_PATCH(0, "PATCH 1", "P1"), GU_PATCH(1, "PATCH 2", "P2"), GU_PATCH(2, "PATCH 3", "P3"),
@@ -345,6 +346,14 @@ static void gu_draw_head(void)
 
 /* the tabs, as on a card index: the pages of the button whose page is open. The open one in the button's colour,
  * "BUTTON · PAGE", joined to the line under the tabs; the button's other pages beside it, dark, by short names */
+/* card k of page pg as it works now: MOD FX's METAL turns SPEED DEPTH MIX into GAIN MID MID FREQ */
+static const gu_par_t *gu_pk(const gu_page_t *pg, uint32_t k)
+{
+    static const gu_par_t METAL[3] = {{P_IA, "GAIN", 0}, {P_IB, "MID", 0}, {P_IC, "MID FREQ", 0}};
+    if (pg->k[0].id == GL_MFX && k && gu_t()->p[GL_MFX] == 5)
+        return &METAL[k - 1u];
+    return &pg->k[k];
+}
 #define GU_TAB_Y 32
 #define GU_TAB_H 26
 static void gu_draw_tabs(void)
@@ -388,7 +397,7 @@ static void gu_draw_tabs(void)
 static void gu_draw_card(uint32_t k)
 {
     const gu_page_t *pg = &GU_PAGES[gu.page];
-    const gu_par_t *q = &pg->k[k];
+    const gu_par_t *q = gu_pk(pg, k);
     char b[16];
     int32_t v = gu_get(q), lo = 0, hi = 0, x = 4 + (int32_t)(k & 1u) * (GU_CW + 4);
     int32_t y = GU_TAB_Y + GU_TAB_H + 4 + (int32_t)(k >> 1) * (GU_CH + 4);
@@ -643,7 +652,7 @@ static int32_t gu_accel(int32_t s, int32_t range)
 
 static void gu_turn(uint32_t k, int32_t s)
 {
-    const gu_par_t *q = &GU_PAGES[gu.page].k[k];
+    const gu_par_t *q = gu_pk(&GU_PAGES[gu.page], k);
     int32_t lo, hi;
     if (q->id == GV_NONE || !s)
         return;

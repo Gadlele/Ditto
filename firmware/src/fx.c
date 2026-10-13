@@ -566,13 +566,32 @@ static uint32_t gl_dtype(void)
 }
 #endif
 
+/* the reverb bus: rev_in through the model G_RTYPE picks, added to out (HALL: its stereo part in rev_side) */
+static __attribute__((noinline)) void fx_reverb(const int32_t *rev_in, int32_t *out, uint32_t n)
+{
+    int32_t rt = song.g[G_RTYPE];
+    rt = rt == 1 || rt == 2 ? rt : 0;
+    hl.side = 0;
+    if (rt != fx.rtype)
+        rev_switch(rev_in, out, n, rt);
+    else if (rt == 2)
+        rev_hall(rev_in, out, n);
+    else if (rt)
+        rev_spring(rev_in, out, n);
+    else
+        rev_room(rev_in, out, n);
+}
+#if GOLANA
+static uint8_t gl_norev;                               /* fx_buses leaves the reverb out (gl_chain runs it) */
+#endif
+
 static void fx_buses(const int32_t *cho_in, const int32_t *dly_in, const int32_t *rev_in, int32_t *wet,
                      uint32_t n)
 {
     uint32_t i, dl = delay_samples();
     int32_t fb = song.g[G_DFDBK] * 230, col = 2000 + song.g[G_DCOLOR] * 240;
     int32_t dmix = song.g[G_DMIX] * 258;
-    int32_t cdepth = song.g[G_CDEPTH] * 6, rt;
+    int32_t cdepth = song.g[G_CDEPTH] * 6;
     uint32_t cinc = LFO_INC[song.g[G_CRATE] & 127] / CTL;
     if (pf.ew1 && fb < THR_FB)
         fb += mulq16(THR_FB - fb, (uint32_t)pf.ew1 << 1);   /* ECHO THROW (perform.c): more feedback while held, 0.7
@@ -622,17 +641,13 @@ static void fx_buses(const int32_t *cho_in, const int32_t *dly_in, const int32_t
         y += mulq15(x << 1, dmix);
         wet[i] = y;
     }
-    rt = song.g[G_RTYPE];
-    rt = rt == 1 || rt == 2 ? rt : 0;
-    hl.side = 0;
-    if (rt != fx.rtype)
-        rev_switch(rev_in, wet, n, rt);
-    else if (rt == 2)
-        rev_hall(rev_in, wet, n);
-    else if (rt)
-        rev_spring(rev_in, wet, n);
-    else
-        rev_room(rev_in, wet, n);
+#if GOLANA
+    if (gl_norev) {                                     /* (Golana's ROUTING: the reverb comes later, gl_chain) */
+        hl.side = 0;
+        return;
+    }
+#endif
+    fx_reverb(rev_in, wet, n);
 }
 
 /* after the buses: HALL's stereo difference to the left and from the right of the dry mix (the wet bus adds the
@@ -672,6 +687,7 @@ static __attribute__((noinline)) void rev_side_mix(int32_t *l, int32_t *r, uint3
 enum { IT_OFF, IT_SOFT, IT_HARD, IT_FOLD, IT_FUZZ, IT_CRUSH, IT_PHASER, IT_FLANGER, IT_CHORUS,
 #if GOLANA
        IT_ENSEMBLE,                     /* (Golana's MOD FX) three chorus taps a third of a turn apart, no feedback */
+       IT_METAL,                        /* (Golana's MOD FX) a high-gain distortion with a strong mid hump (ins_metal) */
 #endif
        IT_N };
 _Static_assert(IT_N == NELEM(N_ITYPE), "N_ITYPE: one name per IT_*");
@@ -834,6 +850,49 @@ static __attribute__((noinline)) void ins_swept(ins_t *s, const track_t *t, int3
     }
 }
 
+#if GOLANA
+/* METAL (Golana's MOD FX): a heavy pedal-style distortion, after the classic high-gain pedals with a parametric mid:
+ * a tight low cut (~110 Hz) -> GAIN (A: 1x .. ~190x, squared) into a soft clip -> the MID hump (B: 0 .. ~+14 dB, a
+ * band-pass around MID FREQ added back) -> a second, harder clip (the hump drives it: the mids saturate first) ->
+ * the cabinet's low-pass (two one-poles, ~5.5 kHz) -> the mid hump again, half as strong (the pedal's post EQ) ->
+ * a level that keeps it near the dry sound's loudness -> DC blocker. C: MID FREQ, 200 Hz .. 5 kHz. Always all wet
+ * (MIX is the other types'). State in ins_t: the two band-passes in px[0..3], hp, lp1, lp2, dc */
+static __attribute__((noinline)) void ins_metal(ins_t *s, const track_t *t, int32_t *b, uint32_t n, int32_t tw)
+{
+    uint32_t i;
+    int32_t a = clamp(t->p[P_IA], 0, 127), g = 256 + a * a * 3;   /* GAIN, Q8 */
+    int32_t mid = clamp(t->p[P_IB], 0, 127) * 36;                 /* MID: the band-pass's share, Q10 (0 .. ~4.5) */
+    int32_t fc = (38 + clamp(t->p[P_IC], 0, 127) * 65 / 127) << 8;   /* MID FREQ: CUTOFF_HZ index 38 .. 103 */
+    int32_t kc = ins_lpk(105);                                    /* the cabinet: ~5.5 kHz */
+    int32_t k = 8192 - 92 * 7600 / 127;                           /* the band-passes' damping (a broad hump) */
+    tsvf_t c;
+    tsvf_coef_k(&c, fc, k);
+    for (i = 0; i < n; i++) {
+        int32_t x = b[i], v, y, bp;
+        s->w += clamp(tw - s->w, -SL_SLOPE, SL_SLOPE);
+        s->hp += ((x << 6) - s->hp) >> 6;                         /* ~110 Hz low cut (Q6) */
+        v = clamp(x - (s->hp >> 6), -131072, 131071) >> 3;       /* (x / 8: the gain stays in 32 bits) */
+        y = softclip(clamp((v * g) >> 8, -65535, 65535));        /* first stage */
+        bp = analog_tap(&c, k, y >> 1, &s->px[0], &s->px[1], 1u);   /* the hump: the band around MID FREQ */
+        y = softclip(clamp((y + ((bp * mid) >> 9)) * 2, -65535, 65535));   /* second stage, harder */
+        y <<= 4;                                                  /* (x16: the low-passes' rounding, as ins_drive) */
+        v = mulq16(y - s->lp1, (uint32_t)kc);
+        y = v + s->lp1;
+        s->lp1 = y + v;
+        v = mulq16(y - s->lp2, (uint32_t)kc);
+        y = v + s->lp2;
+        s->lp2 = y + v;
+        y = (y + 8) >> 4;
+        bp = analog_tap(&c, k, y >> 1, &s->px[2], &s->px[3], 1u);
+        y += (bp * mid) >> 11;                                    /* post EQ: the hump again, half */
+        y = (y * 3) >> 2;                                         /* level: near the dry sound's */
+        s->dc += ((y << 8) - s->dc) >> 9;
+        y -= s->dc >> 8;
+        b[i] = pf_mix(x, y, s->w);
+    }
+}
+#endif
+
 /* the INSERT at rest at once (mix_part: TYPE turned OFF while the part was silent, its fade never ran) */
 static __attribute__((noinline)) void ins_rest(track_t *t)
 {
@@ -842,32 +901,54 @@ static __attribute__((noinline)) void ins_rest(track_t *t)
 }
 
 /* the track's INSERT on its block b (mix_part, mix_spread): nothing while TYPE is OFF or MIX is 0 and faded */
+static int ins_apply(ins_t *s, const track_t *t, int32_t *b, uint32_t n);
 static __attribute__((noinline)) void track_insert(track_t *t, int32_t *b, uint32_t n)
 {
-    ins_t *s = &ins[(uint32_t)(t - trk) % NTRK];
+    t->ins_run = (uint8_t)ins_apply(&ins[(uint32_t)(t - trk) % NTRK], t, b, n);
+}
+/* the INSERT of track t's settings on b with the state s; 1 while it sounds (its wet share above 0) */
+static int ins_apply(ins_t *s, const track_t *t, int32_t *b, uint32_t n)
+{
     int32_t ty = clamp(t->p[P_ITYPE], 0, IT_N - 1), tw;
     if (s->type != ty && !s->w)                         /* faded out: the new type from rest */
         s->type = (uint8_t)ty;
     tw = s->type == ty && ty ? ins_mixq(t->p[P_IMIX]) : 0;
+#if GOLANA
+    if (s->type == ty && ty == IT_METAL)
+        tw = 32768;                                     /* (METAL: all wet) */
+#endif
     if (!s->w) {
-        if (!tw) {
-            t->ins_run = 0;
-            return;                                     /* dry: bit for bit */
-        }
+        if (!tw)
+            return 0;                                   /* dry: bit for bit */
         memset(s, 0, sizeof *s);                        /* starting: no stale line or filter */
         s->type = (uint8_t)ty;
     }
+#if GOLANA
+    if (s->type == IT_METAL)
+        ins_metal(s, t, b, n, tw);
+    else
+#endif
     if (s->type >= IT_PHASER)
         ins_swept(s, t, b, n, tw);
     else
         ins_drive(s, t, b, n, tw);
-    t->ins_run = s->w != 0;                             /* (mix_part calls again while it fades) */
+    return s->w != 0;                                   /* (mix_part calls again while it fades) */
 }
 
 /* one block of the whole mix (shared with hostsim.c): events -> each part (with its modulation matrix)
  * -> dist -> INSERT -> SLICER -> level / pan / sends -> buses -> master; out: stereo Q15 */
 static void events_block(uint32_t n);                    /* seq.c */
 static int32_t send_c[CTL], send_d[CTL], send_r[CTL], wet[CTL], mix_l[CTL], mix_r[CTL];
+
+/* Golana's ROUTING (core.h GL_ROUTE, of part 1's program): 0 MFX>DLY>REV, the MOD FX on part 1 before its sends, as
+ * always; 1 DLY>MFX>REV, the MOD FX on part 1's dry sound with its echoes, the reverb fed from what comes out of it;
+ * 2 DLY>REV>MFX, the MOD FX last, on everything (gl_chain). Part 1 only: Golana plays one part */
+#if GOLANA
+static int gl_route(void) { return trk[0].engine == ENGI_GOLANA ? clamp(trk[0].p[GL_ROUTE], 0, 2) : 0; }
+static int gl_post(const track_t *t) { return t == &trk[0] && gl_route(); }
+#else
+#define gl_post(t) 0
+#endif
 
 /* SPREAD (#148): a POLY or UNISON part whose SPRD is above 0. Its voices start left and right of PAN in turn (voice.c
  * voice_start; UNISON's detuned voices alternate), at PAN -/+ SPRD / 2 (SPRD 127: hard left and right), with the pan
@@ -893,7 +974,7 @@ static __attribute__((noinline)) void mix_spread(track_t *t, int32_t *b, uint32_
     for (i = 0; i < n; i++)
         d[i] = (d[i] << 1) - b[i];                      /* left - right */
     track_dist(t, b, n);
-    if (t->p[P_ITYPE] | t->ins_run)
+    if ((t->p[P_ITYPE] | t->ins_run) && !gl_post(t))
         track_insert(t, b, n);                          /* (the mono sum, as DIST) */
     slicer_track_sd(t, b, d, n);
     if ((pf.mute >> (t - trk)) & 1u)
@@ -938,7 +1019,7 @@ static void mix_part(track_t *t, uint32_t n)
         mix_spread(t, b, n);
     else {
         track_dist(t, b, n);
-        if (t->p[P_ITYPE] | t->ins_run)
+        if ((t->p[P_ITYPE] | t->ins_run) && !gl_post(t))
             track_insert(t, b, n);                      /* the INSERT (1.5): off, nothing */
         slicer_track(t, b, n);                          /* slicer.c: before the level, pan and sends */
         if ((pf.mute >> (t - trk)) & 1u)
@@ -1006,6 +1087,62 @@ static __attribute__((noinline)) void perf_master(int32_t *out, uint32_t n)
     }
 }
 
+#if GOLANA
+/* ROUTING 1 and 2 (gl_route): the dry mix and the delay, then the MOD FX of part 1 on both sides (ins[2], ins[3]: the
+ * idle parts' states) and the reverb before it (2) or after it, fed from it (1); the sum in mix_l / mix_r, wet 0 */
+static int32_t gl_buf[CTL];
+static void gl_mfx_lr(uint32_t n)
+{
+    uint32_t i;
+    track_t *t = &trk[0];
+    if (!(t->p[P_ITYPE] | ins[2].w | ins[3].w))
+        return;
+    for (i = 0; i < n; i++)
+        gl_buf[i] = clamp(mix_l[i], -1 << 29, 1 << 29) << 2;   /* (the insert works at a part's scale, x4 its mix) */
+    ins_apply(&ins[2], t, gl_buf, n);
+    for (i = 0; i < n; i++) {
+        mix_l[i] = gl_buf[i] >> 2;
+        gl_buf[i] = clamp(mix_r[i], -1 << 29, 1 << 29) << 2;
+    }
+    ins_apply(&ins[3], t, gl_buf, n);
+    for (i = 0; i < n; i++)
+        mix_r[i] = gl_buf[i] >> 2;
+}
+static __attribute__((noinline)) void gl_chain(uint32_t n)
+{
+    uint32_t i;
+    int32_t r = trk[0].p[P_REV] * 258, route = gl_route();
+    gl_norev = (uint8_t)(route == 1);
+    fx_buses(send_c, send_d, send_r, wet, n);           /* chorus, delay (and for 2 the reverb) into wet */
+    gl_norev = 0;
+    for (i = 0; i < n; i++) {
+        int32_t sd = dly_side_on ? dly_side[i] : 0;
+        mix_l[i] += wet[i] + sd;
+        mix_r[i] += wet[i] - sd;
+        wet[i] = 0;
+    }
+    if (route == 2) {
+        if (hl.side)
+            rev_side_mix(mix_l, mix_r, n);
+        gl_mfx_lr(n);
+        hl.side = 0;
+        return;
+    }
+    gl_mfx_lr(n);
+    for (i = 0; i < n; i++)
+        send_r[i] = mulq15(clamp((mix_l[i] + mix_r[i]) >> 1, -65535, 65535), r);
+    fx_reverb(send_r, wet, n);
+    for (i = 0; i < n; i++) {
+        mix_l[i] += wet[i];
+        mix_r[i] += wet[i];
+        wet[i] = 0;
+    }
+    if (hl.side)
+        rev_side_mix(mix_l, mix_r, n);
+    hl.side = 0;
+}
+#endif
+
 static void mix_block(int32_t *out, uint32_t n)
 {
     uint32_t i;
@@ -1019,16 +1156,23 @@ static void mix_block(int32_t *out, uint32_t n)
         mix_part(&trk[i], n);
     if (perf)
         perf_pre(mix_l, mix_r, send_d, send_r, n);
-    fx_buses(send_c, send_d, send_r, wet, n);
-    if (hl.side)
-        rev_side_mix(mix_l, mix_r, n);                  /* HALL: stereo */
 #if GOLANA
-    if (dly_side_on)
-        for (i = 0; i < n; i++) {                       /* the delay's CROSS / L/R: stereo */
-            mix_l[i] += dly_side[i];
-            mix_r[i] -= dly_side[i];
-        }
+    if (gl_route()) {
+        gl_chain(n);                                    /* (the MOD FX after the delay: mix_l / mix_r whole, no wet) */
+    } else
 #endif
+    {
+        fx_buses(send_c, send_d, send_r, wet, n);
+        if (hl.side)
+            rev_side_mix(mix_l, mix_r, n);              /* HALL: stereo */
+#if GOLANA
+        if (dly_side_on)
+            for (i = 0; i < n; i++) {                   /* the delay's CROSS / L/R: stereo */
+                mix_l[i] += dly_side[i];
+                mix_r[i] -= dly_side[i];
+            }
+#endif
+    }
     if (scope_mix)
         scope_take_mix(n);
     if (perf) {

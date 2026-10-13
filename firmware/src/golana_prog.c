@@ -11,8 +11,8 @@
 
 /* GL_ARPTYPE -> seq.c's AM_* (UP, DN, UPDN = ALT1, ALT2, RND, CHORD = TRIGGER) */
 static const uint8_t GL_AM[6] = {1, 2, 3, 15, 4, 14};
-/* GL_MFX -> fx.c's IT_* (OFF, CHORUS, FLANGER, ENSEMBLE, PHASER) */
-static const uint8_t GL_IT[5] = {0, 8, 7, 9, 6};
+/* GL_MFX -> fx.c's IT_* (OFF, CHORUS, FLANGER, ENSEMBLE, PHASER, METAL) */
+static const uint8_t GL_IT[6] = {0, 8, 7, 9, 6, 10};
 
 static void gl_defaults(int16_t *p)
 {
@@ -39,7 +39,7 @@ static void gl_defaults(int16_t *p)
     p[P_IC] = 50;                       /* .. feedback (fixed) */
     p[P_IMIX] = 127;
     p[P_SPRD] = 0;
-    p[GL_SPARE] = 0;
+    p[GL_ROUTE] = 0;                    /* MFX>DLY>REV */
     p[P_LSYNC] = 0;                     /* (the track LFO: idle) */
 }
 
@@ -47,13 +47,13 @@ static void gl_defaults(int16_t *p)
 static void gl_sync(track_t *t)
 {
     int16_t *p = t->p;
-    int32_t ty = clamp(p[GL_ARPTYPE], 0, 5), mf = clamp(p[GL_MFX], 0, 4);
+    int32_t ty = clamp(p[GL_ARPTYPE], 0, 5), mf = clamp(p[GL_MFX], 0, 5);
     p[P_AMODE] = (int16_t)(p[GL_ARPON] ? GL_AM[ty] : 0);
     p[P_ITYPE] = (int16_t)GL_IT[mf];
     p[P_APROB] = 127;
     p[P_LD_PIT] = p[P_LD_FLT] = p[P_LD_SHP] = p[P_LD_AMP] = 0;
     p[P_ED_FLT] = p[P_ED_PIT] = p[P_ED_SHP] = 0;
-    p[GL_SPARE] = 0;
+    p[GL_ROUTE] = (int16_t)clamp(p[GL_ROUTE], 0, 2);
     if (t == &trk[0]) {                 /* the delay and the reverb of the program that plays */
         song.g[G_DTIME] = (int16_t)clamp(p[GL_DTIME], 0, 12);
         song.g[G_DFDBK] = (int16_t)clamp(p[GL_DFDBK], 0, 120);

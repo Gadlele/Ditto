@@ -63,7 +63,7 @@ static const char *const N_SLDIV[] = {"1/8", "1/16", "1/32", "8T", "16T", "32T"}
 /* the INSERT's types (1.5, fx.c IT_*; append-only: stored). Its three values A B C mean what the type says (ins_desc) */
 static const char *const N_ITYPE[] = {"OFF", "SOFT", "HARD", "FOLD", "FUZZ", "CRUSH", "PHASR", "FLANG", "CHOR",
 #if GOLANA
-                                      "ENSMB",
+                                      "ENSMB", "METAL",
 #endif
 };
 /* CRUSH: BITS 1..16 and RATE (the held sample's rate, fx.c INS_HOLD) over the range in 16 even parts (0-terminated) */

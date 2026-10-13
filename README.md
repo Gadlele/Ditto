@@ -18,10 +18,11 @@ Golana is free software under the GPL-3.0, like Felucca. Felucca's original READ
 | LFO 1 / LFO 2 | WAVE (SAW, SQR, TRI, SIN, S&H), FREQ, KEY SYNC (OFF, TIMBRE, VOICE), TEMPO (sync to a note value) |
 | PATCH 1-4 | SOURCE (FEG, AEG, LFO1, LFO2, VELO, KBD), DEST (PITCH, OSC2, CTRL1, NOISE, CUTOFF, AMP, LFO2F), INTENSITY |
 | ARP | ON, TYPE (UP, DOWN, ALT1, ALT2, RANDOM, TRIGGER), RANGE 1-4, RES, GATE, SWING, LATCH, KEY SYNC, LAST STEP and steps on/off |
-| MOD FX | TYPE (CHORUS, FLANGER, ENSEMBLE, PHASER), SPEED, DEPTH, MIX |
+| MOD FX | TYPE (CHORUS, FLANGER, ENSEMBLE, PHASER), SPEED, DEPTH, MIX; TYPE METAL (a high-gain distortion with a strong mid hump): GAIN, MID, MID FREQ (200 Hz - 5 kHz) |
 | DELAY | TYPE (STEREO, CROSS, L/R), TIME (tempo), FEEDBACK, LEVEL |
 | REVERB | TYPE (ROOM, SPRING, HALL), SIZE, DAMP, LEVEL |
 | GLOBAL | TEMPO, TUNE, CLOCK (INT, USB, TRS), MIDI IN (ALL, CH 1) |
+| ROUTE | FX ORDER, saved with the program: MFX>DLY>REV (the default), DLY>MFX>REV (the MOD FX after the delay, the reverb fed from it), DLY>REV>MFX (the MOD FX last) |
 
 32 programs: 1-16 hold the factory sounds until written over (FAT BASS, ACID LINE, GLIDE LEAD, UNISON SAW,
 SYNC PAD, BRIGHT ARP, 80S BRASS, ORGAN, SOFT PAD, PHASE PAD, SLOW ARP, SOFT BELLS, DRONE, WARM LEAD, DARK UNISON,
@@ -37,7 +38,7 @@ S&H TEXTURE), 17-32 start as INIT. MIDI Program Change 0-31 picks a program.
 | PRESETS | the program (it loads as you turn; edits not written are lost, as on the original) |
 | HOME | PERFORM: cutoff, resonance, EG int, LFO 1 rate |
 | EDIT / SCL / ENV / LFO | OSC 1, OSC 2, MIXER / FILTER, KEY TRACK / FILTER EG, AMP EG / LFO 1, LFO 2 (press again for the next) |
-| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL / PATCH 1-4 / ARP, TIMING, STEPS / MOD FX, DELAY, REVERB |
+| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL, ROUTE / PATCH 1-4 / ARP, TIMING, STEPS / MOD FX, DELAY, REVERB |
 
 The screen shows the open page as a tab, "BUTTON · PAGE" in that button's own colour, with the button's other pages as dark tabs beside it.
 | ARP | the arpeggiator on / off |

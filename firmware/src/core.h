@@ -140,7 +140,8 @@ enum {                          /* per-track parameters */
 #define GL_RSIZE P_LPHASE
 #define GL_RDAMP P_LFADE
 #define GL_MFX P_LTRIG
-#define GL_SPARE P_LPOL                          /* (kept 0: voice.c reads it with P_LD_AMP, which stays 0) */
+#define GL_ROUTE P_LPOL                          /* the effects' order (fx.c gl_route); voice.c reads P_LPOL only
+                                                  * with P_LD_AMP (0 here) and for the track LFO (unused here) */
 #define GL_P1SRC P_M1SRC                         /* PATCH k (0..3): SRC GL_P1SRC + 3k, DST + 1, INT + 2 */
 #define GL_P1DST P_M1DST
 #define GL_P1INT P_M1AMT

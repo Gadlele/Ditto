@@ -31,7 +31,8 @@ static const char *const N_GPDST[] = {"PITCH", "OSC2", "CTRL1", "NOISE", "CUTOFF
 static const char *const N_GARPT[] = {"UP", "DOWN", "ALT1", "ALT2", "RANDOM", "TRIGGER"};
 static const char *const N_GDTYPE[] = {"STEREO", "CROSS", "L/R"};
 static const char *const N_GRTYPE[] = {"ROOM", "SPRING", "HALL"};
-static const char *const N_GMFX[] = {"OFF", "CHORUS", "FLANGER", "ENSEMBL", "PHASER"};
+static const char *const N_GMFX[] = {"OFF", "CHORUS", "FLANGER", "ENSEMBL", "PHASER", "METAL"};
+static const char *const N_GROUTE[] = {"MFX>DLY>REV", "DLY>MFX>REV", "DLY>REV>MFX"};
 static const char *const N_GONOFF[] = {"OFF", "ON"};
 static const char *const N_GDTIME[] = {"1/4", "1/8", "1/16", "1/32", "1/8T", "16T", "1/2", "1/1", "2BAR", "4BAR",
                                        "1/8D", "16D", "1/4D"};
@@ -79,7 +80,7 @@ static const param_desc_t GOL_TP[P_COUNT] = {
     [GL_RSIZE] = GPD("RSIZE", F_PCT, 0, 127, 95),
     [GL_RDAMP] = GPD("RDAMP", F_PCT, 0, 127, 60),
     [GL_MFX] = GPE("MFX", N_GMFX, 0),
-    [GL_SPARE] = GPD("-", F_INT, 0, 0, 0),
+    [GL_ROUTE] = GPE("ROUTE", N_GROUTE, 0),
 #define GPATCH(k, s, d) [GL_P1SRC + 3 * (k)] = GPE("SRC", N_GPSRC, s), [GL_P1DST + 3 * (k)] = GPE("DST", N_GPDST, d), \
                         [GL_P1INT + 3 * (k)] = GPD("INT", F_BIPCT, -63, 63, 0)
     GPATCH(0, GS_LFO2, GD_PITCH), GPATCH(1, GS_FEG, GD_PITCH), GPATCH(2, GS_LFO1, GD_CUT), GPATCH(3, GS_LFO1, GD_AMP),
