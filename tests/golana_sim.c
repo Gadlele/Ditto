@@ -216,6 +216,51 @@ int main(int argc, char **argv)
         turn(EN_PRESET, 1);
         check(trk[0].step[1].time == ST_NOTE && trk[0].p[P_SLEN] == 4, "loaded back: the steps and LENGTH");
     }
+    /* 1.0: WRITE while the sequencer plays: STOP TO SAVE, the WRITE screen stays and nothing is written; PLAY there
+     * stops it, then SAVE writes */
+    web_buttons(1u << B_PLAY);
+    render(60);
+    web_buttons(0);
+    render(200);
+    check(song.playing, "PLAY before WRITE");
+    press(B_SAVE);
+    turn(EN_PRESET, 25 - (int32_t)gu.save_slot);
+    press(B_SAVE);
+    check(gu.save && !strcmp(gu.toast, "STOP TO SAVE") && !gu_user(25), "WRITE while playing: STOP TO SAVE, nothing written");
+    press(B_PLAY);
+    render(200);
+    check(gu.save && !song.playing, "PLAY on the WRITE screen stops the sequencer");
+    press(B_SAVE);
+    check(!gu.save && gu.prog == 25 && gu_user(25) && !strcmp(gu.toast, "WRITTEN"), "stopped: SAVE writes");
+    /* 1.0: CC74 / CC71 move GOLANA's CUTOFF and RESO (the standard CC map) */
+    web_midi(0xB0, 74, 0);
+    render(40);
+    check(trk[0].p[GL_CUTOFF] == 0, "CC74 0: CUTOFF 0");
+    web_midi(0xB0, 74, 127);
+    render(40);
+    check(trk[0].p[GL_CUTOFF] == 127, "CC74 127: CUTOFF 127");
+    web_midi(0xB0, 71, 127);
+    render(40);
+    check(trk[0].p[GL_RESO] == 127, "CC71 127: RESO 127");
+    /* 1.0: the named values' ranges end at their last name (gu_range: the lists' NELEM, no 0 at their end) */
+    {
+        uint32_t pg, k, seen = 0;
+        for (pg = 0; pg < GU_NPAGE; pg++)
+            for (k = 0; k < 4u; k++) {
+                const gu_par_t *q = &GU_PAGES[pg].k[k];
+                int32_t lo, hi;
+                if (!q->names)
+                    continue;
+                gu_range(q, &lo, &hi);
+                check(lo == 0 && hi == (int32_t)q->nn - 1 && q->nn > 1u, "a list's range: its names");
+                seen |= (q->id == P_VOICE) | (q->id == P_AHOLD) << 1;
+                if (q->id == P_VOICE)
+                    check(hi == 3, "ASSIGN: POLY .. UNISON");
+                if (q->id == P_AHOLD)
+                    check(hi == 1, "LATCH: OFF / ON");
+            }
+        check(seen == 3u, "ASSIGN and LATCH are on the pages");
+    }
     /* (UPDATE MODE's countdown is main.c's loop: not in the browser build) */
     printf("%s: %d failures\n", fails ? "FAIL" : "ok", fails);
     return fails ? 1 : 0;

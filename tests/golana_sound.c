@@ -138,7 +138,7 @@ int main(int argc, char **argv)
         t0 = now_ns();
         phrase((int)arp);
         t1 = now_ns();
-        render_ms(9000, 1);                       /* the release, the delay and reverb tails */
+        render_ms(15000, 1);                      /* the release, the delay and reverb tails (SLOW ARP's long echoes: ~12 s) */
         tail = 0;
         for (i = rec_n > 44100u ? rec_n - 44100u : 0; i < rec_n; i++)
             tail = abs(rec[i]) > tail ? abs(rec[i]) : tail;

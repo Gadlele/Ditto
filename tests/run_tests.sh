@@ -278,6 +278,16 @@ if [ -f build/gen/felucca_tables.h ]; then
     mkdir -p build/ui_fm4/ppm build/ui_fm4_slot
     run "UI renders with FELUCCA_FM4=1: DIGITAL's screens (EDIT, OP ENV, the 8 algorithm charts), lint, GREY gray, MONO neutral" \
         "$OUT/ui_render_fm4" build/ui_fm4 build/ui_fm4_slot
+    $CC -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_sim" tests/golana_sim.c -lm
+    mkdir -p build/golana_sim
+    run "GOLANA on the simulated FM-1: pages, keys, ARP, PRESETS, WRITE (and STOP TO SAVE), CC74 / CC71, the sequencer" \
+        "$OUT/golana_sim" build/golana_sim
+    $CC -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_preview" tests/golana_preview.c -lm
+    mkdir -p build/golana_preview
+    run "GOLANA's screens (PPM in build/golana_preview)" "$OUT/golana_preview" build/golana_preview
+    $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_sound" tests/golana_sound.c -lm
+    mkdir -p build/golana_sound
+    run "GOLANA's 16 factory programs: no clipping, not silent, their tails end" "$OUT/golana_sound" build/golana_sound
     $CC -w -Ibuild/gen -Ifirmware/src -o "$OUT/audio_test" tests/audio_test.c -lm
     run "audio: overload protection, bounded fades and DMA diagnostics" "$OUT/audio_test"
     $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/click_test" tests/click_test.c -lm
@@ -403,6 +413,9 @@ else
         $SCC -o "$A/$t" tests/$t.c -lm
         run "ASan/UBSan: $t" "$A/$t"
     done
+    $SCC -o "$A/golana_sim" tests/golana_sim.c -lm
+    mkdir -p "$A/golana_sim_out"
+    run "ASan/UBSan: golana_sim" "$A/golana_sim" "$A/golana_sim_out"
     $SCC -o "$A/fuzz_ed" tests/fuzz_ed.c -lm
     run "ASan/UBSan fuzz: editor SysEx and raw USB-MIDI packets (20000, seed 7)" "$A/fuzz_ed" 20000 7
     $SCC -o "$A/fuzz_proj" tests/fuzz_proj.c -lm
