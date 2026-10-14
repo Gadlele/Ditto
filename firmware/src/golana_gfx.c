@@ -332,3 +332,111 @@ static void gu_draw_graph(uint32_t g)
     }
     cv_blit(0, 60);
 }
+
+/* ---------------------------------------------------------------- SPLASH --- */
+/* The power-on splash (3 s, NIGHT's colours whatever the palette): five stripes come in from the left one after the
+ * other, slanted at their ends, as on the synths of the eighties; GOLANA in block letters is uncovered by a wipe and a
+ * chrome glint crosses it; the stripes close into a frame, top and bottom, and the version comes up. Drawn at ~30
+ * frames a second in two halves of 240 x 120 (the canvas). main.c and the browser build run it (gu_splash_step); a key
+ * or a button pressed skips it (the key stays silent: seq.c kb_boot_hold) */
+#define GSP_MS 3000u
+static const uint32_t GSP_STRIPE[5] = {0xFFB547, 0xFF805C, 0xECD660, 0xF07A9C, 0xB092FF};   /* NIGHT's buttons */
+#define GSP_BG 0x0E1118u
+#define GSP_TEXT 0xE8E6E1u
+#define GSP_MID 0x969CACu
+static const uint8_t GSP_GLYPH[6][7] = {                /* G O L A N A, 5 x 7 (bit 4 the left column) */
+    {0x0E, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0F}, {0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E},
+    {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F}, {0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11},
+    {0x11, 0x19, 0x15, 0x15, 0x13, 0x11, 0x11}, {0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11},
+};
+static uint16_t gsp_rgb(uint32_t c) { return RGB((c >> 16) & 255u, (c >> 8) & 255u, c & 255u); }
+static uint16_t gsp_mix(uint32_t a, uint32_t b, int32_t k)   /* a .. b, k 0..1000 */
+{
+    uint32_t i, o = 0;
+    k = clamp(k, 0, 1000);
+    for (i = 0; i < 24u; i += 8u) {
+        int32_t x = (int32_t)((a >> i) & 255u), y = (int32_t)((b >> i) & 255u);
+        o |= (uint32_t)(x + (y - x) * k / 1000) << i;
+    }
+    return gsp_rgb(o);
+}
+static int32_t gsp_ease(int32_t t, int32_t t0, int32_t len)  /* smoothstep of (t - t0) / len, 0..1000 */
+{
+    int32_t p = clamp((t - t0) * 1000 / len, 0, 1000);
+    return p * p / 1000 * (3000 - 2 * p) / 1000;
+}
+/* the whole picture at t ms, on the canvas (cv_oy: the half drawn) */
+static void gsp_draw(int32_t t)
+{
+    int32_t i, r, frame = gsp_ease(t, 2000, 600), wipe = gsp_ease(t, 900, 600) * 240 / 1000;
+    for (i = 0; i < 5; i++) {                           /* the stripes, 9 px, 4 apart, from y 150 */
+        int32_t y = 150 + i * 13, x1 = -40 + gsp_ease(t, i * 120, 550) * 320 / 1000;
+        uint16_t c = gsp_rgb(GSP_STRIPE[i]);
+        if (frame <= 0) {
+            for (r = 0; r < 9; r++)                     /* (the right end slanted: 18 px over the stripe) */
+                cv_rect(0, y + r, x1 - 18 * r / 9, 1, c);
+        } else {                                        /* each thins to a 2 px line of the frame, 3 on top, 2 below */
+            int32_t th = 9 - 9 * frame / 1000, fy = i < 3 ? 18 + i * 5 : 222 - (i - 3) * 5;
+            cv_rect(0, y + (fy - y) * frame / 1000, 240, th < 2 ? 2 : th, c);
+        }
+    }
+    if (t > 900) {                                      /* GOLANA: 6 x 6 px blocks (5 lit), 36 px a letter, from 15, 75 */
+        int32_t sweep = t < 1500 ? -30 : t > 2000 ? 400 : (t - 1500) * 300 / 500 - 30, k, x, y;
+        for (k = 0; k < 6; k++)
+            for (y = 0; y < 7; y++)
+                for (x = 0; x < 5; x++) {
+                    int32_t px = 15 + k * 36 + x * 6, d = px - sweep;
+                    if (!((GSP_GLYPH[k][y] >> (4 - x)) & 1u) || px > wipe)
+                        continue;
+                    /* silver until the glint (a white band, 14 px each side) has passed over it, then the text's */
+                    cv_rect(px, 75 + y * 6, 5, 5, d > -14 && d < 14 ? gsp_mix(GSP_TEXT, 0xFFFFFFu, 1000 - (d < 0 ? -d : d) * 1000 / 14)
+                                                  : d >= 14 ? gsp_mix(GSP_TEXT, GSP_BG, 420) : gsp_rgb(GSP_TEXT));
+                }
+    }
+    if (t > 2300) {                                     /* the version, faded in under the name */
+        static const char V[] = FELUCCA_VERSION " \xB7 by Gadlele";
+        cv_text(120 - text_w(&AF_S, V) / 2, 128, &AF_S, V, gsp_mix(GSP_BG, GSP_MID, gsp_ease(t, 2300, 400)));
+    }
+}
+static void gu_splash_frame(uint32_t t)
+{
+    uint32_t h;
+    for (h = 0; h < 2u; h++) {
+        cv_begin(240, 120, gsp_rgb(GSP_BG));
+        cv_oy = -(int32_t)(h * 120u);
+        gsp_draw((int32_t)t);
+        cv_oy = 0;
+        cv_blit(0, h * 120u);
+    }
+    lcd_sync();
+}
+static struct { uint32_t last, notes, btn; } gsp;
+static void gu_splash_start(void)
+{
+    gsp.notes = fm1_in.notes;                           /* (held at power-on: a press after it skips) */
+    gsp.btn = fm1_in.buttons;
+    gsp.last = 0xFFFFFFFFu;
+}
+/* t ms into the splash: the frame due drawn (one each 33 ms); 1 = over (its 3 s, or a key / button pressed) */
+static int gu_splash_step(uint32_t t)
+{
+    if (t >= GSP_MS || (fm1_in.notes & ~gsp.notes) || (fm1_in.buttons & ~gsp.btn)) {
+        uint32_t cur, ch, k;
+        fm1_irq_off();                                  /* the keys down now stay silent until let go, as under the */
+        cur = fm1_in.notes;                             /* splash (seq.c keyboard_block, kb_boot_hold): the key that */
+        ch = cur ^ kb_prev;                             /* skipped it plays nothing */
+        for (k = 0; k < 27u; k++)
+            if ((ch & cur) >> k & 1u)
+                kb_note[k] = KB_SILENT;
+        kb_prev = cur;
+        fm1_irq_on();
+        return 1;
+    }
+    gsp.notes &= fm1_in.notes;                          /* (let go: pressed again, it skips) */
+    gsp.btn &= fm1_in.buttons;
+    if (gsp.last == 0xFFFFFFFFu || t - gsp.last >= 33u) {
+        gsp.last = t;
+        gu_splash_frame(t);
+    }
+    return 0;
+}

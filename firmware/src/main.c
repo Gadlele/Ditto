@@ -155,7 +155,11 @@ static void fm1_main(void)
     settings_init();
     usb_serial_apply();                                 /* (#67: the saved USB SERIAL before usb_start) */
     lcd_init();
+#if GOLANA
+    gu_splash_frame(0);                   /* Golana's animated splash, its first frame (golana_gfx.c) */
+#else
     draw_splash();                                      /* ui_draw.c (1.1.5) */
+#endif
     if (felucca_dbg.magic != DBG_MAGIC) {
         memset(&felucca_dbg, 0, sizeof felucca_dbg);
         felucca_dbg.magic = DBG_MAGIC;
@@ -195,10 +199,19 @@ static void fm1_main(void)
 #if !GOLANA                                   /* (Golana: no session to bring back, its programs are its memory) */
     autosave_boot(boot_clean);                /* (1.2) the last session's music, under the splash */
 #endif
+#if GOLANA                                    /* Golana's animated splash (golana_gfx.c): 3 s, a key or a button skips it */
+    gu_splash_start();
+    for (ms = fm1_ms; !gu_splash_step(fm1_ms - ms);) {
+        fm1_delay_ms(5);
+        master_poll();
+        fm1_wdt_feed();
+    }
+#else
     for (ms = 0; ms < 400u; ms += 10u) {      /* the splash; the pot followed (MIDI IN plays under it) */
         fm1_delay_ms(10);
         master_poll();
     }
+#endif
     kb_boot_hold = 0;
     lcd_fill(0, 0, 240, 240, T_BG);
     scrn.idle = fm1_ms;                        /* (MENU > SCREEN OFF: from here) */

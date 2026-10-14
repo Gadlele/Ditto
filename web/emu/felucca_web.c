@@ -251,6 +251,9 @@ static void cdc_task(void) {}
 
 /* --------------------------------------------------------- the device --- */
 static uint32_t web_booted, web_boot_ms, web_last_frame;
+#if GOLANA
+static uint32_t web_splash_t0;                 /* main.c: Golana's splash runs from here (web_ms) */
+#endif
 
 /* main.c fm1_main's boot, up to the main loop (no USB, no UART, no panel setup) */
 static void web_power_on(void)
@@ -259,7 +262,11 @@ static void web_power_on(void)
     settings_init();
     usb_serial_apply();
     lcd_init();
+#if GOLANA
+    gu_splash_frame(0);                   /* Golana's animated splash, its first frame (golana_gfx.c) */
+#else
     draw_splash();                        /* main.c: the splash (ui_draw.c) */
+#endif
     memset(&felucca_dbg, 0, sizeof felucca_dbg);
     felucca_dbg.magic = DBG_MAGIC;
     fm1_input_init();
@@ -276,7 +283,13 @@ static void web_power_on(void)
 #if !GOLANA
     autosave_boot(boot_clean);            /* main.c: the last session's music (1.2, project.c) */
 #endif
+#if GOLANA
+    gu_splash_start();                    /* main.c: Golana's animated splash, 30 ms on (web_ms runs it) */
+    web_splash_t0 = fm1_ms + 30u;
+    web_boot_ms = fm1_ms + 30u + GSP_MS;
+#else
     web_boot_ms = fm1_ms + 430u;         /* main.c: 30 + 400 ms before the first frame */
+#endif
     web_booted = 1;
 }
 
@@ -325,6 +338,10 @@ static void web_ms(void)
         }
         web_half ^= 1u;
     }
+#if GOLANA
+    if (web_booted && web_boot_ms && (int32_t)(fm1_ms - web_splash_t0) >= 0 && gu_splash_step(fm1_ms - web_splash_t0))
+        web_boot_ms = fm1_ms;                             /* main.c: its 3 s over, or skipped */
+#endif
     if (!web_booted || (int32_t)(fm1_ms - web_boot_ms) < 0)
         return;
     if (web_boot_ms) {                                    /* main.c: the splash goes, the loop starts */

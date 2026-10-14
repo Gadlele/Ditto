@@ -73,7 +73,19 @@ int main(int argc, char **argv)
         dir = argv[1];
     web_nor_erase();
     web_boot();
-    render(700);
+    /* the splash (golana_gfx.c): 3 s of animation, then the UI; a key skips it and stays silent */
+    render(1600);
+    shot("00_splash_1600ms");
+    check(web_boot_ms != 0, "1.6 s after power-on: the splash still runs");
+    render(500);
+    shot("00_splash_2100ms");
+    peak = 0;
+    web_keys(1u << 12);                           /* a key: the splash goes at once */
+    render(100);
+    check(web_boot_ms == 0, "a key skips the splash");
+    check(peak < 0.001f, "  the key that skipped it is silent");
+    web_keys(0);
+    render(300);
     shot("00_boot");
     check(trk[0].eng_req == ENGI_GOLANA && trk[0].engine == ENGI_GOLANA, "part 1 plays GOLANA");
     check(gu.prog == 0 && gu.ready, "program 1 at power-on");
