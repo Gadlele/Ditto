@@ -224,6 +224,9 @@ static const uint8_t MIDI_CC_ENG[NENGINES] = {
 #if FELUCCA_SLICE
     0x80,                                             /* SLICE TONE */
 #endif
+#if GOLANA
+    0x80,                                             /* GOLANA CUTOFF (its RESO is no E value: below) */
+#endif
 };
 /* a CC sets parameter id of track t as a knob would: 0..127 over its range */
 static void midi_cc_set(track_t *t, uint32_t id, uint32_t value)
@@ -293,6 +296,12 @@ static void __attribute__((noinline)) midi_cc_map(track_t *t, uint32_t cc, uint3
     if (id >= MCC_CUT) {
         if (id == 0xFFFFu)
             return;
+#if GOLANA
+        if (id == MCC_RES && eng_idx(t->eng_req) == ENGI_GOLANA) {
+            midi_cc_set(t, GL_RESO, value);           /* (core.h: RESO in a borrowed slot) */
+            return;
+        }
+#endif
         e = MIDI_CC_ENG[eng_idx(t->eng_req)] >> (id == MCC_CUT ? 4 : 0) & 15u;
         if (!e)
             return;
