@@ -64,7 +64,8 @@ static uint8_t gu_pi, gu_view;                  /* the palette, HOME's drawing (
 /* virtual parameters (not a track parameter of part 1) */
 enum { GV_NONE = 0xFF, GV_RES = 200, GV_BPM, GV_TUNE, GV_CLOCK, GV_STEP, GV_STEPON, GV_MIDI, GV_PAL, GV_VIEW,
        GV_SSTEP, GV_SNOTE, GV_STYPE, GV_SFLAG, GV_SLEN };   /* (the step sequencer: REC) */
-typedef struct { uint8_t id; const char *label; const char *const *names; } gu_par_t;
+typedef struct { uint8_t id; const char *label; const char *const *names; uint8_t nn; } gu_par_t;   /* nn: names' count */
+#define GN(a) a, (uint8_t)NELEM(a)                    /* (the lists have no 0 at their end: GOL_TP's GPE counts them) */
 typedef struct { uint8_t btn; const char *tab, *tshort; gu_par_t k[4]; } gu_page_t;
 static const char *const N_GVOICE[] = {"POLY", "MONO", "LEGATO", "UNISON"};
 static const char *const N_GRES[] = {"1/32", "1/24", "1/16", "1/12", "1/8", "1/4"};
@@ -99,17 +100,17 @@ static const gu_page_t GU_PAGES[] = {
 #undef GU_PATCH
     {B_GLO, "AMP", "AMP", {{P_LEVEL, "LEVEL", 0}, {P_PAN, "PANPOT", 0}, {GL_DIST, "DIST", 0}, {P_SPRD, "SPREAD", 0}}},
     {B_GLO, "VOICE", "VOICE",
-     {{P_VOICE, "ASSIGN", N_GVOICE}, {P_DETUNE, "DETUNE", 0}, {P_GLIDE, "PORTA", 0}, {GL_EGRESET, "EG RESET", 0}}},
+     {{P_VOICE, "ASSIGN", GN(N_GVOICE)}, {P_DETUNE, "DETUNE", 0}, {P_GLIDE, "PORTA", 0}, {GL_EGRESET, "EG RESET", 0}}},
     {B_GLO, "GLOBAL", "GLOB",
-     {{GV_BPM, "TEMPO", 0}, {GV_TUNE, "TUNE", 0}, {GV_CLOCK, "CLOCK", N_GCLOCK}, {GV_MIDI, "MIDI IN", N_GMIDI}}},
+     {{GV_BPM, "TEMPO", 0}, {GV_TUNE, "TUNE", 0}, {GV_CLOCK, "CLOCK", GN(N_GCLOCK)}, {GV_MIDI, "MIDI IN", GN(N_GMIDI)}}},
     {B_GLO, "SETUP", "SETUP", {{GL_ROUTE, "FX ORDER", 0}, {GV_PAL, "PALETTE", 0}, {GV_VIEW, "HOME", 0}, {GV_NONE, 0, 0}}},
-    {B_SEQ, "ARP", "ARP", {{GL_ARPON, "ARP", 0}, {GL_ARPTYPE, "TYPE", 0}, {P_AOCT, "RANGE", 0}, {GV_RES, "RES", N_GRES}}},
+    {B_SEQ, "ARP", "ARP", {{GL_ARPON, "ARP", 0}, {GL_ARPTYPE, "TYPE", 0}, {P_AOCT, "RANGE", 0}, {GV_RES, "RES", GN(N_GRES)}}},
     {B_SEQ, "TIMING", "TIMING",
-     {{P_AGATE, "GATE", 0}, {P_ASWING, "SWING", 0}, {P_AHOLD, "LATCH", N_GONOFF}, {GL_ARPKSYNC, "KEY SYNC", 0}}},
+     {{P_AGATE, "GATE", 0}, {P_ASWING, "SWING", 0}, {P_AHOLD, "LATCH", GN(N_GONOFF)}, {GL_ARPKSYNC, "KEY SYNC", 0}}},
     {B_SEQ, "STEPS", "STEPS",
-     {{GL_ARPLAST, "LAST STEP", 0}, {GV_STEP, "STEP", 0}, {GV_STEPON, "ON / OFF", N_GONOFF}, {GV_NONE, 0, 0}}},
+     {{GL_ARPLAST, "LAST STEP", 0}, {GV_STEP, "STEP", 0}, {GV_STEPON, "ON / OFF", GN(N_GONOFF)}, {GV_NONE, 0, 0}}},
     {B_REC, "PATTERN", "PATTERN",
-     {{GV_SSTEP, "STEP", 0}, {GV_SNOTE, "NOTE", 0}, {GV_STYPE, "TYPE", N_GSTYPE}, {GV_SFLAG, "ACC / SLIDE", N_GSFLAG}}},
+     {{GV_SSTEP, "STEP", 0}, {GV_SNOTE, "NOTE", 0}, {GV_STYPE, "TYPE", GN(N_GSTYPE)}, {GV_SFLAG, "ACC / SLIDE", GN(N_GSFLAG)}}},
     {B_REC, "SETUP", "SETUP",
      {{GV_SLEN, "LENGTH", 0}, {P_SDIV, "RES", 0}, {P_SGATE, "GATE", 0}, {P_SSWING, "SWING", 0}}},
     {B_FX, "MOD FX", "MOD FX", {{GL_MFX, "TYPE", 0}, {P_IA, "SPEED", 0}, {P_IB, "DEPTH", 0}, {P_IMIX, "MIX", 0}}},
@@ -247,11 +248,8 @@ static void gu_range(const gu_par_t *q, int32_t *lo, int32_t *hi)
     case GV_SLEN: *lo = 1; *hi = 16; return;
     default:
         if (q->names) {
-            uint32_t n = 0;
-            while (q->names[n])
-                n++;
             *lo = 0;
-            *hi = (int32_t)n - 1;
+            *hi = (int32_t)q->nn - 1;
             if (q->id < P_COUNT && gu_desc(q->id)->max < *hi)
                 *hi = gu_desc(q->id)->max;
             return;
@@ -952,9 +950,13 @@ static void gu_input(void)
         b = panel_btn_of(id);
         if (b >= NB)
             continue;
-        if (gu.save) {
+        if (gu.save && b != B_PLAY) {                /* (PLAY works on WRITE: STOP TO SAVE can be done there) */
             if (b == B_SAVE) {
                 int rc;
+                if (transport_busy()) {                  /* (no flash erase while playing: up_put would refuse it, its */
+                    gu_say("STOP TO SAVE", 0);           /* message is Felucca's UI's) the WRITE screen stays */
+                    continue;
+                }
                 if (!gu.sname[0])
                     str_cpy(gu.sname, "PROGRAM", 13);
                 rc = gu_store(gu.save_slot, gu.sname);
@@ -963,8 +965,8 @@ static void gu_input(void)
                     str_cpy(gu.name, gu.sname, 13);
                     gu.dirty = 0;
                     gu_say("WRITTEN", 0);
-                } else if (rc != 2) {
-                    gu_say("NOT WRITTEN", 0);
+                } else {
+                    gu_say("NOT WRITTEN", 0);            /* (a flash error: the slot holds what it held) */
                 }
                 gu.save = 0;
             } else if (b == B_HOME) {
