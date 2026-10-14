@@ -1098,11 +1098,11 @@ static void gl_mfx_lr(uint32_t n)
     if (!(t->p[P_ITYPE] | ins[2].w | ins[3].w))
         return;
     for (i = 0; i < n; i++)
-        gl_buf[i] = clamp(mix_l[i], -1 << 29, 1 << 29) << 2;   /* (the insert works at a part's scale, x4 its mix) */
+        gl_buf[i] = clamp(mix_l[i], -(1 << 29), (1 << 29) - 1) * 4;   /* (the insert works at a part's scale, x4 its mix) */
     ins_apply(&ins[2], t, gl_buf, n);
     for (i = 0; i < n; i++) {
         mix_l[i] = gl_buf[i] >> 2;
-        gl_buf[i] = clamp(mix_r[i], -1 << 29, 1 << 29) << 2;
+        gl_buf[i] = clamp(mix_r[i], -(1 << 29), (1 << 29) - 1) * 4;
     }
     ins_apply(&ins[3], t, gl_buf, n);
     for (i = 0; i < n; i++)
