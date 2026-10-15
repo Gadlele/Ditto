@@ -165,6 +165,11 @@ cd "$(dirname "$0")/.."
 OUT=build/host
 mkdir -p "$OUT"
 CC="${CC:-cc} -O1 -Wall -Wno-unused-function"
+# Golana: Felucca's tests build the tree as Felucca (GOLANA=0): they test the code Golana keeps from it (the engines, the
+# sequencer, the stores, the formats, the protocol, the updater) through Felucca's interface, which Golana replaces.
+# Golana's own tests (golana_*) build it as Golana: G1.
+G1="-UGOLANA -DGOLANA=1"
+CC="$CC -DGOLANA=0"
 fail=0
 run() { echo "== $1"; shift; "$@" || fail=1; }
 
@@ -278,14 +283,14 @@ if [ -f build/gen/felucca_tables.h ]; then
     mkdir -p build/ui_fm4/ppm build/ui_fm4_slot
     run "UI renders with FELUCCA_FM4=1: DIGITAL's screens (EDIT, OP ENV, the 8 algorithm charts), lint, GREY gray, MONO neutral" \
         "$OUT/ui_render_fm4" build/ui_fm4 build/ui_fm4_slot
-    $CC -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_sim" tests/golana_sim.c -lm
+    $CC $G1 -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_sim" tests/golana_sim.c -lm
     mkdir -p build/golana_sim
     run "GOLANA on the simulated FM-1: pages, keys, ARP, PRESETS, WRITE (and STOP TO SAVE), CC74 / CC71, the sequencer" \
         "$OUT/golana_sim" build/golana_sim
-    $CC -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_preview" tests/golana_preview.c -lm
+    $CC $G1 -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_preview" tests/golana_preview.c -lm
     mkdir -p build/golana_preview
     run "GOLANA's screens (PPM in build/golana_preview)" "$OUT/golana_preview" build/golana_preview
-    $CC -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_sound" tests/golana_sound.c -lm
+    $CC $G1 -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_sound" tests/golana_sound.c -lm
     mkdir -p build/golana_sound
     run "GOLANA's 16 factory programs: no clipping, not silent, their tails end" "$OUT/golana_sound" build/golana_sound
     $CC -w -Ibuild/gen -Ifirmware/src -o "$OUT/audio_test" tests/audio_test.c -lm
@@ -403,7 +408,7 @@ elif ! san_ok; then
 else
     mkdir -p "$OUT/asan"
     A="$OUT/asan"
-    SCC="${CC%% *} $SAN -Ibuild/gen -Ifirmware/src"
+    SCC="${CC%% *} $SAN -DGOLANA=0 -Ibuild/gen -Ifirmware/src"   # (Felucca's tests as Felucca; golana_sim: $G1)
     export ASAN_OPTIONS="${ASAN_OPTIONS:-detect_leaks=0}"
     $SCC -o "$A/ldr_test" tests/ldr_test.c
     run "ASan/UBSan: update loader (other app -> this build)" "$A/ldr_test" "$OUT/old.fwsc" build/felucca.fwsc
@@ -413,7 +418,7 @@ else
         $SCC -o "$A/$t" tests/$t.c -lm
         run "ASan/UBSan: $t" "$A/$t"
     done
-    $SCC -o "$A/golana_sim" tests/golana_sim.c -lm
+    $SCC $G1 -o "$A/golana_sim" tests/golana_sim.c -lm
     mkdir -p "$A/golana_sim_out"
     run "ASan/UBSan: golana_sim" "$A/golana_sim" "$A/golana_sim_out"
     $SCC -o "$A/fuzz_ed" tests/fuzz_ed.c -lm
