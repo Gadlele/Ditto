@@ -9,11 +9,15 @@
   firmware/NAME-VER.fwsc     the package, with SHA256SUMS, LICENSE, LICENSING.md and LICENSES/
   img/                       web/site/img
 
+  "What's new" and the list of versions come from CHANGELOG.md (web/site/changelog.py); its newest entry must
+  be project.json's version.
+
   web/site/make_pages.py PACKAGE.fwsc EMU_DIR_OR_PAGE OUT_DIR
 
 The package must be a release build of tools/build.py (Felucca's loader, no vendor files)."""
 import hashlib
 import html
+import importlib.util
 import json
 import re
 import shutil
@@ -53,6 +57,11 @@ def main(pkg, emu, out):
         raise SystemExit(f"{pkg}: not a release package of this tree (identity {product!r})")
     sha = hashlib.sha256(raw).hexdigest()
     ver = p["version"]
+    spec = importlib.util.spec_from_file_location("changelog", HERE / "changelog.py")
+    cl = importlib.util.module_from_spec(spec); spec.loader.exec_module(cl)
+    log = cl.entries(ROOT / "CHANGELOG.md")
+    if not log or log[0][0] != ver:
+        raise SystemExit(f"CHANGELOG.md: the newest entry must be {ver} (project.json's version)")
     fw_name = f"{p['name']}-{ver}.fwsc"
     if out.exists():
         for child in out.iterdir():                 # (a git checkout of gh-pages: keep .git)
@@ -85,7 +94,11 @@ def main(pkg, emu, out):
         **common, "LEAD": p["lead"], "H1_TRACK": p["h1_track"], "H1_EXTRA": p["h1_extra"], "STRIPES": p["stripes"],
         "DOT_RADIUS": p["dot_radius"], "DEVICE_TITLE": p["device_title"], "DEVICE_SUB": p["device_sub"],
         "FEATURES_SUB": p["features_sub"], "FEATURES": feats, "GALLERY_SUB": p["gallery_sub"], "GALLERY": gal,
-        "CREDITS": p["credits"]})
+        "CREDITS": p["credits"], "NEWS": cl.html(log[0][2]), "NEWS_DATE": html.escape(log[0][1]),
+        "VERSIONS": "\n".join(
+            f'      <li><a href="{p["repo"]}/releases/tag/v{v}"><b>{v}</b></a>'
+            f'<span>{html.escape(d)}</span>{" <em>latest</em>" if i == 0 else ""}</li>'
+            for i, (v, d, _) in enumerate(log))})
     (out / "index.html").write_text(page, encoding="utf-8")
     shutil.copytree(HERE / "img", out / "img")
 

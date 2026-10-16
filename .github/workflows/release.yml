@@ -1,0 +1,29 @@
+name: Release
+# A tag vX.Y (git tag v1.1 && git push origin v1.1) makes the GitHub Release of that version: its notes from
+# CHANGELOG.md (web/site/changelog.py) and, attached, the package the website serves (gh-pages: firmware/), the very
+# file that was tested and published, not a new build. So: publish the site first (web/site/make_pages.py), then tag.
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Notes and package
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          NAME=$(python3 -c "import json; print(json.load(open('web/site/project.json'))['name'])")
+          python3 web/site/changelog.py --check "$V"
+          python3 web/site/changelog.py "$V" > notes.md
+          git fetch -q --depth 1 origin gh-pages
+          git show "FETCH_HEAD:firmware/$NAME-$V.fwsc" > "$NAME-$V.fwsc"
+          git show "FETCH_HEAD:firmware/SHA256SUMS" > SHA256SUMS
+          sha256sum -c SHA256SUMS
+          printf '\n---\nInstall it from the browser: %s\n' \
+            "$(python3 -c "import json; r=json.load(open('web/site/project.json'))['repo']; o, n = r.split('/')[-2:]; print(f'https://{o.lower()}.github.io/{n}/install/')")" >> notes.md
+          gh release create "$GITHUB_REF_NAME" "$NAME-$V.fwsc" SHA256SUMS --title "$NAME $V" --notes-file notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}
