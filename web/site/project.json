@@ -1,0 +1,47 @@
+{
+  "name": "Golana",
+  "version": "1.0",
+  "tagline": "One analog-style synth for the M-VAVE FM-1, laid out like the classic microKORG, with a screen that draws the sound.",
+  "lead": "The FM-1 as a single, deep analog-style synthesizer: two oscillators, five filters, two envelopes, two LFOs, a patch bay, an arpeggiator and a step sequencer. Every page draws what it does.",
+  "repo": "https://github.com/Gadlele/Golana",
+  "rescue": "GOLANA USB RESCUE",
+  "fonts": "https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap",
+  "theme": "--bg: #0e1118; --panel: #171b25; --rule: #2a303d; --text: #e8e6e1; --mid: #969cac; --accent: #ffb547; --on-accent: #1a1206; --glow: rgba(255, 181, 71, .16); --warn: #ff805c; --warn-bg: rgba(255, 128, 92, .07); --err: #ff7a6b; --good: #5cceaa; --body: 'IBM Plex Sans', system-ui, sans-serif; --display: DotGothic16, 'IBM Plex Mono', monospace; --mono: 'IBM Plex Mono', ui-monospace, monospace; --stripes-h: 30px;",
+  "h1_track": ".08em",
+  "h1_extra": "text-transform: uppercase; font-weight: 400;",
+  "stripes": "linear-gradient(180deg, #ffb547 0 16%, transparent 16% 21%, #ff805c 21% 37%, transparent 37% 42%, #ecd660 42% 58%, transparent 58% 63%, #f07a9c 63% 79%, transparent 79% 84%, #b092ff 84% 100%)",
+  "dot_radius": "2px",
+  "device_title": "A synth you can read",
+  "device_sub": "Twelve buttons open the sections, as on the classic microKORG: EDIT the oscillators, SCL the filter, ENV the envelopes, LFO the LFOs and the patch bay, FX the effects. KNOB 1–4 always set the four cards on the screen, ALGORITHM is always the cutoff.",
+  "features_sub": "A single voice architecture, explored in depth, with 32 programs.",
+  "features": [
+    {"t": "Two oscillators", "p": "OSC 1: SAW with an octave-up blend, PULSE with width, TRI with a wavefolder, SINE with cross modulation. OSC 2: SAW, SQR or TRI with RING, SYNC or both, semitone and tune.", "c": "#ffb547"},
+    {"t": "Five filters", "p": "LPF24, LPF12, BPF, HPF and <b>MS20</b>, a driven 12 dB low-pass whose resonance screams. A FOLD stage before it, key tracking and its own envelope.", "c": "#ecd660"},
+    {"t": "Envelopes and LFOs", "p": "FILTER EG and AMP EG; two LFOs (SAW, SQR, TRI, SIN, S&amp;H) with key sync and tempo sync. Four patch cords route any of them to pitch, cutoff, amp and more.", "c": "#f07a9c"},
+    {"t": "Unison and glide", "p": "POLY, MONO, LEGATO and UNISON: four voices, or eight detuned oscillators in unison. DETUNE, PORTA, EG RESET and SPREAD across the stereo field.", "c": "#b092ff"},
+    {"t": "Arpeggiator and sequencer", "p": "Six arp types over 1–4 octaves with latch, swing and steps on/off; a 16-step sequencer with notes, ties, accents and slides, saved with the program.", "c": "#5cceaa"},
+    {"t": "Effects", "p": "MOD FX (chorus, flanger, ensemble, phaser, or METAL distortion), a stereo delay in time with the tempo and a reverb, in three orders.", "c": "#ff805c"},
+    {"t": "Pages that draw", "p": "Each page draws its shape from the values: the waves, the filter's curve, the envelopes, the LFOs running. HOME draws the sound playing: RIDGE, RING or ORBIT.", "c": "#66aaff"},
+    {"t": "32 programs", "p": "Sixteen factory sounds (FAT BASS, ACID LINE, SYNC PAD, 80S BRASS, SOFT BELLS, S&amp;H TEXTURE…) and sixteen free slots. MIDI Program Change picks them.", "c": "#ffb547"},
+    {"t": "Four palettes", "p": "NIGHT, CRT, PAPER and NEON. And a three-second power-on with the eighties' stripes.", "c": "#96d668"}
+  ],
+  "gallery_sub": "Real screens of Golana 1.0, taken from the emulator.",
+  "gallery": [
+    {"img": "home_notes.png", "t": "HOME", "p": "PERFORM: the sound as it plays"},
+    {"img": "edit.png", "t": "EDIT", "p": "OSC 1, OSC 2 and the mixer"},
+    {"img": "scl.png", "t": "SCL", "p": "the filter's response"},
+    {"img": "env.png", "t": "ENV", "p": "the filter and amp envelopes"},
+    {"img": "lfo.png", "t": "LFO", "p": "LFO 1, running"},
+    {"img": "patch.png", "t": "PATCH", "p": "four cords, any source to any destination"},
+    {"img": "fx.png", "t": "FX", "p": "MOD FX, delay, reverb"},
+    {"img": "seq.png", "t": "ARP", "p": "type, range, resolution"},
+    {"img": "glo2.png", "t": "VOICE", "p": "assign, detune, portamento"},
+    {"img": "glo4.png", "t": "SETUP", "p": "FX order, palette, HOME's view"},
+    {"img": "save.png", "t": "WRITE", "p": "name and save a program"}
+  ],
+  "credits": "; the USB rescue after zvenson's <a href=\"https://github.com/zvenson/dinghy\">dinghy</a>. microKORG is a trademark of Korg",
+  "emu_replace": [
+    ["<title>Golana</title>", "<title>Golana · in your browser</title>"],
+    ["  <a href=\"https://github.com/Gadlele/Golana\" target=\"_blank\" rel=\"noopener\">Source</a> ·", "  <a href=\"../\">Home</a> · <a href=\"../install/\">Install</a> · <a href=\"https://github.com/Gadlele/Golana\" target=\"_blank\" rel=\"noopener\">Source</a> ·"]
+  ]
+}
