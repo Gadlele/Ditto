@@ -1,10 +1,11 @@
 name: Release
-# A tag vX.Y (git tag v1.1 && git push origin v1.1) makes the GitHub Release of that version: its notes from
+# A tag NAME-vX.Y (git tag golana-v1.1 && git push origin golana-v1.1; NAME is project.json's name, lower case:
+# Felucca's own tags v1.0 .. v1.5.1 came with its history) makes the GitHub Release of that version: its notes from
 # CHANGELOG.md (web/site/changelog.py) and, attached, the package the website serves (gh-pages: firmware/), the very
 # file that was tested and published, not a new build. So: publish the site first (web/site/make_pages.py), then tag.
 on:
   push:
-    tags: ['v*']
+    tags: ['*-v*']
 permissions:
   contents: write
 jobs:
@@ -14,8 +15,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Notes and package
         run: |
-          V="${GITHUB_REF_NAME#v}"
+          V="${GITHUB_REF_NAME##*-v}"
           NAME=$(python3 -c "import json; print(json.load(open('web/site/project.json'))['name'])")
+          [ "$GITHUB_REF_NAME" = "$(echo "$NAME" | tr A-Z a-z)-v$V" ] || { echo "tag $GITHUB_REF_NAME is not ${NAME}'s"; exit 1; }
           python3 web/site/changelog.py --check "$V"
           python3 web/site/changelog.py "$V" > notes.md
           git fetch -q --depth 1 origin gh-pages

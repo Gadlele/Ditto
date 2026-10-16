@@ -96,7 +96,7 @@ def main(pkg, emu, out):
         "FEATURES_SUB": p["features_sub"], "FEATURES": feats, "GALLERY_SUB": p["gallery_sub"], "GALLERY": gal,
         "CREDITS": p["credits"], "NEWS": cl.html(log[0][2]), "NEWS_DATE": html.escape(log[0][1]),
         "VERSIONS": "\n".join(
-            f'      <li><a href="{p["repo"]}/releases/tag/v{v}"><b>{v}</b></a>'
+            f'      <li><a href="{p["repo"]}/releases/tag/{p["name"].lower()}-v{v}"><b>{v}</b></a>'
             f'<span>{html.escape(d)}</span>{" <em>latest</em>" if i == 0 else ""}</li>'
             for i, (v, d, _) in enumerate(log))})
     (out / "index.html").write_text(page, encoding="utf-8")
