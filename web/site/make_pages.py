@@ -12,7 +12,10 @@
   "What's new" and the list of versions come from CHANGELOG.md (web/site/changelog.py); its newest entry must
   be project.json's version.
 
-  web/site/make_pages.py PACKAGE.fwsc EMU_DIR_OR_PAGE OUT_DIR
+  web/site/make_pages.py PACKAGE.fwsc EMU_DIR_OR_PAGE OUT_DIR [SOUNDS_DIR]
+
+SOUNDS_DIR (tools/render_sounds.sh, where there is one): sounds.json and the pieces it lists, the project page's
+Sounds section (sounds/).
 
 The package must be a release build of tools/build.py (Felucca's loader, no vendor files)."""
 import hashlib
@@ -48,7 +51,41 @@ def fill(page, cfg):
     return page
 
 
-def main(pkg, emu, out):
+DEFAULT_SOUNDS_SUB = ("Eight short pieces, each played by the firmware's own engines on the four tracks, as the FM-1 "
+                      "plays them: no effects added afterwards.")
+
+
+def sounds_html(p, sounds):
+    """the Sounds section: the pieces of tools/render_sounds.c, each with its sounds ("" without SOUNDS_DIR)"""
+    if not sounds:
+        return ""
+    pieces = json.loads((Path(sounds) / "sounds.json").read_text(encoding="utf-8"))
+    cards = []
+    for i, x in enumerate(pieces):
+        parts = "".join(f"<li>{html.escape(s.split(' ', 1)[1] if s.split(' ', 1)[1].startswith(s.split(' ', 1)[0]) else s)}</li>"
+                        for s in x["parts"])   # (DRUM DRUM KIT: DRUM KIT)
+        cards.append(
+            f'      <article class="piece"><div class="ph"><span class="no">{i + 1:02d}</span>'
+            f'<h3>{html.escape(x["title"])}</h3>{"<em>NEW IN " + html.escape(p["version"]) + "</em>" if x.get("new") else ""}'
+            f'<span class="len">0:{x["seconds"]:02d}</span></div>'
+            f'<p>{html.escape(x["text"])}</p><ul class="parts">{parts}</ul>'
+            f'<audio controls preload="none" src="sounds/{html.escape(x["file"])}"></audio></article>')
+    return f'''<section id="sounds">
+  <div class="wrap">
+    <h2>Sounds</h2>
+    <p class="sub">{p.get("sounds_sub", DEFAULT_SOUNDS_SUB)}</p>
+    <div class="pieces">
+{chr(10).join(cards)}
+    </div>
+  </div>
+</section>
+<script>
+document.querySelectorAll("#sounds audio").forEach((a, _, all) => a.addEventListener("play", () => all.forEach((b) => b !== a && b.pause())));
+</script>
+'''
+
+
+def main(pkg, emu, out, sounds=None):
     pkg, emu, out = Path(pkg), Path(emu), Path(out)
     p = json.loads((HERE / "project.json").read_text(encoding="utf-8"))
     raw = pkg.read_bytes()
@@ -94,13 +131,17 @@ def main(pkg, emu, out):
         **common, "LEAD": p["lead"], "H1_TRACK": p["h1_track"], "H1_EXTRA": p["h1_extra"], "STRIPES": p["stripes"],
         "DOT_RADIUS": p["dot_radius"], "DEVICE_TITLE": p["device_title"], "DEVICE_SUB": p["device_sub"],
         "FEATURES_SUB": p["features_sub"], "FEATURES": feats, "GALLERY_SUB": p["gallery_sub"], "GALLERY": gal,
-        "CREDITS": p["credits"], "NEWS": cl.html(log[0][2]), "NEWS_DATE": html.escape(log[0][1]),
+        "CREDITS": p["credits"], "SOUNDS": sounds_html(p, sounds), "NEWS": cl.html(log[0][2]), "NEWS_DATE": html.escape(log[0][1]),
         "VERSIONS": "\n".join(
             f'      <li><a href="{p["repo"]}/releases/tag/{p["name"].lower()}-v{v}"><b>{v}</b></a>'
             f'<span>{html.escape(d)}</span>{" <em>latest</em>" if i == 0 else ""}</li>'
             for i, (v, d, _) in enumerate(log))})
     (out / "index.html").write_text(page, encoding="utf-8")
     shutil.copytree(HERE / "img", out / "img")
+    if sounds:
+        (out / "sounds").mkdir()
+        for f in Path(sounds).glob("*.mp3"):
+            shutil.copy(f, out / "sounds" / f.name)
 
     # the emulator: a directory (index.html, felucca.wasm, worklet.js, fonts/) or one self-contained page
     try_dir = out / "try"
@@ -142,6 +183,6 @@ def main(pkg, emu, out):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) not in (4, 5):
         sys.exit(__doc__)
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:5])

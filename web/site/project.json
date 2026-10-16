@@ -1,6 +1,7 @@
 {
   "name": "Golana",
   "version": "1.0",
+  "sounds_sub": "Eight short pieces, each one factory program played as the FM-1 plays it: one synth, its four voices, its arpeggiator, delay and reverb. No effects added afterwards.",
   "tagline": "One analog-style synth for the M-VAVE FM-1, laid out like the classic microKORG, with a screen that draws the sound.",
   "lead": "The FM-1 as a single, deep analog-style synthesizer: two oscillators, five filters, two envelopes, two LFOs, a patch bay, an arpeggiator and a step sequencer. Every page draws what it does.",
   "repo": "https://github.com/Gadlele/Golana",
