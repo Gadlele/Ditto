@@ -13,11 +13,11 @@
   <a href="https://gadlele.github.io/Golana/install/"><b>Install</b></a> ·
   <a href="https://gadlele.github.io/Golana/try/"><b>Try it in your browser</b></a> ·
   <a href="https://gadlele.github.io/Golana/">Website</a> ·
-  <a href="https://gadlele.github.io/Golana/firmware/Golana-1.0.fwsc">Download 1.0</a>
+  <a href="https://gadlele.github.io/Golana/firmware/Golana-1.1.fwsc">Download 1.1</a>
 </p>
 
 <p align="center">
-  <img alt="version 1.0" src="https://img.shields.io/badge/version-1.0-ffb547?style=flat-square&labelColor=0e1118">
+  <img alt="version 1.1" src="https://img.shields.io/badge/version-1.1-ffb547?style=flat-square&labelColor=0e1118">
   <img alt="FM-1" src="https://img.shields.io/badge/for-M--VAVE%20FM--1-f07a9c?style=flat-square&labelColor=0e1118">
   <img alt="GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-b092ff?style=flat-square&labelColor=0e1118">
 </p>
@@ -78,7 +78,7 @@ the sound playing (RIDGE, RING or ORBIT). Four palettes: NIGHT, CRT, PAPER and N
 2. Connect the FM-1 with a USB **data** cable, straight into the computer.
 3. Follow the five steps: the checklist, a backup, the build, connect, install. About two minutes.
 
-From a terminal instead: `python3 tools/fm1_install.py Golana-1.0.fwsc` (needs `pip install mido python-rtmidi`).
+From a terminal instead: `python3 tools/fm1_install.py Golana-1.1.fwsc` (needs `pip install mido python-rtmidi`).
 
 **If something goes wrong:** switch the FM-1 on while holding **OCT−**. It starts **GOLANA USB RESCUE**, with only
 USB, ready for a new install (it also starts by itself after two failed starts). The firmware never writes the FM-1's
@@ -88,14 +88,14 @@ boot code, and the installer can put the official M-VAVE firmware back at any ti
 
 | | |
 | --- | --- |
-| `main` | the latest release, now **1.0** |
+| `main` | the latest release, now **1.1** |
 | `next` | the work on the next version |
 | [Releases](https://github.com/Gadlele/Golana/releases) | every version: its notes and its package |
 | [`gh-pages`](https://github.com/Gadlele/Golana/tree/gh-pages) | the website: project page, installer, emulator, package |
 
 - [The manual](docs/MANUAL.md): every section, page and control
 - [What changed](CHANGELOG.md), version by version · [How a version is released](RELEASING.md)
-- Building: [BUILDING.md](BUILDING.md) (`./build.sh --release 1.0`); the tests: `sh tests/run_tests.sh`
+- Building: [BUILDING.md](BUILDING.md) (`./build.sh --release 1.1`); the tests: `sh tests/run_tests.sh`
 
 ## Credits
 

@@ -3,7 +3,7 @@
 Golana's versions, newest first. The numbers: **X.Y** adds something (saved programs still open), **X.Y.Z** only
 fixes, a new **X** may change how things are saved.
 
-## 1.1 — not released yet
+## 1.1 — 2026-10-19
 
 - **Four new arpeggiator types** (SEQ › ARP › TYPE), after the six of 1.0, which play as before:
   - **ORDER**: the notes in the order you pressed them.
