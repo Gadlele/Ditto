@@ -226,10 +226,11 @@ static int rec_on(const track_t *t) { return ((song.rec >> trk_index(t)) & 1u) &
  * C E C G (the bottom one); WALK a random step up or down the list (bouncing off its ends); CHORD all the held
  * notes together (the first 4), an octave higher each step through OCT */
 enum { AM_OFF, AM_UP, AM_DN, AM_UPDN, AM_RND, AM_ORD, AM_REPEAT, AM_DNUP, AM_UP8, AM_CONV, AM_DIVG, AM_PINKY,
-       AM_THUMB, AM_WALK, AM_CHORD, AM_ALT2 };    /* ALT2 (Golana): up and down, the top and the bottom notes twice */
+       AM_THUMB, AM_WALK, AM_CHORD, AM_ALT2,      /* ALT2 (Golana): up and down, the top and the bottom notes twice */
+       AM_DOUBLE };                               /* DOUBLE (Golana 1.1): each note twice, then its octave twice */
 #if GOLANA
-_Static_assert(AM_UP == 1 && AM_DN == 2 && AM_UPDN == 3 && AM_RND == 4 && AM_CHORD == 14 && AM_ALT2 == 15,
-               "golana_prog.c GL_AM");
+_Static_assert(AM_UP == 1 && AM_DN == 2 && AM_UPDN == 3 && AM_RND == 4 && AM_CHORD == 14 && AM_ALT2 == 15 &&
+               AM_ORD == 5 && AM_CONV == 9 && AM_THUMB == 12 && AM_DOUBLE == 16, "golana_prog.c GL_AM");
 #endif
 
 static void arp_forget(track_t *t)               /* (its notes ended otherwise: trk_all_off) */
@@ -294,6 +295,16 @@ static __attribute__((noinline)) uint32_t arp_pick(track_t *t, uint32_t *list, u
     uint32_t i = t->arp_idx, m = (uint32_t)t->p[P_AMODE], cyc, k, w;
     if (m == AM_UP8 && len < 64u)                   /* UP+8: the first note again over the top */
         list[len++] = (uint32_t)clamp((int32_t)list[0] + 12 * t->p[P_AOCT], 0, 127);
+    if (m == AM_DOUBLE) {                           /* C C C' C', E E E' E', ..: the list four times as long (from the end:
+                                                     * place 4k is never below k), 16 notes at most (64 places) */
+        uint32_t n = len < 16u ? len : 16u;
+        for (k = n; k-- > 0;) {
+            uint32_t x = list[k], o = (uint32_t)clamp((int32_t)x + 12, 0, 127);
+            list[4u * k] = list[4u * k + 1u] = x;
+            list[4u * k + 2u] = list[4u * k + 3u] = o;
+        }
+        return i % (4u * n);
+    }
     cyc = len > 1u ? 2u * len - 2u : 1u;
     k = i % cyc;
     switch (m) {

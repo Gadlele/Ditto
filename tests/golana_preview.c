@@ -100,6 +100,13 @@ int main(int argc, char **argv)
     go_page(B_LFO, 0); render(300); shot("lfo1");
     go_page(B_LFO, 1); setv(GL_L2WAVE, 4); setv(GL_L2FREQ, 100); ui.force = 1; render(300); shot("lfo2_sh");
     go_page(B_GLO, 3); render(100); shot("glo_setup");
+    {   /* (1.1) the ARP page with the four new types: the names fit their card */
+        static const char *const NM[4] = {"arp_order", "arp_converge", "arp_pedal", "arp_double"};
+        uint32_t k;
+        go_page(B_SEQ, 0);
+        for (k = 0; k < 4u; k++) { setv(GL_ARPON, 1); setv(GL_ARPTYPE, (int32_t)(6u + k)); ui.force = 1; render(100); shot(NM[k]); }
+        setv(GL_ARPON, 0); setv(GL_ARPTYPE, 0);
+    }
     /* the palettes: HOME (RING) and FILTER in each */
     gu_load(0);
     for (pal = 0; pal < 4u; pal++) {

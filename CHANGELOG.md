@@ -3,6 +3,14 @@
 Golana's versions, newest first. The numbers: **X.Y** adds something (saved programs still open), **X.Y.Z** only
 fixes, a new **X** may change how things are saved.
 
+## 1.1 — not released yet
+
+- **Four new arpeggiator types** (SEQ › ARP › TYPE), after the six of 1.0, which play as before:
+  - **ORDER**: the notes in the order you pressed them.
+  - **CONVERGE**: from the outside in, the lowest, the highest, the second lowest, the second highest…
+  - **PEDAL**: the lowest note between each of the others, as a pedal (C E C G C C′…).
+  - **DOUBLE**: each note twice, then its octave twice (C C C′ C′, E E E′ E′, G G G′ G′).
+
 ## 1.0 — 2026-10-16
 
 The first release. Golana is [Felucca](https://github.com/hugelton/Felucca) 1.5.1 turned into one analog-style synth,

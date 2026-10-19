@@ -1,6 +1,6 @@
 {
   "name": "Golana",
-  "version": "1.0",
+  "version": "1.1",
   "sounds_sub": "Eight short pieces, each one factory program played as the FM-1 plays it: one synth, its four voices, its arpeggiator, delay and reverb. No effects added afterwards.",
   "tagline": "One analog-style synth for the M-VAVE FM-1, laid out like the classic microKORG, with a screen that draws the sound.",
   "lead": "The FM-1 as a single, deep analog-style synthesizer: two oscillators, five filters, two envelopes, two LFOs, a patch bay, an arpeggiator and a step sequencer. Every page draws what it does.",
@@ -20,7 +20,7 @@
     {"t": "Five filters", "p": "LPF24, LPF12, BPF, HPF and <b>MS20</b>, a driven 12 dB low-pass whose resonance screams. A FOLD stage before it, key tracking and its own envelope.", "c": "#ecd660"},
     {"t": "Envelopes and LFOs", "p": "FILTER EG and AMP EG; two LFOs (SAW, SQR, TRI, SIN, S&amp;H) with key sync and tempo sync. Four patch cords route any of them to pitch, cutoff, amp and more.", "c": "#f07a9c"},
     {"t": "Unison and glide", "p": "POLY, MONO, LEGATO and UNISON: four voices, or eight detuned oscillators in unison. DETUNE, PORTA, EG RESET and SPREAD across the stereo field.", "c": "#b092ff"},
-    {"t": "Arpeggiator and sequencer", "p": "Six arp types over 1–4 octaves with latch, swing and steps on/off; a 16-step sequencer with notes, ties, accents and slides, saved with the program.", "c": "#5cceaa"},
+    {"t": "Arpeggiator and sequencer", "p": "Ten arp types (ORDER, CONVERGE, PEDAL and DOUBLE new in 1.1) over 1–4 octaves with latch, swing and steps on/off; a 16-step sequencer with notes, ties, accents and slides, saved with the program.", "c": "#5cceaa"},
     {"t": "Effects", "p": "MOD FX (chorus, flanger, ensemble, phaser, or METAL distortion), a stereo delay in time with the tempo and a reverb, in three orders.", "c": "#ff805c"},
     {"t": "Pages that draw", "p": "Each page draws its shape from the values: the waves, the filter's curve, the envelopes, the LFOs running. HOME draws the sound playing: RIDGE, RING or ORBIT.", "c": "#66aaff"},
     {"t": "32 programs", "p": "Sixteen factory sounds (FAT BASS, ACID LINE, SYNC PAD, 80S BRASS, SOFT BELLS, S&amp;H TEXTURE…) and sixteen free slots. MIDI Program Change picks them.", "c": "#ffb547"},

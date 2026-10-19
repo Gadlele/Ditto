@@ -18,7 +18,7 @@ Golana is free software under the GPL-3.0, like Felucca. Felucca's own README, f
 | LFO 1 / LFO 2 | WAVE (SAW, SQR, TRI, SIN, S&H), FREQ, KEY SYNC (OFF, TIMBRE, VOICE), TEMPO (sync to a note value) |
 | PATCH 1-4 | SOURCE (FEG, AEG, LFO1, LFO2, VELO, KBD), DEST (PITCH, OSC2, CTRL1, NOISE, CUTOFF, AMP, LFO2F), INTENSITY |
 | SEQUENCER | 16 steps saved with the program. PATTERN: STEP, NOTE, TYPE (REST, NOTE, TIE), ACC / SLIDE; a key writes its note into the step and moves on. SETUP: LENGTH 1-16, RES, GATE, SWING |
-| ARP | ON, TYPE (UP, DOWN, ALT1, ALT2, RANDOM, TRIGGER), RANGE 1-4, RES, GATE, SWING, LATCH, KEY SYNC, LAST STEP and steps on/off |
+| ARP | ON, TYPE (UP, DOWN, ALT1, ALT2, RANDOM, TRIGGER; 1.1: ORDER as pressed, CONVERGE from the ends to the middle, PEDAL the lowest note between the others, DOUBLE each note twice and its octave twice), RANGE 1-4, RES, GATE, SWING, LATCH, KEY SYNC, LAST STEP and steps on/off |
 | MOD FX | TYPE (CHORUS, FLANGER, ENSEMBLE, PHASER), SPEED, DEPTH, MIX; TYPE METAL (a high-gain distortion with a strong mid hump): GAIN, MID, MID FREQ (200 Hz - 5 kHz) |
 | DELAY | TYPE (STEREO, CROSS, L/R), TIME (tempo), FEEDBACK, LEVEL |
 | REVERB | TYPE (ROOM, SPRING, HALL), SIZE, DAMP, LEVEL |

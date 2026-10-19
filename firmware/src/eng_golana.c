@@ -30,7 +30,8 @@ static const char *const N_GLSYNC[] = {"OFF", "4BAR", "2BAR", "1/1", "1/2", "1/4
 static const uint8_t GL_SYNC_DIV[11] = {0, 9, 8, 7, 6, 0, 1, 4, 2, 5, 3};   /* N_GLSYNC -> fx.c div_samples */
 static const char *const N_GPSRC[] = {"FEG", "AEG", "LFO1", "LFO2", "VELO", "KBD"};
 static const char *const N_GPDST[] = {"PITCH", "OSC2", "CTRL1", "NOISE", "CUTOFF", "AMP", "LFO2F"};
-static const char *const N_GARPT[] = {"UP", "DOWN", "ALT1", "ALT2", "RANDOM", "TRIGGER"};
+static const char *const N_GARPT[] = {"UP", "DOWN", "ALT1", "ALT2", "RANDOM", "TRIGGER",
+                                      "ORDER", "CONVERGE", "PEDAL", "DOUBLE"};   /* (1.1: the last four) */
 static const char *const N_GDTYPE[] = {"STEREO", "CROSS", "L/R"};
 static const char *const N_GRTYPE[] = {"ROOM", "SPRING", "HALL"};
 static const char *const N_GMFX[] = {"OFF", "CHORUS", "FLANGER", "ENSEMBL", "PHASER", "METAL"};

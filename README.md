@@ -41,7 +41,7 @@ It is a fork of [Felucca](https://github.com/hugelton/Felucca).
 | **EG / LFO** | FILTER EG and AMP EG · two LFOs (SAW, SQR, TRI, SIN, S&H) with key sync and tempo sync |
 | **PATCH 1–4** | FEG, AEG, LFO 1, LFO 2, velocity or keyboard to pitch, OSC 2, CTRL 1, noise, cutoff, amp or LFO 2's rate |
 | **VOICE** | POLY, MONO, LEGATO, UNISON (eight detuned oscillators) · DETUNE, PORTA, SPREAD |
-| **ARP / SEQ** | six arp types over 1–4 octaves with latch and swing · a 16-step sequencer with ties, accents and slides |
+| **ARP / SEQ** | ten arp types over 1–4 octaves (1.1: ORDER, CONVERGE, PEDAL, DOUBLE) with latch and swing · a 16-step sequencer with ties, accents and slides |
 | **EFFECTS** | MOD FX (chorus, flanger, ensemble, phaser, METAL distortion), delay, reverb, in three orders |
 | **PROGRAMS** | 32: FAT BASS, ACID LINE, SYNC PAD, 80S BRASS, SOFT BELLS, S&H TEXTURE… and sixteen free |
 

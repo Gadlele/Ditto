@@ -9,8 +9,9 @@
 #define GL_NPROG 32u                    /* program slots (upreset.c's 32 user preset slots) */
 #define GL_NFACT 16u                    /* slots 1..16 hold the factory sounds until written over */
 
-/* GL_ARPTYPE -> seq.c's AM_* (UP, DN, UPDN = ALT1, ALT2, RND, CHORD = TRIGGER) */
-static const uint8_t GL_AM[6] = {1, 2, 3, 15, 4, 14};
+/* GL_ARPTYPE -> seq.c's AM_* (UP, DN, UPDN = ALT1, ALT2, RND, CHORD = TRIGGER; 1.1: ORD = ORDER, CONV = CONVERGE,
+ * THUMB = PEDAL, DOUBLE) */
+static const uint8_t GL_AM[10] = {1, 2, 3, 15, 4, 14, 5, 9, 12, 16};
 /* GL_MFX -> fx.c's IT_* (OFF, CHORUS, FLANGER, ENSEMBLE, PHASER, METAL) */
 static const uint8_t GL_IT[6] = {0, 8, 7, 9, 6, 10};
 
@@ -47,7 +48,7 @@ static void gl_defaults(int16_t *p)
 static void gl_sync(track_t *t)
 {
     int16_t *p = t->p;
-    int32_t ty = clamp(p[GL_ARPTYPE], 0, 5), mf = clamp(p[GL_MFX], 0, 5);
+    int32_t ty = clamp(p[GL_ARPTYPE], 0, (int32_t)NELEM(GL_AM) - 1), mf = clamp(p[GL_MFX], 0, 5);
     p[P_AMODE] = (int16_t)(p[GL_ARPON] ? GL_AM[ty] : 0);
     p[P_ITYPE] = (int16_t)GL_IT[mf];
     p[P_APROB] = 127;

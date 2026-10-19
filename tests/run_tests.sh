@@ -287,6 +287,8 @@ if [ -f build/gen/felucca_tables.h ]; then
     mkdir -p build/golana_sim
     run "GOLANA on the simulated FM-1: pages, keys, ARP, PRESETS, WRITE (and STOP TO SAVE), CC74 / CC71, the sequencer" \
         "$OUT/golana_sim" build/golana_sim
+    $CC $G1 -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_arp_test" tests/golana_arp_test.c -lm
+    run "GOLANA's arpeggiator types (1.1: ORDER, CONVERGE, PEDAL, DOUBLE), RANGE 1 and 2" "$OUT/golana_arp_test"
     $CC $G1 -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_preview" tests/golana_preview.c -lm
     mkdir -p build/golana_preview
     run "GOLANA's screens (PPM in build/golana_preview)" "$OUT/golana_preview" build/golana_preview
