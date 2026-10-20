@@ -6,6 +6,7 @@
  *           TRI (CTRL1: folds the wave, more harmonics), SINE (CTRL1: cross modulation, OSC 2 moves its phase).
  *           CTRL2: LFO 1 on CTRL1 (PWM, a moving fold, a moving cross mod)
  *   OSC 2   SAW / SQR / TRI, MOD OFF / RING (OSC 1 x OSC 2) / SYNC (restarts with OSC 1) / R+S, SEMI +-24, TUNE +-63 ct
+ *   SUB     (1.2) a square or a sine an octave or two below OSC 1, in step with it, its LEVEL into the mixer
  *   MIXER   OSC 1, OSC 2 and NOISE levels into the filter
  *   FOLD    a wavefolder on the mix before the filter (Buchla / Serge style): 0 off, up to ~8x into the folds
  *   FILTER  LPF24 (two state-variable stages, the resonance on the second), LPF12, BPF, HPF, MS20 (a 12 dB low-pass
@@ -15,6 +16,8 @@
  *   AMP     the part's level, pan and ADSR (voice.c), DIST ON a soft drive after the filter
  *   LFO 1/2 per voice: SAW SQR TRI SIN S&H, FREQ or a SYNC note value of the tempo, KEY SYNC OFF (free, in step
  *           with the part's clock), TIMBRE (from 0 when the first key goes down), VOICE (from 0 every note)
+ *   DRIFT   (1.2) analog age: every note's two oscillators a little off pitch, each its own way, slowly wandering,
+ *           its cutoff a little off too, the oscillators free running (0: none, exactly as before)
  *   PATCH   4 routes SRC -> DST by INT (+-63): sources FEG AEG LFO1 LFO2 VELO KBD, destinations PITCH OSC2
  *           (OSC 2's pitch) CTRL1 NOISE CUTOFF AMP LFO2F (LFO 2's rate)
  * Felucca's track LFO, LFO DEST and matrix are not used by this engine (mod.c leaves it alone): their parameter
@@ -37,6 +40,7 @@ static const char *const N_GRTYPE[] = {"ROOM", "SPRING", "HALL"};
 static const char *const N_GMFX[] = {"OFF", "CHORUS", "FLANGER", "ENSEMBL", "PHASER", "METAL"};
 static const char *const N_GROUTE[] = {"MFX>DLY>REV", "DLY>MFX>REV", "DLY>REV>MFX"};
 static const char *const N_GONOFF[] = {"OFF", "ON"};
+static const char *const N_GSUB[] = {"-1 SQR", "-2 SQR", "-1 SINE", "-2 SINE"};
 static const char *const N_GDTIME[] = {"1/4", "1/8", "1/16", "1/32", "1/8T", "16T", "1/2", "1/1", "2BAR", "4BAR",
                                        "1/8D", "16D", "1/4D"};
 enum { GS_FEG, GS_AEG, GS_LFO1, GS_LFO2, GS_VELO, GS_KBD, GS_N };
@@ -85,6 +89,9 @@ static const param_desc_t GOL_TP[P_COUNT] = {
     [GL_RDAMP] = GPD("RDAMP", F_PCT, 0, 127, 60),
     [GL_MFX] = GPE("MFX", N_GMFX, 0),
     [GL_ROUTE] = GPE("ROUTE", N_GROUTE, 0),
+    [GL_SUBTYPE] = GPE("SUBTYP", N_GSUB, 0),
+    [GL_SUB] = GPD("SUB", F_PCT, 0, 127, 0),
+    [GL_DRIFT] = GPD("DRIFT", F_PCT, 0, 127, 0),
 #define GPATCH(k, s, d) [GL_P1SRC + 3 * (k)] = GPE("SRC", N_GPSRC, s), [GL_P1DST + 3 * (k)] = GPE("DST", N_GPDST, d), \
                         [GL_P1INT + 3 * (k)] = GPD("INT", F_BIPCT, -63, 63, 0)
     GPATCH(0, GS_LFO2, GD_PITCH), GPATCH(1, GS_FEG, GD_PITCH), GPATCH(2, GS_LFO1, GD_CUT), GPATCH(3, GS_LFO1, GD_AMP),
@@ -102,7 +109,10 @@ typedef struct {
     int32_t nst;                 /* noise */
     int32_t jl;                  /* OSC 2 sync: 1 + the step of a restart a sample ago (16 bits), 0 none */
     uint8_t fst;                 /* filter EG stage: 0 off, 1 attack, 2 decay / sustain, 3 release */
-    uint8_t rsv[3];
+    uint8_t sc;                  /* SUB: OSC 1's cycles (its low 2 bits: the sub's phase above OSC 1's) */
+    uint16_t dn;                 /* DRIFT: blocks until the wander's next target */
+    int16_t d1, d2, dc;          /* DRIFT: this note's offsets, OSC 1, OSC 2 and the cutoff (Q15, -1..1) */
+    int16_t dw, dt;              /* DRIFT: the slow wander and its target (Q15) */
 } glv_t;
 typedef struct {
     glv_t v[NVOICE];
@@ -185,8 +195,17 @@ static void gol_note_on(track_t *t, voice_t *v)
         s->f1 = s->f2 = s->f3 = s->f4 = 0;
         s->feg = 0;
         s->jl = 0;
+        s->sc = 0;
         v->ph[0] = 0;
         v->ph[1] = 0x40000000u;
+        if (t->p[GL_DRIFT] > 0) {                       /* DRIFT: each note its own offsets, free-running oscillators */
+            s->d1 = (int16_t)(noise32(&g->seed) >> 16);
+            s->d2 = (int16_t)(noise32(&g->seed) >> 16);
+            s->dc = (int16_t)(noise32(&g->seed) >> 16);
+            v->ph[0] = noise32(&g->seed);
+            v->ph[1] = noise32(&g->seed);
+            s->sc = (uint8_t)(v->ph[1] >> 30);
+        }
         s->l1 = gp(t, GL_L1KEY, 0, 2) == 2 ? 0u : gp(t, GL_L1KEY, 0, 2) == 1 ? g->tim1 : g->free1;
         s->l2 = gp(t, GL_L2KEY, 0, 2) == 2 ? 0u : gp(t, GL_L2KEY, 0, 2) == 1 ? g->tim2 : g->free2;
         s->s1 = s->s2 = 0;
@@ -248,12 +267,13 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
     const int16_t *p = t->p;
     uint32_t w1 = (uint32_t)gp(t, GL_O1WAVE, 0, 3), w2 = (uint32_t)gp(t, GL_O2WAVE, 0, 2);
     uint32_t md = (uint32_t)gp(t, GL_O2MOD, 0, 3), ft = (uint32_t)gp(t, GL_FTYPE, 0, 4), k, i;
-    int32_t feg, lfo1, lfo2, src[GS_N], d[GD_N], ctrl1, cut, reso, x1, x2, xn, gain;
+    int32_t feg, lfo1, lfo2, src[GS_N], d[GD_N], ctrl1, cut, reso, x1, x2, xn, xs, gain;
     int32_t pitch1, pitch2, fold;
     uint32_t inc1, inc2;
     tsvf_t f1c, f2c;
     int32_t k2, ring = md == GM_RING || md == GM_RSYNC, sync = md == GM_SYNC || md == GM_RSYNC;
-    int32_t dist = p[GL_DIST] != 0;
+    int32_t dist = p[GL_DIST] != 0, drift = gp(t, GL_DRIFT, 0, 127), dw, df1 = 0, df2 = 0, dcut = 0;
+    uint32_t st = (uint32_t)gp(t, GL_SUBTYPE, 0, 3), so = 1u + (st & 1u);   /* SUB: its type, its octaves down */
     /* control rate: the envelopes, the LFOs, the patch */
     feg = gl_feg_tick(t, v, s);
     for (k = 0; k < GD_N; k++)
@@ -281,13 +301,26 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
         if (a && ds != GD_LFO2F)
             d[ds] += src[gp(t, GL_P1SRC + 3u * k, 0, GS_N - 1)] * a;     /* Q15 x 63 */
     }
+    /* DRIFT: the note's offsets and the wander (a new target every ~0.37 s, followed over about as long), in
+     * 1/4096 of the pitch (2.37 a cent: up to +-12 ct each oscillator, +-5 ct the wander) and in cutoff units */
+    if (drift) {
+        if (!s->dn--) {
+            s->dn = 511;
+            s->dt = (int16_t)(noise32(&g->seed) >> 16);
+        }
+        s->dw = (int16_t)(s->dw + ((s->dt - s->dw) >> 9));
+        dw = (s->dw * drift) >> 15;
+        df1 = (((s->d1 * drift) >> 15) * 28 >> 7) + (dw * 12 >> 7);
+        df2 = (((s->d2 * drift) >> 15) * 28 >> 7) + (dw * 12 >> 7);
+        dcut = ((s->dc * drift) >> 15) * 5 + dw;
+    }
     /* pitches (1/16 semitone): the voice's (glide, unison, tune, bend in m), the patch */
     pitch1 = m->pitch16 + ((d[GD_PITCH] * 3) >> 15);
     pitch2 = pitch1 + gp(t, GL_O2SEMI, -24, 24) * 16 + ((d[GD_OSC2] * 3) >> 15);
-    inc1 = d[GD_PITCH] ? cents_inc(clamp(pitch1, 0, 2047), 0, m->fine) : m->inc;
+    inc1 = d[GD_PITCH] || df1 ? cents_inc(clamp(pitch1, 0, 2047), 0, m->fine + df1) : m->inc;
     /* UNISON: OSC 2 detuned the other way from OSC 1 (each voice two detuned oscillators: 8 for 4 voices) */
     inc2 = cents_inc(clamp(pitch2, 0, 2047), gp(t, GL_O2TUNE, -63, 63),
-                     t->p[P_VOICE] == V_UNISON ? m->fine - 2 * v->fine : m->fine);
+                     (t->p[P_VOICE] == V_UNISON ? m->fine - 2 * v->fine : m->fine) + df2);
     if (inc1 > 0x40000000u)
         inc1 = 0x40000000u;
     if (inc2 > 0x40000000u)
@@ -298,9 +331,10 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
     x1 = gp(t, GL_MIX1, 0, 127) * 258;
     x2 = gp(t, GL_MIX2, 0, 127) * 258;
     xn = clamp(gp(t, GL_NOISE, 0, 127) + (d[GD_NOISE] >> 14), 0, 127) * 258;
+    xs = gp(t, GL_SUB, 0, 127) * 258;
     /* the filter: CUTOFF, the EG, KEY TRACK (63: the keys exactly, ~18.7 per 1/16 semitone), the patch */
     cut = (gp(t, GL_CUTOFF, 0, 127) << 8) + ((feg * gp(t, GL_FEGINT, -63, 63)) >> 6) +
-          ((gp(t, GL_KTRK, -63, 63) * (m->pitch16 - 60 * 16) * 19) >> 6) + (d[GD_CUT] >> 6);
+          ((gp(t, GL_KTRK, -63, 63) * (m->pitch16 - 60 * 16) * 19) >> 6) + (d[GD_CUT] >> 6) + dcut;
     reso = gp(t, GL_RESO, 0, 127);
     tsvf_coef(&f2c, cut, reso);
     k2 = 8192 - reso * 7600 / 127;
@@ -311,7 +345,7 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
     fold = gp(t, GL_FOLD, 0, 127) ? 4096 + gp(t, GL_FOLD, 0, 127) * 230 : 0;   /* FOLD: the gain into the folds, Q12 */
     gain = clamp(32767 + (d[GD_AMP] >> 6), 0, 49151);  /* AMP: the patch's gain, up to 1.5 */
     {
-        uint32_t ph0 = v->ph[0], ph1 = v->ph[1], pw;
+        uint32_t ph0 = v->ph[0], ph1 = v->ph[1], pw, sc = s->sc;
         int32_t a1 = s->f1, a2 = s->f2, b1 = s->f3, b2 = s->f4, nst = s->nst, jl = s->jl;
         int32_t xm = ctrl1 * 380;                       /* SINE: the cross modulation's depth (phase, Q16 of a cycle) */
         int32_t tfold = 32768 + ctrl1 * 768;            /* TRI: the fold's gain, Q15 (1 .. 4) */
@@ -354,15 +388,20 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
             }
             if (ring)
                 o2 = mulq15(o1, o2);
+            sx = mulq15(o1, x1) + mulq15(o2, x2);
+            if (xs) {                                   /* SUB: OSC 1's phase an octave or two down, OSC 1's cycles above it */
+                uint32_t sp = sc << (32u - so) | ph0 >> so;
+                sx += mulq15(st >= 2u ? osc_sine(sp) : osc_pulse(sp, inc1 >> so, 0x80000000u), xs);
+            }
             ph0 += inc1;
             ph1 += inc2;
+            sc += ph0 < inc1;
             if (sync && ph0 < inc1) {                   /* OSC 1 wrapped: OSC 2 restarts with it */
                 uint32_t f = ph0 / ((inc1 >> 16) | 1u);
                 uint32_t at = ph1 - f * (inc2 >> 16);
                 jl = (int32_t)(at >> 16) + 1;
                 ph1 = f * (inc2 >> 16);
             }
-            sx = mulq15(o1, x1) + mulq15(o2, x2);
             if (xn)
                 sx += mulq15((int32_t)(noise32(&nst) >> 17) - 16384, xn);
             sx = (sx * 3) >> 3;                         /* one oscillator ~12 k into the filter, all three ~32 k */
@@ -405,6 +444,7 @@ static void gol_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const v
         }
         v->ph[0] = ph0;
         v->ph[1] = ph1;
+        s->sc = (uint8_t)sc;
         s->f1 = a1;
         s->f2 = a2;
         s->f3 = b1;

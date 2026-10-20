@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Gadlele */
-/* Golana's 16 factory sounds (golana_prog.c gl_factory): each one's values that differ from INIT. 1..8 the
+/* Golana's 24 factory sounds (golana_prog.c gl_factory): each one's values that differ from INIT. 1..8 the
  * classic analog palette (basses, leads, brass, an arpeggio, an organ), 9..16 warm and ambient (pads, slow arps,
- * soft bells, a drone, a sweet lead, textures).
+ * soft bells, a drone, a sweet lead, textures), 17..24 (1.2) made with the SUB oscillator and DRIFT.
  * Time values: 40 ~ 20 ms, 60 ~ 80 ms, 80 ~ 0.3 s, 90 ~ 0.7 s, 100 ~ 1.4 s, 110 ~ 3 s, 120 ~ 6 s (gen_tables.py).
  * LFO FREQ: 20 ~ 0.15 Hz, 40 ~ 0.4 Hz, 60 ~ 1.2 Hz, 85 ~ 4.4 Hz, 90 ~ 5.6 Hz.
  * PATCH k (0..3): SRC FEG AEG LFO1 LFO2 VELO KBD, DST PITCH OSC2 CTRL1 NOISE CUTOFF AMP LFO2F, INT +-63 */
@@ -17,6 +17,7 @@ enum { L_SAW, L_SQR, L_TRI, L_SIN, L_SH };
 enum { F_LPF24, F_LPF12, F_BPF, F_HPF };
 enum { Q_FEG, Q_AEG, Q_LFO1, Q_LFO2, Q_VELO, Q_KBD };
 enum { D_PITCH, D_OSC2, D_CTRL1, D_NOISE, D_CUT, D_AMP, D_LFO2F };
+enum { U_SQR1, U_SQR2, U_SIN1, U_SIN2 };          /* SUB TYPE: -1 SQR, -2 SQR, -1 SINE, -2 SINE */
 
 /* ------------------------------------------------------------- classic --- */
 static const gl_set_t F_FATBASS[] = {             /* two oscillators an octave apart, a round 24 dB filter */
@@ -146,6 +147,67 @@ static const gl_set_t F_SHTEXTURE[] = {           /* a slow sample and hold on t
     S(GL_RTYPE, 2), S(GL_RSIZE, 108), S(P_REV, 50),
 };
 
+/* ------------------------------------------------------ SUB and DRIFT (1.2) --- */
+static const gl_set_t F_SUBBASS[] = {             /* a saw on a square an octave down: round and deep */
+    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_SAW), S(GL_SUBTYPE, U_SQR1), S(GL_SUB, 110), S(GL_DRIFT, 12),
+    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 38), S(GL_RESO, 22), S(GL_FEGINT, 30), S(GL_KTRK, 20),
+    S(GL_FA, 0), S(GL_FD, 72), S(GL_FS, 30), S(GL_FR, 50),
+    S(P_ATK, 0), S(P_DEC, 80), S(P_SUS, 118), S(P_REL, 45), S(P_GLIDE, 12), S(P_LEVEL, 106), S(P_REV, 0),
+};
+static const gl_set_t F_REESE[] = {               /* two saws beating slowly over a sine an octave down */
+    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2TUNE, 16), S(GL_MIX2, 120),
+    S(GL_SUBTYPE, U_SIN1), S(GL_SUB, 100), S(GL_DRIFT, 30),
+    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 52), S(GL_RESO, 25), S(GL_FEGINT, 12), S(GL_FD, 90), S(GL_FS, 70),
+    S(P_ATK, 4), S(P_SUS, 124), S(P_REL, 55), S(P_GLIDE, 20), S(P_LEVEL, 100),
+    S(GL_MFX, 4), S(P_IA, 20), S(P_IB, 70), S(P_IMIX, 70), S(P_REV, 15),
+};
+static const gl_set_t F_POLYCHORUS[] = {          /* a pulse with PWM on a sub square, a lush chorus: an 80s poly */
+    S(GL_O1WAVE, W_PULSE), S(GL_O1C1, 30), S(GL_O1C2, 35), S(GL_L1WAVE, L_TRI), S(GL_L1FREQ, 42), S(GL_L1KEY, 0),
+    S(GL_SUBTYPE, U_SQR1), S(GL_SUB, 70), S(GL_DRIFT, 25),
+    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 64), S(GL_RESO, 15), S(GL_FEGINT, 22), S(GL_KTRK, 30),
+    S(GL_FA, 10), S(GL_FD, 88), S(GL_FS, 50), S(GL_FR, 80),
+    S(P_ATK, 8), S(P_DEC, 90), S(P_SUS, 110), S(P_REL, 80), S(P_LEVEL, 98),
+    S(GL_MFX, 1), S(P_IA, 35), S(P_IB, 75), S(P_IMIX, 110), S(GL_RTYPE, 2), S(GL_RSIZE, 100), S(P_REV, 35),
+};
+static const gl_set_t F_OLDSTRINGS[] = {          /* two saws an octave apart, slow and well worn, an ensemble */
+    S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, 12), S(GL_O2TUNE, 4), S(GL_MIX2, 80), S(GL_DRIFT, 70),
+    S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 74), S(GL_RESO, 8), S(GL_KTRK, 30),
+    S(P_ATK, 86), S(P_DEC, 100), S(P_SUS, 120), S(P_REL, 100), S(P_LEVEL, 96),
+    S(GL_MFX, 3), S(P_IA, 30), S(P_IB, 100), S(P_IMIX, 120),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 112), S(GL_RDAMP, 70), S(P_REV, 60),
+};
+static const gl_set_t F_WORNTAPE[] = {            /* soft keys off a warped tape: DRIFT high, a slow wow */
+    S(GL_O1WAVE, W_TRI), S(GL_O1C1, 18), S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, 12), S(GL_MIX2, 22), S(GL_DRIFT, 110),
+    S(GL_SUBTYPE, U_SIN1), S(GL_SUB, 45),
+    S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 66), S(GL_RESO, 10), S(GL_FEGINT, 16), S(GL_FD, 95), S(GL_FS, 40),
+    S(GL_L2WAVE, L_SIN), S(GL_L2FREQ, 32), S(GL_L2KEY, 0), S(PSRC(0), Q_LFO2), S(PDST(0), D_PITCH), S(PINT(0), 3),
+    S(P_ATK, 4), S(P_DEC, 104), S(P_SUS, 70), S(P_REL, 92), S(P_LEVEL, 108),
+    S(GL_MFX, 1), S(P_IA, 20), S(P_IB, 50), S(P_IMIX, 70),
+    S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 50), S(P_DLY, 35), S(GL_RTYPE, 2), S(GL_RSIZE, 108), S(P_REV, 50),
+};
+static const gl_set_t F_DRIFTLEAD[] = {           /* a saw and a square a fifth up, never quite in tune, gliding */
+    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SQR), S(GL_O2SEMI, 7), S(GL_MIX2, 55), S(GL_DRIFT, 55),
+    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 76), S(GL_RESO, 35), S(GL_FEGINT, 20), S(GL_FD, 85), S(GL_FS, 60),
+    S(P_ATK, 6), S(P_SUS, 122), S(P_REL, 60), S(P_GLIDE, 45), S(P_LEVEL, 98),
+    S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 55), S(P_DLY, 45), S(GL_RTYPE, 2), S(P_REV, 30),
+};
+static const gl_set_t F_SUBARP[] = {              /* DOUBLE: each note twice, then its octave, over a sub square */
+    S(GL_O1WAVE, W_PULSE), S(GL_O1C1, 40), S(GL_SUBTYPE, U_SQR1), S(GL_SUB, 85), S(GL_DRIFT, 18),
+    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 56), S(GL_RESO, 48), S(GL_FEGINT, 34), S(GL_FD, 66), S(GL_FS, 10),
+    S(P_ATK, 0), S(P_DEC, 76), S(P_SUS, 0), S(P_REL, 58), S(P_LEVEL, 104),
+    S(GL_ARPON, 1), S(GL_ARPTYPE, 9), S(P_AOCT, 1), S(P_ARATE, 2), S(P_AGATE, 65),
+    S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 40), S(P_DLY, 35), S(P_REV, 20),
+};
+static const gl_set_t F_AGEDPAD[] = {             /* saws and a breath of noise, DRIFT all the way: an old machine */
+    S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2TUNE, 6), S(GL_MIX2, 100), S(GL_NOISE, 18), S(GL_DRIFT, 127),
+    S(GL_SUBTYPE, U_SIN2), S(GL_SUB, 40),
+    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 50), S(GL_RESO, 20), S(GL_FEGINT, 14),
+    S(GL_FA, 100), S(GL_FD, 105), S(GL_FS, 90), S(GL_FR, 105),
+    S(P_ATK, 98), S(P_DEC, 100), S(P_SUS, 122), S(P_REL, 108), S(P_LEVEL, 100),
+    S(GL_MFX, 4), S(P_IA, 12), S(P_IB, 100), S(P_IMIX, 110),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 118), S(GL_RDAMP, 75), S(P_REV, 70),
+};
+
 static const gl_prog_t GL_FACTORY[] = {
     PROG("FAT BASS", F_FATBASS),
     PROG("ACID LINE", F_ACID),
@@ -163,8 +225,16 @@ static const gl_prog_t GL_FACTORY[] = {
     PROG("WARM LEAD", F_WARMLEAD),
     PROG("DARK UNISON", F_DARKUNI),
     PROG("S&H TEXTURE", F_SHTEXTURE),
+    PROG("SUB BASS", F_SUBBASS),
+    PROG("REESE", F_REESE),
+    PROG("POLY CHORUS", F_POLYCHORUS),
+    PROG("OLD STRINGS", F_OLDSTRINGS),
+    PROG("WORN TAPE", F_WORNTAPE),
+    PROG("DRIFT LEAD", F_DRIFTLEAD),
+    PROG("SUB ARP", F_SUBARP),
+    PROG("AGED PAD", F_AGEDPAD),
 };
-_Static_assert(NELEM(GL_FACTORY) == GL_NFACT, "16 factory sounds");
+_Static_assert(NELEM(GL_FACTORY) == GL_NFACT, "24 factory sounds");
 #undef S
 #undef PROG
 #undef PSRC

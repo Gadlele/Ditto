@@ -83,6 +83,8 @@ static const gu_page_t GU_PAGES[] = {
     {B_EDIT, "OSC 2", "OSC 2",
      {{GL_O2WAVE, "WAVE", 0}, {GL_O2MOD, "MOD", 0}, {GL_O2SEMI, "SEMI", 0}, {GL_O2TUNE, "TUNE", 0}}},
     {B_EDIT, "MIXER", "MIXER", {{GL_MIX1, "OSC 1", 0}, {GL_MIX2, "OSC 2", 0}, {GL_NOISE, "NOISE", 0}, {GL_FOLD, "FOLD", 0}}},
+    {B_EDIT, "SUB/DRIFT", "SUB",                     /* (1.2) */
+     {{GL_SUBTYPE, "SUB TYPE", 0}, {GL_SUB, "SUB LEVEL", 0}, {GL_DRIFT, "DRIFT", 0}, {GV_NONE, 0, 0}}},
     {B_SCL, "FILTER", "FILTER",
      {{GL_FTYPE, "TYPE", 0}, {GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}}},
     {B_SCL, "KEY TRACK", "KEY TRK", {{GL_KTRK, "KEY TRACK", 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}}},
@@ -144,10 +146,22 @@ static struct {
 static track_t *gu_t(void) { return &trk[0]; }
 
 /* --------------------------------------------------------------- programs --- */
+/* 1.2: the values a record keeps past its P_COUNT (packed[GU_XTRA_AT + k], the value itself: nothing before read or
+ * wrote there, so a program of 1.0 / 1.1 has 0, SUB and DRIFT off). Their slots in the record hold what they held
+ * before (the SLICER's defaults), so firmware before loads a 1.2 program as it would have, without them */
+static const uint8_t GU_XTRA[3] = {GL_SUBTYPE, GL_SUB, GL_DRIFT};
+#define GU_XTRA_AT P_COUNT
+_Static_assert(GU_XTRA_AT + NELEM(GU_XTRA) <= UP_CAT_AT, "Golana's extra values: before the category byte");
+
 static void gu_prog_values(uint32_t k, int16_t *v, char *name)
 {
     if (up_used(k) && up_rec(k)->engine == ENGI_GOLANA) {
-        up_values(up_rec(k), v);
+        const up_rec_t *r = up_rec(k);
+        uint32_t i;
+        up_values(r, v);
+        for (i = 0; i < NELEM(GU_XTRA); i++)
+            v[GU_XTRA[i]] = (int16_t)param_fit(param_desc_of(ENGI_GOLANA, GU_XTRA[i]),
+                                               r->ver >= 4u && r->np <= GU_XTRA_AT ? r->packed[GU_XTRA_AT + i] : 0);
         up_name(k, name);
     } else {
         gl_factory(k < GL_NFACT ? k : 0xFFu, v, name);
@@ -196,6 +210,10 @@ static int gu_store(uint32_t k, const char *name)
     up_set_name(&r, k, name);
     for (i = 0; i < P_COUNT; i++)
         up_set_value(&r, i, (int16_t)clamp(gu_t()->p[i], -64, 191));
+    for (i = 0; i < NELEM(GU_XTRA); i++) {            /* (1.2: SUB, DRIFT) */
+        r.packed[GU_XTRA_AT + i] = (uint8_t)clamp(gu_t()->p[GU_XTRA[i]], 0, 127);
+        up_set_value(&r, GU_XTRA[i], TP[GU_XTRA[i]].def);
+    }
     up_pat_from(&r, gu_t()->step);                    /* the sequencer's 16 steps with the sound */
     rc = up_put(k, &r);
     return rc == 0 || rc == 3 ? 0 : rc;

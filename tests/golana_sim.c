@@ -123,6 +123,7 @@ int main(int argc, char **argv)
     press(B_EDIT);
     check(GU_PAGES[gu.page].btn == B_EDIT && gu.page == 2, "EDIT again: OSC 2");
     press(B_EDIT);
+    press(B_EDIT);                                /* (1.2: MIXER, then SUB / DRIFT) */
     press(B_EDIT);
     check(gu.page == 1, "EDIT wraps to OSC 1");
     press(B_FX);
@@ -272,6 +273,42 @@ int main(int argc, char **argv)
                     check(hi == 1, "LATCH: OFF / ON");
             }
         check(seen == 3u, "ASSIGN and LATCH are on the pages");
+    }
+    /* 1.2: SUB and DRIFT, the EDIT button's fourth page; a program keeps them past its P_COUNT values, and one of
+     * before (0 there, the SLICER's defaults in their slots) loads with both off */
+    {
+        uint32_t i;
+        press(B_EDIT);
+        for (i = 0; i < 4u && GU_PAGES[gu.page].k[0].id != GL_SUBTYPE; i++)
+            press(B_EDIT);
+        check(GU_PAGES[gu.page].btn == B_EDIT && GU_PAGES[gu.page].k[2].id == GL_DRIFT, "EDIT: the SUB / DRIFT page");
+        gu_load(23);
+        render(80);
+        shot("35_sub_drift");
+        check(!strcmp(gu.name, "AGED PAD") && trk[0].p[GL_DRIFT] == 127 && trk[0].p[GL_SUB] == 40 &&
+              trk[0].p[GL_SUBTYPE] == 3, "program 24, AGED PAD: SUB -2 SINE 40, DRIFT 127");
+        check(gu_store(27, "AGED COPY") == 0, "AGED PAD written to slot 28");
+        check(up_rec(27)->packed[P_COUNT] == 3 && up_rec(27)->packed[P_COUNT + 1u] == 40 &&
+              up_rec(27)->packed[P_COUNT + 2u] == 127, "SUB and DRIFT past the record's values");
+        check(up_value(up_rec(27), GL_SUB) == TP[GL_SUB].def && up_value(up_rec(27), GL_SUBTYPE) == TP[GL_SUBTYPE].def,
+              "their slots in the record: as before 1.2");
+        gu_load(0);
+        check(trk[0].p[GL_DRIFT] == 0 && trk[0].p[GL_SUB] == 0, "FAT BASS: SUB and DRIFT off");
+        gu_load(27);
+        check(trk[0].p[GL_DRIFT] == 127 && trk[0].p[GL_SUB] == 40 && trk[0].p[GL_SUBTYPE] == 3, "loaded back: SUB, DRIFT");
+        for (i = 0; i < 3u; i++)
+            up_rec(27)->packed[P_COUNT + i] = 0;  /* (as Golana 1.1 writes a program) */
+        gu_load(0);
+        gu_load(27);
+        check(trk[0].p[GL_DRIFT] == 0 && trk[0].p[GL_SUB] == 0 && trk[0].p[GL_SUBTYPE] == 0 &&
+              trk[0].p[GL_CUTOFF] == 50, "a program of 1.1: SUB and DRIFT off, the rest as written");
+        peak = 0;
+        gu_load(16);                              /* SUB BASS sounds */
+        web_keys(1u);
+        render(400);
+        web_keys(0);
+        render(200);
+        check(peak > 0.01f, "SUB BASS plays");
     }
     /* (UPDATE MODE's countdown is main.c's loop: not in the browser build) */
     printf("%s: %d failures\n", fails ? "FAIL" : "ok", fails);

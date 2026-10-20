@@ -3,6 +3,16 @@
 Golana's versions, newest first. The numbers: **X.Y** adds something (saved programs still open), **X.Y.Z** only
 fixes, a new **X** may change how things are saved.
 
+## 1.2 — unreleased
+
+- **SUB oscillator** (EDIT › SUB/DRIFT): a square or a sine one or two octaves below OSC 1, in step with it, with its
+  own level into the mixer. Deep basses without giving up OSC 2.
+- **DRIFT** (EDIT › SUB/DRIFT): analog age. Each note's two oscillators a little out of tune, each its own way, slowly
+  wandering, and its filter a little off: from a touch of life to a worn-out machine.
+- **Eight new factory sounds** in programs 17-24, made with them: SUB BASS, REESE, POLY CHORUS, OLD STRINGS,
+  WORN TAPE, DRIFT LEAD, SUB ARP, AGED PAD. A program you wrote in 17-24 stays as it is.
+- Programs saved with 1.0 and 1.1 load exactly as before (SUB and DRIFT off).
+
 ## 1.1 — 2026-10-19
 
 - **Four new arpeggiator types** (SEQ › ARP › TYPE), after the six of 1.0, which play as before:

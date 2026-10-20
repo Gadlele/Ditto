@@ -153,6 +153,12 @@ enum {                          /* per-track parameters */
 #define GL_P1SRC P_M1SRC                         /* PATCH k (0..3): SRC GL_P1SRC + 3k, DST + 1, INT + 2 */
 #define GL_P1DST P_M1DST
 #define GL_P1INT P_M1AMT
+/* 1.2: the SUB oscillator and DRIFT, in the SLICER's slots (Golana never turns the SLICER on: P_SLCR stays OFF, so
+ * slicer.c reads these for its idle step clock only). A program stores them past its P_COUNT values (golana_ui.c
+ * GU_XTRA), where every record of before holds 0: SUB and DRIFT off, the sound as it was */
+#define GL_SUBTYPE P_SLPAT                       /* -1 SQR, -2 SQR, -1 SINE, -2 SINE (an octave or two below OSC 1) */
+#define GL_SUB P_SLRATE                          /* its level into the mixer */
+#define GL_DRIFT P_SLDEPTH                       /* analog age: each note's oscillators and filter a little off */
 #endif
 
 enum {                          /* global parameters */

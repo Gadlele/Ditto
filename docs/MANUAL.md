@@ -11,6 +11,7 @@ Golana is free software under the GPL-3.0, like Felucca. Felucca's own README, f
 | OSC 1 | WAVE (SAW, PULSE, TRI, SINE), CTRL 1 (SAW: an octave-up saw blended in; PULSE: width; TRI: wavefold; SINE: cross modulation from OSC 2), CTRL 2 (LFO 1 on CTRL 1) |
 | OSC 2 | WAVE (SAW, SQR, TRI), MOD (OFF, RING, SYNC, R+S), SEMITONE, TUNE |
 | MIXER | OSC 1, OSC 2, NOISE, FOLD (a wavefolder on the mix, before the filter) |
+| SUB/DRIFT | (1.2) SUB TYPE (-1 SQR, -2 SQR, -1 SINE, -2 SINE: a square or a sine one or two octaves below OSC 1, in step with it), SUB LEVEL (into the mixer, 0 off), DRIFT (analog age: each note's two oscillators a little out of tune, each its own way, slowly wandering, and its cutoff a little off; 0 off) |
 | FILTER | TYPE (LPF24, LPF12, BPF, HPF, MS20: a driven 12 dB low-pass whose resonance screams), CUTOFF, RESO, EG INT, KEY TRACK |
 | FILTER EG / AMP EG | ATTACK, DECAY, SUSTAIN, RELEASE |
 | AMP | LEVEL, PANPOT, DIST, SPREAD (the voices across the stereo field) |
@@ -25,9 +26,11 @@ Golana is free software under the GPL-3.0, like Felucca. Felucca's own README, f
 | GLOBAL | TEMPO, TUNE, CLOCK (INT, USB, TRS), MIDI IN (ALL, CH 1) |
 | SETUP | FX ORDER, saved with the program: MFX>DLY>REV (the default), DLY>MFX>REV (the MOD FX after the delay, the reverb fed from it), DLY>REV>MFX (the MOD FX last) |
 
-32 programs: 1-16 hold the factory sounds until written over (FAT BASS, ACID LINE, GLIDE LEAD, UNISON SAW,
+32 programs: 1-24 hold the factory sounds until written over (FAT BASS, ACID LINE, GLIDE LEAD, UNISON SAW,
 SYNC PAD, BRIGHT ARP, 80S BRASS, ORGAN, SOFT PAD, PHASE PAD, SLOW ARP, SOFT BELLS, DRONE, WARM LEAD, DARK UNISON,
-S&H TEXTURE), 17-32 start as INIT. MIDI Program Change 0-31 picks a program.
+S&H TEXTURE; 1.2: SUB BASS, REESE, POLY CHORUS, OLD STRINGS, WORN TAPE, DRIFT LEAD, SUB ARP, AGED PAD), 25-32 start
+as INIT. A program you wrote keeps its slot: one written in 17-24 before 1.2 is still there. MIDI Program Change 0-31
+picks a program.
 
 ## The controls
 
@@ -38,7 +41,7 @@ S&H TEXTURE), 17-32 start as INIT. MIDI Program Change 0-31 picks a program.
 | ALGORITHM | CUTOFF, from any page |
 | PRESETS | the program (it loads as you turn; edits not written are lost, as on the original) |
 | HOME | PERFORM: cutoff, resonance, EG int, LFO 1 rate |
-| EDIT / SCL / ENV / LFO | OSC 1, OSC 2, MIXER / FILTER, KEY TRACK / FILTER EG, AMP EG / LFO 1, LFO 2, PATCH 1-4 (press again for the next) |
+| EDIT / SCL / ENV / LFO | OSC 1, OSC 2, MIXER, SUB/DRIFT / FILTER, KEY TRACK / FILTER EG, AMP EG / LFO 1, LFO 2, PATCH 1-4 (press again for the next) |
 | GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL, SETUP (FX ORDER, PALETTE, HOME) / the sequencer: PATTERN, SETUP / the arpeggiator: ARP, TIMING, STEPS / MOD FX, DELAY, REVERB |
 
 The pages that set a shape draw it above their four knobs, from the values themselves: OSC 1 and OSC 2 their wave,

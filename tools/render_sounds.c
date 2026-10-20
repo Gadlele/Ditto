@@ -77,6 +77,7 @@ static void line(uint32_t bar, const uint8_t (*m)[2], uint32_t n, uint32_t vel) 
 }
 
 static const char *prog_name;
+static int16_t set_id = -1, set_v;                  /* one value changed from the program's (a comparison), -1 none */
 static void prog(const char *name, uint32_t bpm)
 {
     int16_t v[P_COUNT];
@@ -99,6 +100,8 @@ static void prog(const char *name, uint32_t bpm)
         eng_mem_claim(&trk[k]);
     }
     gl_factory(pi, v, nm);
+    if (set_id >= 0)
+        v[set_id] = set_v;
     gl_apply(&trk[0], v);
     trk[0].engine = trk[0].eng_req;
     song.sel = 0;
@@ -187,6 +190,102 @@ static void p_acid(void)                            /* ACID LINE: a sixteenth li
         }
 }
 
+/* ---- 1.2: the programs made with SUB and DRIFT ---- */
+static void p_subbass(void)                         /* SUB BASS: a line in E minor, an octave below it the sub */
+{
+    static const uint8_t L[][2] = {{40, 3}, {40, 1}, {0, 2}, {52, 2}, {40, 2}, {43, 3}, {45, 3}, {0, 2},
+                                   {40, 3}, {40, 1}, {0, 2}, {50, 2}, {38, 2}, {47, 2}, {45, 2}, {43, 2}};
+    uint32_t b;
+    prog("SUB BASS", 98);
+    for (b = 0; b < 8u; b += 2u)
+        line(b, L, NELEM(L), 104);
+}
+static void p_reese(void)                           /* REESE: long gliding notes, two saws beating */
+{
+    static const uint8_t L[][2] = {{40, 16}, {43, 12}, {38, 4}, {36, 16}, {38, 8}, {35, 8}};
+    uint32_t b;
+    prog("REESE", 86);
+    for (b = 0; b < 8u; b += 4u) {
+        uint32_t i, six = 0;
+        for (i = 0; i < NELEM(L); i++) {
+            tie(b + six / 16u, six % 16u, L[i][0], L[i][1], 100);
+            six += L[i][1];
+        }
+    }
+}
+static void p_polych(void)                          /* POLY CHORUS: Fmaj7 G6 Em7 Am9 in eighths, the push before the bar */
+{
+    static const uint8_t C[4][4] = {{53, 57, 60, 64}, {55, 59, 62, 64}, {52, 55, 59, 62}, {45, 55, 59, 60}};
+    static const uint8_t HIT[6][2] = {{0, 3}, {3, 3}, {6, 2}, {8, 3}, {11, 3}, {14, 2}};
+    uint32_t b, i;
+    prog("POLY CHORUS", 104);
+    for (b = 0; b < 8u; b++)
+        for (i = 0; i < 6u; i++)
+            chord(b, HIT[i][0], C[b % 4u], 4, HIT[i][1], i % 3u ? 88 : 104);
+}
+static void p_strings(void)                         /* OLD STRINGS: Cmaj7 Am7 Fmaj7 G6, slow */
+{
+    static const uint8_t C[4][4] = {{48, 55, 59, 64}, {45, 52, 55, 60}, {41, 52, 57, 60}, {43, 52, 55, 62}};
+    uint32_t b;
+    prog("OLD STRINGS", 68);
+    for (b = 0; b < 8u; b++)
+        chord(b, 0, C[b % 4u], 4, 16, 92);
+}
+static void p_tape(void)                            /* WORN TAPE: Dm9 Bbmaj7 F/A Gm9, soft keys off a warped tape */
+{
+    static const uint8_t C[4][4] = {{50, 57, 60, 64}, {46, 53, 57, 62}, {45, 53, 57, 60}, {43, 50, 57, 58}};
+    uint32_t b;
+    prog("WORN TAPE", 76);
+    for (b = 0; b < 8u; b++) {
+        chord(b, 0, C[b % 4u], 4, 6, 88);
+        chord(b, 6, C[b % 4u] + 1, 3, 4, 70);
+        chord(b, 10, C[b % 4u], 4, 6, 80);
+    }
+}
+static void p_driftlead(void)                       /* DRIFT LEAD: a tune in A minor, never quite in tune */
+{
+    static const uint8_t T[][2] = {{69, 6}, {72, 2}, {76, 8}, {74, 4}, {72, 4}, {71, 8}, {67, 6}, {71, 2}, {74, 8},
+                                   {72, 4}, {71, 4}, {69, 16}, {0, 4}, {76, 4}, {79, 4}, {81, 4}, {79, 6}, {76, 2},
+                                   {74, 8}, {72, 4}, {74, 4}, {76, 16}};
+    uint32_t i, six = 0;
+    prog("DRIFT LEAD", 96);
+    for (i = 0; i < NELEM(T); i++) {
+        if (T[i][0])
+            tie(six / 16u, six % 16u, T[i][0], T[i][1], 100);
+        six += T[i][1];
+    }
+}
+static void p_subarp(void)                          /* SUB ARP: DOUBLE (each note twice, then its octave) on Am F C G */
+{
+    static const uint8_t C[4][3] = {{45, 48, 52}, {41, 45, 48}, {43, 48, 52}, {43, 47, 50}};
+    uint32_t b;
+    prog("SUB ARP", 112);
+    for (b = 0; b < 8u; b++)
+        chord(b, 0, C[b % 4u], 3, 16, 100);
+}
+static void p_aged(void)                            /* AGED PAD: Ebmaj9 Cm9 Abmaj7 Bb6, DRIFT all the way */
+{
+    static const uint8_t C[4][4] = {{51, 58, 62, 65}, {48, 55, 58, 62}, {44, 51, 55, 60}, {46, 53, 55, 62}};
+    uint32_t b;
+    prog("AGED PAD", 64);
+    for (b = 0; b < 8u; b++)
+        chord(b, 0, C[b % 4u], 4, 16, 90);
+}
+static void p_tape_dry(void)                        /* (WORN TAPE without DRIFT, to compare) */
+{
+    set_id = GL_DRIFT;
+    set_v = 0;
+    p_tape();
+    set_id = -1;
+}
+static void p_bass_nosub(void)                      /* (SUB BASS without its SUB, to compare) */
+{
+    set_id = GL_SUB;
+    set_v = 0;
+    p_subbass();
+    set_id = -1;
+}
+
 typedef struct { const char *file, *title, *text; void (*score)(void); } piece_t;
 static const piece_t PIECES[] = {
     {"1_sync", "Sync Pad", "Oscillator sync swept by an envelope, four voices wide: Dmaj7, Bm9, Gmaj7, Aadd9.", p_sync},
@@ -199,9 +298,24 @@ static const piece_t PIECES[] = {
     {"8_acid", "Acid Sweep", "The squelchy line, with the cutoff opening and closing as the ALGORITHM knob does.", p_acid},
 };
 
+static const piece_t PIECES12[] = {                 /* (render_sounds OUT 1.2: the 1.2 programs, two comparisons) */
+    {"n1_subbass", "Sub Bass", "SUB BASS", p_subbass},
+    {"n1b_subbass_nosub", "Sub Bass, no SUB", "SUB BASS with SUB LEVEL 0", p_bass_nosub},
+    {"n2_reese", "Reese", "REESE", p_reese},
+    {"n3_polychorus", "Poly Chorus", "POLY CHORUS", p_polych},
+    {"n4_oldstrings", "Old Strings", "OLD STRINGS", p_strings},
+    {"n5_worntape", "Worn Tape", "WORN TAPE", p_tape},
+    {"n5b_worntape_nodrift", "Worn Tape, no DRIFT", "WORN TAPE with DRIFT 0", p_tape_dry},
+    {"n6_driftlead", "Drift Lead", "DRIFT LEAD", p_driftlead},
+    {"n7_subarp", "Sub Arp", "SUB ARP", p_subarp},
+    {"n8_agedpad", "Aged Pad", "AGED PAD", p_aged},
+};
+
 int main(int argc, char **argv)
 {
     const char *dir = argc > 1 ? argv[1] : ".";
+    const piece_t *pieces = argc > 2 ? PIECES12 : PIECES;
+    uint32_t npieces = argc > 2 ? NELEM(PIECES12) : NELEM(PIECES);
     char p[512];
     uint32_t n, i, a, b;
     FILE *js;
@@ -210,8 +324,8 @@ int main(int argc, char **argv)
     if (!js)
         return 1;
     fprintf(js, "[");
-    for (n = 0; n < NELEM(PIECES); n++) {
-        const piece_t *pc = &PIECES[n];
+    for (n = 0; n < npieces; n++) {
+        const piece_t *pc = &pieces[n];
         nev = 0;
         cut_from = -1;
         pc->score();
