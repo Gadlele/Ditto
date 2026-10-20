@@ -3,7 +3,7 @@
 Golana's versions, newest first. The numbers: **X.Y** adds something (saved programs still open), **X.Y.Z** only
 fixes, a new **X** may change how things are saved.
 
-## 1.2 — unreleased
+## 1.2 — 2026-10-20
 
 - **SUB oscillator** (EDIT › SUB/DRIFT): a square or a sine one or two octaves below OSC 1, in step with it, with its
   own level into the mixer. Deep basses without giving up OSC 2.

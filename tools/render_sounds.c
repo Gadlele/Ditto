@@ -286,16 +286,16 @@ static void p_bass_nosub(void)                      /* (SUB BASS without its SUB
     set_id = -1;
 }
 
-typedef struct { const char *file, *title, *text; void (*score)(void); } piece_t;
-static const piece_t PIECES[] = {
-    {"1_sync", "Sync Pad", "Oscillator sync swept by an envelope, four voices wide: Dmaj7, Bm9, Gmaj7, Aadd9.", p_sync},
-    {"2_arp", "Bright Arp", "The arpeggiator on held chords (Cm, Ab, Eb, Bb), in time with the tempo, the delay in time too.", p_arp},
-    {"3_brass", "80s Brass", "Stabs of the brass patch on Eb, Bb, Cm, Ab: filter envelope on every hit.", p_brass},
-    {"4_organ", "Organ", "A gospel turn on the organ patch: C, F/C, C, G7.", p_organ},
-    {"5_phase", "Phase Pad", "The phaser on a slow pad: Am9, Fmaj7, Cmaj7, Em7.", p_phase},
-    {"6_slowarp", "Slow Arp", "A slow arpeggio with long echoes: Am7, Dm7, Gsus4, C, two bars each.", p_slowarp},
-    {"7_bells", "Soft Bells", "Bell chords with a tune on top, four voices at once: Gmaj7, Em7, Cmaj7, D.", p_bells},
-    {"8_acid", "Acid Sweep", "The squelchy line, with the cutoff opening and closing as the ALGORITHM knob does.", p_acid},
+typedef struct { const char *file, *title, *text; void (*score)(void); int new; } piece_t;
+static const piece_t PIECES[] = {                   /* (1.2: four of 1.1's and four new) */
+    {"1_subbass", "Sub Bass", "A saw over the new SUB oscillator, a square an octave down: a line in E minor.", p_subbass, 1},
+    {"2_worntape", "Worn Tape", "DRIFT high: soft keys off a warped tape, every note its own way out of tune. Dm9, Bbmaj7, F/A, Gm9.", p_tape, 1},
+    {"3_sync", "Sync Pad", "Oscillator sync swept by an envelope, four voices wide: Dmaj7, Bm9, Gmaj7, Aadd9.", p_sync, 0},
+    {"4_polychorus", "Poly Chorus", "A pulse with PWM on a sub square, a lush chorus, a little DRIFT: Fmaj7, G6, Em7, Am9.", p_polych, 1},
+    {"5_arp", "Bright Arp", "The arpeggiator on held chords (Cm, Ab, Eb, Bb), in time with the tempo, the delay in time too.", p_arp, 0},
+    {"6_agedpad", "Aged Pad", "DRIFT all the way, a breath of noise, a sine two octaves down: Ebmaj9, Cm9, Abmaj7, Bb6.", p_aged, 1},
+    {"7_brass", "80s Brass", "Stabs of the brass patch on Eb, Bb, Cm, Ab: filter envelope on every hit.", p_brass, 0},
+    {"8_acid", "Acid Sweep", "The squelchy line, with the cutoff opening and closing as the ALGORITHM knob does.", p_acid, 0},
 };
 
 static const piece_t PIECES12[] = {                 /* (render_sounds OUT 1.2: the 1.2 programs, two comparisons) */
@@ -359,8 +359,8 @@ int main(int argc, char **argv)
         wav_hdr(w, frames);
         fclose(w);
         w = 0;
-        fprintf(js, "%s\n {\"file\": \"%s.mp3\", \"title\": \"%s\", \"text\": \"%s\", \"new\": false, \"seconds\": %u, \"parts\": [\"GOLANA %s\"]}",
-                n ? "," : "", pc->file, pc->title, pc->text, frames / FS, prog_name);
+        fprintf(js, "%s\n {\"file\": \"%s.mp3\", \"title\": \"%s\", \"text\": \"%s\", \"new\": %s, \"seconds\": %u, \"parts\": [\"GOLANA %s\"]}",
+                n ? "," : "", pc->file, pc->title, pc->text, pc->new ? "true" : "false", frames / FS, prog_name);
     }
     fprintf(js, "\n]\n");
     fclose(js);
