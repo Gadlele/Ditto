@@ -17,7 +17,7 @@ from PIL import Image
 src, dst = Path(sys.argv[1]), Path(sys.argv[2])
 for n in ("home_notes", "edit", "sndb", "mixer", "scl", "env", "lfo", "patch", "fx", "start", "save"):
     Image.open(src / f"{n}.ppm").convert("RGBA").save(dst / f"{n}.png")
-# the power-on (without the version) at twice its size (the screen's pixels kept), its last frame held 3 s so the name can be read
+# the power-on (without the line under the name) at twice its size (the screen's pixels kept), its last frame held 3 s so the name can be read
 frames = [Image.open(p).resize((480, 480), Image.NEAREST).convert("P", palette=Image.ADAPTIVE, colors=64)
           for p in sorted(src.glob("splash_*.ppm"))]
 frames[0].save(dst / "splash.gif", save_all=True, append_images=frames[1:], duration=[50] * (len(frames) - 1) + [3000], loop=0)
