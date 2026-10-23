@@ -62,35 +62,33 @@ int main(int argc, char **argv)
         shot(nm);
     }
     render(3500);
-    gu_load(1);                                      /* CHOIR: a chord held, HOME drawing it */
+    gu_load(1);                                      /* CHOIR: a chord held, HOME */
     web_keys((1u << 7) | (1u << 11) | (1u << 14));
     render(1500);
     shot("home_notes");
     web_keys(0);
     render(600);
-    gu_load(0);                                      /* STRINGS */
+    gu_load(0);                                      /* STRINGS: VOICE DEF 11 SAMPLE */
     page(B_EDIT, 0);
     shot("edit");
-    gu_load(16);                                     /* BOW + PLUCK: SOUND B, VEL X */
-    page(B_EDIT, 1);
+    gu_load(16);                                     /* BOW + PLUCK: PRESET DEF 22 SOUND B */
+    page(B_SEQ, 0);
     shot("sndb");
-    gu_load(20);                                     /* EMU 1 KEYS: the character */
-    page(B_EDIT, 2);
+    page(B_SEQ, 1);                                  /* .. 25 LAYER: VEL X */
     shot("mixer");
-    gu_load(4);                                      /* BRASS: the filter, its EG */
+    gu_load(4);                                      /* BRASS: FILTER 1, its ADSR */
     page(B_SCL, 0);
     shot("scl");
-    page(B_ENV, 0);
+    page(B_SCL, 2);
     shot("env");
-    gu_load(5);                                      /* FLUTE: the vibrato */
-    page(B_LFO, 0);
-    render(400);
+    gu_load(5);                                      /* FLUTE: the LFO, its delay */
+    page(B_ENV, 1);
     shot("lfo");
-    gu_load(0);
-    page(B_LFO, 3);                                  /* PATCH 2: VELO -> CUTOFF */
+    gu_load(3);                                      /* PIANO: VOICE DEF 21 VELOCITY */
+    page(B_EDIT, 1);
     shot("patch");
     gu_load(1);
-    page(B_FX, 2);                                   /* the choir's hall */
+    page(B_FX, 1);                                   /* the choir's hall */
     shot("fx");
     gu_load(21);                                     /* AIR CHOIR: START */
     page(B_EDIT, 0);

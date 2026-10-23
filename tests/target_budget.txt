@@ -36,9 +36,9 @@ dv_cym_run 67
 dv_out 35
 dv_metal_mix 16
 slicer_track 557
-gol_render 28423
-fm1_alnk0_irq 40759
-fm1_timer5_irq 33579
+gol_render 27468
+fm1_alnk0_irq 40718
+fm1_timer5_irq 33421
 click_render 30
 mod_begin 162
 mod_voice 30

@@ -160,19 +160,28 @@ enum {                          /* per-track parameters */
 #define GL_SUBTYPE P_SLPAT                       /* -1 SQR, -2 SQR, -1 SINE, -2 SINE (an octave or two below OSC 1) */
 #define GL_SUB P_SLRATE                          /* its level into the mixer */
 #define GL_DRIFT P_SLDEPTH                       /* analog age: each note's oscillators and filter a little off */
-/* Ditto: what Golana's slots hold in the DITTO engine (eng_golana.c): the oscillators' slots are the two
- * sounds', FOLD the sampler's character, SUB LEVEL the SPLIT key (SUB TYPE unused). The rest as Golana's */
+/* Ditto: what Golana's slots hold in the DITTO engine (eng_golana.c), a sampler after the Emulator II: the oscillators'
+ * slots are the two sounds', FOLD the CHARACTER, SUB LEVEL the SPLIT key; Golana's patch bay, LFO 2, noise, DRIFT, DIST,
+ * filter types and MOD FX are gone, their slots hold the EII's fixed routings. The rest as Golana's */
 #define DT_SNDA GL_O1WAVE                        /* SOUND A: a sound of the library or USR1-3 */
 #define DT_START GL_O1C1                         /* where the notes start in the sample (0..127) */
 #define DT_LOOP GL_O1C2                          /* LOOP OFF / ON */
 #define DT_SNDB GL_O2WAVE                        /* SOUND B: OFF, a sound */
-#define DT_LAYER GL_O2MOD                        /* STACK, VEL X, SPLIT */
+#define DT_LAYER GL_O2MOD                        /* STACK, VEL SW, VEL X, SPLIT, POS X */
 #define DT_BSEMI GL_O2SEMI
 #define DT_BTUNE GL_O2TUNE
 #define DT_LVLA GL_MIX1
 #define DT_LVLB GL_MIX2
-#define DT_CHAR GL_FOLD                          /* EII, EMU 1, CLEAN */
-#define DT_SPLIT GL_SUB                          /* SPLIT: SOUND B below this key, A from it */
+#define DT_CHAR GL_FOLD                          /* EII, CLEAN */
+#define DT_SPLIT GL_SUB                          /* SPLIT / POS X: the key (SOUND B below it, A from it) */
+#define DT_LFODLY P_M1SRC                        /* the LFO's delay: it fades in after each note starts */
+#define DT_VIB P_M1DST                           /* LFO -> pitch (vibrato), 0..127: up to +-2 semitones */
+#define DT_LFOCUT P_M1AMT                        /* LFO -> filter cutoff */
+#define DT_LFOVCA P_M2SRC                        /* LFO -> level (tremolo) */
+#define DT_VELLVL P_M2DST                        /* velocity -> level: 0 every note as loud, 127 as hard as played */
+#define DT_VELCUT P_M2AMT                        /* velocity -> filter cutoff, +-63 */
+#define DT_XWIDTH P_M3DST                        /* POS X: the crossfade's width in keys */
+#define DT_VELSW P_M3AMT                         /* VEL SW: the velocity from which SOUND B plays */
 #endif
 
 enum {                          /* global parameters */

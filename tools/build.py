@@ -104,7 +104,8 @@ def generate():
             [tools / "gen_fm6_patches.py", GEN / "felucca_fm6.h"],
             [tools / "gen_samples.py", GEN / "felucca_samples.h"],
             [tools / "gen_samples.py", "--lite", GEN / "felucca_samples_lite.h"],
-            [tools / "gen_ditto_samples.py", GEN / "ditto_samples.h"]]
+            [tools / "gen_ditto_samples.py", GEN / "ditto_samples.h"],
+            [tools / "gen_lcd_font.py", GEN / "lcd_font.h"]]
     procs = [subprocess.Popen([sys.executable, *map(str, c)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True) for c in cmds]
     failed = []

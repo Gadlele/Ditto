@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Gadlele */
-/* Screenshots of Golana's drawings from the whole firmware on a simulated FM-1 (as the browser build runs it):
+/* Screenshots of Ditto's screens from the whole firmware on a simulated FM-1 (as the browser build runs it):
  *   cc -O2 -w -Ibuild/gen -Ifirmware/src -o build/host/golana_preview tests/golana_preview.c -lm
  *   build/host/golana_preview OUTDIR       -> OUTDIR/*.ppm */
 #include <stdio.h>
@@ -49,99 +49,38 @@ static void setv(uint32_t id, int32_t v) { trk[0].p[id] = (int16_t)v; gl_sync(&t
 int main(int argc, char **argv)
 {
     char nm[64];
-    uint32_t pal, view;
+    uint32_t p;
     if (argc > 1)
         dir = argv[1];
     web_nor_erase();
     web_boot();
-    render(700);
-    /* HOME: three views, a chord held, three programs */
-    {
-        static const uint8_t PROGS[3] = {0, 8, 11};      /* FAT BASS, SOFT PAD, SOFT BELLS */
-        uint32_t pi;
-        for (pi = 0; pi < 3u; pi++) {
-            gu_load(PROGS[pi]);
-            web_keys((1u << 0) | (1u << 7));
-            for (view = 0; view < 3u; view++) {
-                gu_view = (uint8_t)view;
-                ui.force = 1;
-                render(view == 2u ? 900 : 400);
-                snprintf(nm, sizeof nm, "home_%s_%u", N_GVIEW[view], pi);
-                shot(nm);
-            }
-            web_keys(0);
-            render(300);
-        }
-    }
-    gu_view = 0;
-    gu_load(0);
-    go_page(B_EDIT, 0); render(100); shot("sound_a");
-    setv(DT_SNDA, DT_S_CHOIR); setv(DT_START, 60); ui.force = 1; render(100); shot("sound_a_choir_start");
-    setv(DT_SNDA, DT_S_ORCH_HIT); setv(DT_START, 0); ui.force = 1; render(100); shot("sound_a_orchhit");
-    go_page(B_EDIT, 1); setv(DT_SNDB, DT_S_PIZZ + 1); setv(DT_LAYER, 1); ui.force = 1; render(100); shot("sound_b_velx");
-    go_page(B_EDIT, 2); setv(DT_CHAR, 1); ui.force = 1; render(100); shot("mixer");
-    go_page(B_EDIT, 3); render(100); shot("split_drift");
-    go_page(B_SCL, 0);
-    {
-        static const char *const FT[5] = {"lpf24", "lpf12", "bpf", "hpf", "ms20"};
-        uint32_t t;
-        for (t = 0; t < 5u; t++) {
-            setv(GL_FTYPE, (int32_t)t);
-            setv(GL_CUTOFF, 70);
-            setv(GL_RESO, t == 4u ? 120 : 90);
-            ui.force = 1;
-            render(100);
-            snprintf(nm, sizeof nm, "filter_%s", FT[t]);
-            shot(nm);
-        }
-    }
-    go_page(B_ENV, 0); render(100); shot("eg_filter");
-    go_page(B_ENV, 1); render(100); shot("eg_amp");
-    gu_load(8);
-    go_page(B_ENV, 1); render(100); shot("eg_amp_softpad");
-    go_page(B_LFO, 0); render(300); shot("lfo1");
-    go_page(B_LFO, 1); setv(GL_L2WAVE, 4); setv(GL_L2FREQ, 100); ui.force = 1; render(300); shot("lfo2_sh");
-    go_page(B_GLO, 3); render(100); shot("glo_setup");
-    {   /* (1.1) the ARP page with the four new types: the names fit their card */
-        static const char *const NM[4] = {"arp_order", "arp_converge", "arp_pedal", "arp_double"};
-        uint32_t k;
-        go_page(B_SEQ, 0);
-        for (k = 0; k < 4u; k++) { setv(GL_ARPON, 1); setv(GL_ARPTYPE, (int32_t)(6u + k)); ui.force = 1; render(100); shot(NM[k]); }
-        setv(GL_ARPON, 0); setv(GL_ARPTYPE, 0);
-    }
-    /* the palettes: HOME (RING) and FILTER in each */
-    gu_load(0);
-    for (pal = 0; pal < 4u; pal++) {
-        gu_pi = (uint8_t)pal;
-        go_page(B_HOME, 0);
-        web_keys(1u << 3);
-        ui.force = 1;
-        render(400);
-        snprintf(nm, sizeof nm, "pal%u_%s_home", pal, N_GPAL[pal]);
-        shot(nm);
-        web_keys(0);
-        go_page(B_SCL, 0);
-        render(100);
-        snprintf(nm, sizeof nm, "pal%u_%s_filter", pal, N_GPAL[pal]);
-        shot(nm);
-    }
-    /* HOME moving: 24 frames of each view, SOFT BELLS arpeggiated */
-    gu_pi = 0;
-    gu_load(5);                                          /* BRIGHT ARP */
-    go_page(B_HOME, 0);
-    web_keys((1u << 0) | (1u << 4) | (1u << 7));
-    for (view = 0; view < 3u; view++) {
-        uint32_t f;
-        gu_view = (uint8_t)view;
-        ui.force = 1;
-        render(300);
-        for (f = 0; f < 24u; f++) {
-            render(60);
-            snprintf(nm, sizeof nm, "anim_%s_%02u", N_GVIEW[view], f);
-            shot(nm);
-        }
-    }
+    render(4000);                                   /* (past the power-on) */
+    gu_load(0);                                     /* HOME, a chord held */
+    web_keys((1u << 0) | (1u << 7));
+    render(600);
+    shot("home");
     web_keys(0);
+    render(300);
+    for (p = 1; p < GU_NPAGE; p++) {                /* every function of every module */
+        gu.page = (uint8_t)p;
+        render(150);
+        snprintf(nm, sizeof nm, "page_%02u", p);
+        shot(nm);
+    }
+    go_page(B_SCL, 0);                              /* a slider just moved: its value on the LCD */
+    setv(GL_CUTOFF, 40);
+    gu.hot = 0;
+    gu.hot_t = fm1_ms;
+    render(60);
+    shot("slider_moved");
+    gu_load(17);                                    /* BASS / PIANO: SPLIT */
+    go_page(B_SEQ, 1);
+    shot("layer_split");
+    go_page(B_REC, 0);                              /* the sequencer's steps on the LCD */
+    shot("sequencer");
+    press(B_SAVE);
+    render(500);
+    shot("write");
     printf("done\n");
     return 0;
 }

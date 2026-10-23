@@ -22,27 +22,29 @@
   <img alt="GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-b092ff?style=flat-square&labelColor=0e1118">
 </p>
 
-**Ditto** turns the M-VAVE FM-1 into a sampler of the mid-eighties, after the E-mu Emulator II: a library of
-sixteen sounds (strings, a choir, an orchestra hit, piano, brass, flute…), two of them layered on every note, played
-through the grain of an 8-bit companded sampler into a 24 dB analog-style filter, with two envelopes, two LFOs, a
-patch bay, an arpeggiator, a step sequencer and effects. It is a fork of [Golana](https://github.com/Gadlele/Golana),
-itself a fork of [Felucca](https://github.com/hugelton/Felucca).
+**Ditto** turns the M-VAVE FM-1 into a sampler of the mid-eighties after the E-mu Emulator II, as dry as it was: a
+library of sixteen sounds (strings, a choir, an orchestra hit, piano, brass, flute…), one or two of them on every note,
+through an 8-bit companded sample player into a 24 dB low-pass and a VCA, each with its ADSR, and one LFO. A grey panel
+with a two-line LCD, the Emulator II's modules and their numbered functions, four sliders. Delay and reverb, an
+arpeggiator and a small step sequencer. It is a fork of [Golana](https://github.com/Gadlele/Golana), itself a fork of
+[Felucca](https://github.com/hugelton/Felucca).
 
-## The sampler
+## The modules
 
-| Section | |
-| --- | --- |
-| **SOUND A** | a sound of the library, or one of three user slots (USR1-3, your own samples from the web editor) · START, where the notes begin in the sample · LOOP |
-| **SOUND B** | OFF or a second sound, SEMI and TUNE · LAYER: STACK (both), VEL X (soft notes A, hard notes B), SPLIT (B below the SPLIT key) |
-| **MIXER** | the two sounds and NOISE · **CHARACTER**: **EII** (8-bit μ-law, no interpolation: the Emulator II's grain), **EMU 1** (8-bit linear, rougher), **CLEAN** (the recordings as they are) |
-| **SPLIT / DRIFT** | the split key · DRIFT, an old machine's clocks: every note a little out of tune, its own way |
-| **FILTER** | LPF24 (the Emulator II's SSM 24 dB), LPF12, BPF, HPF and MS20 · EG INT, KEY TRACK |
-| **EG / LFO** | FILTER EG and AMP EG · two LFOs (SAW, SQR, TRI, SIN, S&H) with key sync and tempo sync |
-| **PATCH 1–4** | FEG, AEG, LFO 1, LFO 2, velocity or keyboard to PITCH, B PITCH, BAL (between the two sounds), NOISE, CUTOFF, AMP or LFO 2's rate |
-| **VOICE** | POLY (eight voices; five when SOUND B is stacked or crossfaded), MONO, LEGATO, UNISON · DETUNE, PORTA, SPREAD |
-| **ARP / SEQ** | ten arp types over 1–4 octaves with latch and swing · a 16-step sequencer with ties, accents and slides |
-| **EFFECTS** | MOD FX (chorus, flanger, ensemble, phaser, METAL), delay, reverb, in three orders |
-| **PROGRAMS** | 32: STRINGS, CHOIR, ORCH HIT, PIANO, BRASS, FLUTE, CHOIR STRING, TUBULAR BELL, TIMPANI, SHAKUHACHI, BOW + PLUCK, BASS / PIANO, HIT ARP… 24 factory sounds and eight free |
+| Button | Module | Functions (press again for the next) |
+| --- | --- | --- |
+| **HOME** | PERFORM | FREQ, Q, ENV, LFO RATE |
+| **GLO** | MASTER | 1 TEMPO TUNE · 2 ASSIGN (POLY, MONO, LEGATO, UNISON; DETUNE, PORTA) · 3 OUTPUT |
+| **SCL** | FILTER | 1 FREQ Q ENV · 2 LFO KBD · 3 ADSR (the Emulator II's SSM 24 dB low-pass) |
+| **ENV** / **LFO** | LFO/VCA | 1 VCA ADSR · 2 LFO (WAVE, RATE, DELAY, VCA) · 3 LFO SYNC (LFO opens 2 directly) |
+| **EDIT** | VOICE DEF | 11 SAMPLE (SOUND, START, LOOP, CHARACTER: EII 8-bit μ-law or CLEAN) · 21 VELOCITY (to level, to filter) · 23 VIBRATO |
+| **SEQ** | PRESET DEF | 22 SOUND B (SEMI, TUNE, LEVEL) · 25 LAYER (STACK, VEL SW, VEL X, SPLIT, POS X) · 29–31 the arpeggiator |
+| **REC** | SEQUENCER | 1 PATTERN (16 steps, drawn on the LCD; a key writes its note) · 2 SETUP |
+| **FX** | EFFECTS | 1 DELAY · 2 REVERB |
+| **SAVE** | DISK | write a preset: PRESETS the slot, KNOB 1 / 2 the name |
+
+KNOB 1–4 are the sliders A–D, ALGORITHM is the filter's FREQ from anywhere, PRESETS picks the preset (32: 24 factory
+sounds and eight free), ARP and PLAY as printed. Eight voices; five when SOUND B is stacked or crossfaded.
 
 ## The library
 
@@ -51,16 +53,6 @@ HARP: 41 multisampled zones, 27 seconds of sound in 283 KB. The recordings are C
 VCSL); CHOIR has no free recording and is synthesized (eight voices singing "ah"), ORCH HIT is struck together from
 trumpets, violins and a timpani. None of E-mu's own samples are used: the Emulator II's sound comes from how
 Ditto plays them.
-
-## The controls
-
-| Control | |
-| --- | --- |
-| **HOME** | PERFORM: cutoff, resonance, EG int, LFO 1 rate |
-| **EDIT / SCL / ENV / LFO** | SOUND A, SOUND B, MIXER, SPLIT (split key, DRIFT) / the filter / the envelopes / the LFOs and the patch bay |
-| **GLO / REC / SEQ / FX** | amp, voice, global, setup / the sequencer / the arpeggiator / the effects |
-| **KNOB 1–4** | the four cards on the screen · **ALGORITHM**: the cutoff from any page · **PRESETS**: the program |
-| **ARP / PLAY / SAVE** | arpeggiator on and off / the sequencer / write a program |
 
 ## Install
 

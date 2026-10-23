@@ -121,15 +121,14 @@ int main(int argc, char **argv)
     }
     /* the buttons */
     press(B_EDIT);
-    check(GU_PAGES[gu.page].btn == B_EDIT && gu.page == 1, "EDIT: SOUND A");
+    check(GU_PAGES[gu.page].btn == B_EDIT && GU_PAGES[gu.page].k[0].id == DT_SNDA, "EDIT: VOICE DEF 11 SAMPLE");
     press(B_EDIT);
-    check(GU_PAGES[gu.page].btn == B_EDIT && gu.page == 2, "EDIT again: SOUND B");
+    check(GU_PAGES[gu.page].btn == B_EDIT && GU_PAGES[gu.page].k[0].id == DT_VELLVL, "EDIT again: 21 VELOCITY");
+    press(B_EDIT);                                /* (23 VIBRATO) */
     press(B_EDIT);
-    press(B_EDIT);                                /* (MIXER, then SPLIT / DRIFT) */
-    press(B_EDIT);
-    check(gu.page == 1, "EDIT wraps to SOUND A");
+    check(GU_PAGES[gu.page].k[0].id == DT_SNDA, "EDIT wraps to 11 SAMPLE");
     press(B_FX);
-    check(GU_PAGES[gu.page].btn == B_FX && !strcmp(GU_PAGES[gu.page].tab, "MOD FX"), "FX: MOD FX");
+    check(GU_PAGES[gu.page].btn == B_FX && !strcmp(GU_PAGES[gu.page].tshort, "1 DELAY"), "FX: EFFECTS 1 DELAY");
     press(B_ARP);
     check(trk[0].p[GL_ARPON] == 1 && trk[0].p[P_AMODE] != 0, "ARP on");
     render(100);
@@ -179,13 +178,15 @@ int main(int argc, char **argv)
     web_midi(0xC0, 2, 0);
     render(100);
     check(gu.prog == 2, "Program Change loads program 3");
-    /* LFO: LFO 1, LFO 2, then PATCH 1 */
+    /* LFO: LFO/VCA's 2 LFO, then 3 LFO SYNC, then 1 VCA ADSR */
     press(B_LFO);
+    check(GU_PAGES[gu.page].btn == B_ENV && GU_PAGES[gu.page].k[0].id == GL_L1WAVE, "LFO: LFO/VCA 2 LFO");
     press(B_LFO);
+    check(GU_PAGES[gu.page].k[0].id == GL_L1KEY, "LFO again: 3 LFO SYNC");
     press(B_LFO);
-    check(GU_PAGES[gu.page].btn == B_LFO && GU_PAGES[gu.page].k[0].id == GL_P1SRC, "LFO third press: PATCH 1");
+    check(GU_PAGES[gu.page].k[0].id == P_ATK, "LFO a third time: 1 VCA ADSR");
     render(80);
-    shot("40_lfo_patch1");
+    shot("40_lfo_vca");
     /* the step sequencer: REC, three keys entered, PLAY, it sounds, STOP; written and loaded back */
     press(B_REC);
     check(GU_PAGES[gu.page].btn == B_REC && GU_PAGES[gu.page].k[0].id == GV_SSTEP, "REC: the sequencer");
@@ -280,23 +281,24 @@ int main(int argc, char **argv)
      * SUB and DRIFT bytes); the sampler: a split, a one-shot that ends by itself, an empty user slot, START */
     {
         uint32_t i;
-        press(B_EDIT);
-        for (i = 0; i < 4u && GU_PAGES[gu.page].k[0].id != DT_SPLIT; i++)
-            press(B_EDIT);
-        check(GU_PAGES[gu.page].btn == B_EDIT && GU_PAGES[gu.page].k[1].id == GL_DRIFT, "EDIT: the SPLIT / DRIFT page");
+        press(B_SEQ);
+        for (i = 0; i < 6u && GU_PAGES[gu.page].k[1].id != DT_SPLIT; i++)
+            press(B_SEQ);
+        check(GU_PAGES[gu.page].btn == B_SEQ && GU_PAGES[gu.page].k[0].id == DT_LAYER, "PRESET DEF 25 LAYER");
         gu_load(17);
         render(80);
-        shot("35_split_drift");
-        check(!strcmp(gu.name, "BASS / PIANO") && trk[0].p[DT_SPLIT] == 60 && trk[0].p[DT_LAYER] == 2 &&
-              trk[0].p[DT_SNDB] == DT_S_BASS + 1, "program 18, BASS / PIANO: SOUND B BASS, SPLIT at C4");
-        trk[0].p[GL_DRIFT] = 77;
+        shot("35_layer");
+        check(!strcmp(gu.name, "BASS / PIANO") && trk[0].p[DT_SPLIT] == 60 && trk[0].p[DT_LAYER] == 3 &&
+              trk[0].p[DT_SNDB] == DT_S_BASS + 1, "preset 18, BASS / PIANO: SOUND B BASS, SPLIT at C4");
+        trk[0].p[DT_SPLIT] = 55;
+        trk[0].p[DT_XWIDTH] = 30;
         check(gu_store(27, "SPLIT COPY") == 0, "written to slot 28");
-        check(up_rec(27)->packed[P_COUNT + 1u] == 60 && up_rec(27)->packed[P_COUNT + 2u] == 77,
-              "SPLIT and DRIFT past the record's values");
+        check(up_rec(27)->packed[P_COUNT + 1u] == 55, "SPLIT past the record's values");
         gu_load(0);
-        check(trk[0].p[GL_DRIFT] == 0 && trk[0].p[DT_SPLIT] == 60, "STRINGS: no DRIFT, SPLIT at its default");
+        check(trk[0].p[DT_SPLIT] == 60 && trk[0].p[DT_XWIDTH] == 12, "STRINGS: SPLIT and WIDTH at their defaults");
         gu_load(27);
-        check(trk[0].p[GL_DRIFT] == 77 && trk[0].p[DT_SPLIT] == 60 && trk[0].p[DT_LAYER] == 2, "loaded back: SPLIT, DRIFT");
+        check(trk[0].p[DT_SPLIT] == 55 && trk[0].p[DT_XWIDTH] == 30 && trk[0].p[DT_LAYER] == 3, "loaded back: SPLIT, WIDTH");
+        trk[0].p[DT_SPLIT] = 60;
         {   /* SPLIT: a key below C4 plays SOUND B (the bass), one above SOUND A (the piano) */
             glp_t *g = gl_part(&trk[0]);
             uint32_t v, below = 0, above = 0;

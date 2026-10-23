@@ -3,7 +3,7 @@
   "version": "1.0",
   "sounds_sub": "Eight short pieces, each one factory program played as the FM-1 plays it: one sampler, its eight voices, its arpeggiator, delay and reverb. No effects added afterwards.",
   "tagline": "An eighties sampler for the M-VAVE FM-1, after the E-mu Emulator II: two sounds layered, eight bits, an analog filter.",
-  "lead": "The FM-1 as a sampler of the mid-eighties: a library of sixteen sounds, two of them on every note, through the grain of an 8-bit companded sampler into a 24 dB filter, with envelopes, LFOs, a patch bay, an arpeggiator and a step sequencer. Every page draws what it does.",
+  "lead": "The FM-1 as a sampler of the mid-eighties, after the Emulator II and as dry as it was: a library of sixteen sounds, one or two on every note, through an 8-bit companded sample player into a 24 dB filter and a VCA, each with its ADSR, and one LFO. A grey panel, a two-line LCD, modules and their numbered functions.",
   "repo": "https://github.com/Gadlele/Ditto",
   "rescue": "DITTO USB RESCUE",
   "fonts": "https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap",
@@ -12,9 +12,9 @@
   "h1_extra": "text-transform: uppercase; font-weight: 400;",
   "stripes": "linear-gradient(180deg, #ffb547 0 16%, transparent 16% 21%, #ff805c 21% 37%, transparent 37% 42%, #ecd660 42% 58%, transparent 58% 63%, #f07a9c 63% 79%, transparent 79% 84%, #b092ff 84% 100%)",
   "dot_radius": "2px",
-  "device_title": "A sampler you can read",
-  "device_sub": "Twelve buttons open the sections: EDIT the two sounds and the mixer, SCL the filter, ENV the envelopes, LFO the LFOs and the patch bay, FX the effects. KNOB 1–4 always set the four cards on the screen, ALGORITHM is always the cutoff.",
-  "features_sub": "One sampler voice, explored in depth, with 32 programs.",
+  "device_title": "A panel from 1984",
+  "device_sub": "The buttons are the Emulator II's modules: GLO the MASTER, SCL the FILTER, ENV the LFO/VCA, EDIT the VOICE DEFINITION, SEQ the PRESET DEFINITION, REC the SEQUENCER, FX the effects, SAVE the DISK. Press a module again for its next function; KNOB 1–4 are the sliders A–D; the LCD says where you are.",
+  "features_sub": "One sampler voice, the Emulator II's, with 32 presets.",
   "features": [
     {
       "t": "A library of sixteen sounds",
@@ -23,48 +23,43 @@
     },
     {
       "t": "Two sounds a note",
-      "p": "SOUND A and SOUND B stacked, crossfaded by the velocity or split at a key, B with its own semitone and tune. A patch cord moves the balance between them.",
+      "p": "PRESET DEF assigns SOUND B, as the Emulator II's presets did: stacked, VELOCITY SWITCH, VELOCITY CROSSFADE, a SPLIT or a POSITIONAL CROSSFADE over a range of keys.",
       "c": "#e0a070"
     },
     {
       "t": "Eight bits",
-      "p": "CHARACTER: <b>EII</b>, 8-bit μ-law and no interpolation, the grain of the Emulator II; <b>EMU 1</b>, 8-bit linear and rougher; or <b>CLEAN</b>, the recordings as they are.",
+      "p": "<b>EII</b>: 8-bit μ-law and no interpolation, the grain of the Emulator II. Or <b>CLEAN</b>, the recordings as they are.",
       "c": "#ecd660"
     },
     {
-      "t": "START and LOOP",
-      "p": "The notes start further into the sample, past its attack; a sustained sound loops while the key is held, or plays once through like tape.",
+      "t": "The Emulator II's voice",
+      "p": "A 24 dB low-pass with its ADSR, a VCA with its ADSR, one LFO with a delay to the pitch, the filter and the level; velocity to the level and the filter. No patch bay: the routings are the EII's.",
       "c": "#f07a9c"
     },
     {
-      "t": "Five filters",
-      "p": "LPF24 after the Emulator II's SSM 24 dB, LPF12, BPF, HPF and MS20, with key tracking and their own envelope.",
+      "t": "START and LOOP",
+      "p": "The notes start further into the sample, past its attack; a sustained sound loops while the key is held, or plays once through.",
       "c": "#b092ff"
     },
     {
-      "t": "Envelopes, LFOs, patch",
-      "p": "FILTER EG and AMP EG; two LFOs with key sync and tempo sync; four patch cords from the envelopes, LFOs, velocity or keyboard to pitch, the balance, the cutoff and more. DRIFT ages the clocks.",
+      "t": "A grey panel",
+      "p": "A two-line LCD in 5 × 7 dots, four sliders and the modules' LEDs: the functions numbered as on the instrument (FILTER 1, VOICE DEF 21, PRESET DEF 25).",
       "c": "#5cceaa"
     },
     {
       "t": "Arpeggiator and sequencer",
-      "p": "Ten arp types over 1–4 octaves with latch, swing and steps on/off; a 16-step sequencer with notes, ties, accents and slides, saved with the program.",
+      "p": "An arpeggiator in PRESET DEF, as on the EII; a small 16-step sequencer with ties, accents and slides, its steps drawn on the LCD.",
       "c": "#66aaff"
     },
     {
-      "t": "Effects",
-      "p": "MOD FX (chorus, flanger, ensemble, phaser, or METAL distortion), a stereo delay in time with the tempo and a reverb, in three orders.",
+      "t": "Delay and reverb",
+      "p": "Only these two, as one would have patched them in 1984: a stereo delay in time with the tempo and a room, spring or hall reverb.",
       "c": "#ff805c"
     },
     {
-      "t": "32 programs",
-      "p": "24 factory sounds (STRINGS, CHOIR, ORCH HIT, PIANO, BRASS, SHAKUHACHI, BOW + PLUCK, BASS / PIANO, HIT ARP, AIR CHOIR…) and eight free slots. MIDI Program Change picks them.",
+      "t": "32 presets",
+      "p": "24 factory sounds (STRINGS, CHOIR, ORCH HIT, PIANO, SHAKUHACHI, BOW + PLUCK, BASS / PIANO, BRASS / HIT, CELLO>CHOIR…) and eight free slots. MIDI Program Change picks them.",
       "c": "#ffb547"
-    },
-    {
-      "t": "Pages that draw",
-      "p": "SOUND A and SOUND B draw their sample, its loop and START; the filter its curve, the envelopes and LFOs their shapes. A record turns at power-on.",
-      "c": "#96d668"
     }
   ],
   "gallery_sub": "Real screens of Ditto 1.0, taken from the emulator.",
@@ -72,57 +67,57 @@
     {
       "img": "home_notes.png",
       "t": "HOME",
-      "p": "PERFORM: the sound as it plays"
+      "p": "the preset and the tempo, four sliders"
     },
     {
       "img": "edit.png",
-      "t": "EDIT",
-      "p": "SOUND A: the sample, its loop, START"
+      "t": "VOICE DEF 11",
+      "p": "the sample: sound, start, loop, character"
     },
     {
       "img": "sndb.png",
-      "t": "SOUND B",
-      "p": "a second sound, stacked, crossfaded or split"
+      "t": "PRESET DEF 22",
+      "p": "SOUND B"
     },
     {
       "img": "mixer.png",
-      "t": "MIXER",
-      "p": "the levels and the sampler's character"
+      "t": "PRESET DEF 25",
+      "p": "the layer: velocity crossfade"
     },
     {
       "img": "start.png",
       "t": "START",
-      "p": "the notes past the sample's attack"
+      "p": "the choir past its attack"
     },
     {
       "img": "scl.png",
-      "t": "SCL",
-      "p": "the filter's response"
+      "t": "FILTER 1",
+      "p": "frequency, Q, envelope"
     },
     {
       "img": "env.png",
-      "t": "ENV",
-      "p": "the filter and amp envelopes"
+      "t": "FILTER 3",
+      "p": "its ADSR"
     },
     {
       "img": "lfo.png",
-      "t": "LFO",
-      "p": "LFO 1, running"
+      "t": "LFO/VCA 2",
+      "p": "the LFO and its delay"
     },
     {
       "img": "patch.png",
-      "t": "PATCH",
-      "p": "four cords, any source to any destination"
+      "t": "VOICE DEF 21",
+      "p": "velocity to level and filter"
     },
     {
       "img": "fx.png",
-      "t": "FX",
-      "p": "MOD FX, delay, reverb"
+      "t": "EFFECTS 2",
+      "p": "the reverb"
     },
     {
       "img": "save.png",
-      "t": "WRITE",
-      "p": "name and save a program"
+      "t": "DISK",
+      "p": "name and write a preset"
     }
   ],
   "credits": "; the sound library from Versilian Studios' CC0 recordings (<a href=\"https://github.com/sgossner/VSCO-2-CE\">VSCO-2 CE</a>, <a href=\"https://github.com/sgossner/VCSL\">VCSL</a>); the USB rescue after zvenson's <a href=\"https://github.com/zvenson/dinghy\">dinghy</a>. Emulator and E-mu are trademarks of their owners; Ditto contains none of E-mu's samples",

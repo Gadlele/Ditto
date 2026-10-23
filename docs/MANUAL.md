@@ -2,33 +2,56 @@
 
 Ditto is a fork of [Golana](https://github.com/Gadlele/Golana) (itself a fork of
 [Felucca](https://github.com/hugelton/Felucca)) for the M-VAVE FM-1 by Gadlele: a sampler of the mid-eighties after the
-E-mu Emulator II, with Golana's interface (the MATRIX). Ditto is free software under the GPL-3.0, like Felucca.
+E-mu Emulator II, with a panel after the instrument's. Ditto is free software under the GPL-3.0, like Felucca.
 Felucca's own README, for the parts Ditto shares (the hardware, the credits), is [FELUCCA.md](FELUCCA.md).
 
 ## The sampler
 
-Every note plays one or two sounds of the library (SOUND A, SOUND B), each through the sampler's CHARACTER, mixed with
-noise into the filter, then the amp. Like the Emulator II, a note starts its sample from the beginning every time.
+Every note plays one or two sounds of the library (SOUND A, SOUND B) through the sampler's CHARACTER into a 24 dB
+low-pass and a VCA, each with its ADSR; one LFO with a delay goes to the pitch, the filter and the level. As on the
+Emulator II, a note starts its sample from the beginning every time and the routings are fixed: there is no patch bay,
+and the only effects are a delay and a reverb.
 
-| Section | Parameters |
-| --- | --- |
-| SOUND A | SOUND (the library's sixteen, or USR1-3: a user slot, your own samples loaded from the web editor), START (0 the sample's beginning .. 127 near its end: the notes start further in, past the attack; the library's sounds only), LOOP (ON: a sustained sound loops while the key is held; OFF: it plays once through and fades) |
-| SOUND B | SOUND (OFF, or a sound), LAYER (STACK: both sounds on every note; VEL X: soft notes play A, hard notes B, crossfaded by the velocity; SPLIT: B below the SPLIT key, A from it), SEMI (±24, B's transposition: B picks the sample of the key it sounds), TUNE (±63 cents) |
-| MIXER | SOUND A, SOUND B (their levels), NOISE, CHARACTER: **EII** (each sample through an 8-bit μ-law compander, 255 steps finer for quiet sounds, and held until the next one, no interpolation: the grain and the aliasing of the Emulator II's variable-clock DACs), **EMU 1** (8-bit linear and held: rougher, the quiet tails gritty, as the Emulator I), **CLEAN** (the recordings as stored, interpolated) |
-| SPLIT | SPLIT KEY (LAYER SPLIT: the lowest key of SOUND A), DRIFT (an old machine's clocks: each note's two sounds a little out of tune, each its own way, slowly wandering, its cutoff a little off; 0 off) |
-| FILTER | TYPE (LPF24: the Emulator II's SSM 24 dB low-pass; LPF12, BPF, HPF, MS20: a driven 12 dB low-pass whose resonance screams), CUTOFF, RESO, EG INT, KEY TRACK |
-| FILTER EG / AMP EG | ATTACK, DECAY, SUSTAIN, RELEASE. A one-shot sound (the piano, the bells, the hit…) ends when its sample does, the key held or not |
-| AMP | LEVEL, PANPOT, DIST, SPREAD (the voices across the stereo field) |
-| VOICE | ASSIGN (POLY with eight voices, five when each note plays two sounds: SOUND B on, LAYER STACK or VEL X; SPLIT keeps eight. MONO, LEGATO, UNISON: every voice on one note, SOUND B detuned the other way), DETUNE, PORTA, EG RESET |
-| LFO 1 / LFO 2 | WAVE (SAW, SQR, TRI, SIN, S&H), FREQ, KEY SYNC (OFF, TIMBRE, VOICE), TEMPO (sync to a note value) |
-| PATCH 1-4 | SOURCE (FEG, AEG, LFO1, LFO2, VELO, KBD), DEST (PITCH, B PITCH: SOUND B's alone, BAL: the balance between the two sounds, + toward B and − toward A, NOISE, CUTOFF, AMP, LFO2F), INTENSITY. VELO → BAL is a velocity crossfade with the two levels kept; an LFO → BAL a slow one |
-| SEQUENCER | 16 steps saved with the program. PATTERN: STEP, NOTE, TYPE (REST, NOTE, TIE), ACC / SLIDE; a key writes its note into the step and moves on. SETUP: LENGTH 1-16, RES, GATE, SWING |
-| ARP | ON, TYPE (UP, DOWN, ALT1, ALT2, RANDOM, TRIGGER, ORDER, CONVERGE, PEDAL, DOUBLE), RANGE 1-4, RES, GATE, SWING, LATCH, KEY SYNC, LAST STEP and steps on/off |
-| MOD FX | TYPE (CHORUS, FLANGER, ENSEMBLE, PHASER), SPEED, DEPTH, MIX; TYPE METAL (a high-gain distortion with a strong mid hump): GAIN, MID, MID FREQ (200 Hz - 5 kHz) |
-| DELAY | TYPE (STEREO, CROSS, L/R), TIME (tempo), FEEDBACK, LEVEL |
-| REVERB | TYPE (ROOM, SPRING, HALL), SIZE, DAMP, LEVEL |
-| GLOBAL | TEMPO, TUNE, CLOCK (INT, USB, TRS), MIDI IN (ALL, CH 1) |
-| SETUP | FX ORDER, saved with the program: MFX>DLY>REV (the default), DLY>MFX>REV, DLY>REV>MFX; PALETTE; HOME's drawing |
+## The panel
+
+The screen is the Emulator II's panel: a dark strip (DITTO, the preset in red, the battery), a two-line LCD of 16
+characters in 5 × 7 dots, four sliders A–D (KNOB 1–4), and the modules' LEDs. The LCD's first line names the module and
+its function's number (`FILTER 1`), the second the function (`FREQ Q ENV`); a slider moved shows its value there for a
+moment (`FREQ 64`), and messages appear there too. On HOME the first line is the preset (`P01 STRINGS`), the second
+the tempo and the arpeggiator.
+
+| Button | Module | Function | Sliders A B C D |
+| --- | --- | --- | --- |
+| HOME | PERFORM | | FREQ, Q, ENV, LFO RATE |
+| GLO | MASTER | 1 TEMPO TUNE | TEMPO, TUNE, CLOCK (INT, USB, TRS), MIDI (ALL, CH 1) |
+| | | 2 ASSIGN | MODE (POLY, MONO, LEGATO, UNISON), DETUNE, PORTA, RESET (both envelopes from 0 on a retrigger) |
+| | | 3 OUTPUT | LEVEL, PAN, SPREAD |
+| SCL | FILTER | 1 FREQ Q ENV | FREQ, Q, ENV (the filter ADSR's amount, ±) |
+| | | 2 LFO KBD | LFO (the LFO on the cutoff), KBD (key tracking, ±; +63 follows the keys) |
+| | | 3 ADSR | ATTACK, DECAY, SUSTAIN, RELEASE |
+| ENV | LFO/VCA | 1 VCA ADSR | ATTACK, DECAY, SUSTAIN, RELEASE (a one-shot sound ends with its sample, the key held or not) |
+| (LFO) | | 2 LFO | WAVE (TRI, SIN, SQR, SAW, S&H), RATE, DELAY (it fades in after each note starts), VCA (a tremolo) |
+| | | 3 LFO SYNC | KEY (OFF, TIMBRE: from the first key down, VOICE: each note), TEMPO (a note value of the tempo) |
+| EDIT | VOICE DEF | 11 SAMPLE | SOUND (the library or USR1-3), START (0 the sample's beginning .. 127 near its end), LOOP, CHAR (EII: 8-bit μ-law, each sample held, no interpolation; CLEAN: the recordings as stored, interpolated) |
+| | | 21 VELOCITY | LEVEL (0 every note as loud, 127 as hard as played), FILTER (±) |
+| | | 23 VIBRATO | DEPTH (up to ±2 semitones), RATE, DELAY (the LFO's) |
+| SEQ | PRESET DEF | 22 SOUND B | SOUND (OFF or a sound; B picks the sample of the key it sounds), SEMI (±24), TUNE (±63 cents), LEVEL |
+| | | 25 LAYER | MODE (STACK both; VEL SW: B from the VEL SW velocity on; VEL X: crossfaded by the velocity; SPLIT: B below KEY; POS X: B into A over WIDTH keys centred on KEY), KEY, WIDTH, VEL SW |
+| | | 29 ARP | ARP, TYPE (UP, DOWN, ALT1, ALT2, RANDOM, TRIGGER, ORDER, CONVERGE, PEDAL, DOUBLE), RANGE 1-4, RES |
+| | | 30 ARP TIME | GATE, SWING, LATCH, KSYNC |
+| | | 31 ARP STEPS | LAST, STEP, ON/OFF (the 8 steps on the LCD) |
+| REC | SEQUENCER | 1 PATTERN | STEP, NOTE, TYPE (REST, NOTE, TIE), ACC/SLD; a key writes its note into the step and moves on. The 16 steps on the LCD: `#` a note, `-` a tie, `.` a rest, `>` the one playing |
+| | | 2 SETUP | LENGTH 1-16, RES, GATE, SWING |
+| FX | EFFECTS | 1 DELAY | TYPE (STEREO, CROSS, L/R), TIME (tempo), FDBK, LEVEL |
+| | | 2 REVERB | TYPE (ROOM, SPRING, HALL), SIZE, DAMP, LEVEL |
+| SAVE | DISK | | WRITE PRESET: PRESETS the slot, KNOB 1 the letter (blinking on the LCD), KNOB 2 changes it, SAVE writes, HOME cancels |
+
+A button opens its module's first function, pressed again the next; SELECT walks every function; LFO opens LFO/VCA 2
+directly. ALGORITHM is the filter's FREQ from any function; PRESETS loads a preset as it turns (edits not written are
+lost); ARP turns the arpeggiator on and off; PLAY starts and stops the sequencer; OCT- OCT+ move the keys an octave.
+
+Voices: eight, five when each note plays two sounds (SOUND B on, LAYER STACK, VEL X or POS X; SPLIT and VEL SW keep
+eight: each note plays one).
 
 ## The library
 
@@ -58,46 +81,18 @@ USR1-3 are the SAMPLE engine's user slots of Felucca: samples sent from the web 
 `tools/fm1_sample_upload.py`) into the FM-1's flash, up to 80 KB each, kept across updates. A slot with nothing in it
 is silent, and the SOUND page says EMPTY SLOT. START works on the library's sounds only.
 
-## The programs
+## The presets
 
-32 programs: 1-24 hold the factory sounds until written over, 25-32 start as INIT. MIDI Program Change 0-31 picks a
-program.
+32 presets: 1-24 hold the factory sounds until written over, 25-32 start as INIT. MIDI Program Change 0-31 picks one.
 
-1-16, the library as the sampler played it: STRINGS, CHOIR, ORCH HIT, PIANO, BRASS, FLUTE, CHOIR STRING (the choir and
-the strings stacked), HARPSICHORD, MARIMBA, TUBULAR BELL, PIZZICATO, UPRIGHT BASS (mono), TIMPANI, PIPE ORGAN, CELLOS,
-SHAKUHACHI (the recorder with breath noise and a bent attack).
+1-16, the library as the sampler played it: STRINGS, CHOIR, ORCH HIT, PIANO, BRASS, FLUTE (a delayed vibrato), CHOIR
+STRING (the choir and the strings stacked), HARPSICHORD, MARIMBA, TUBULAR BELL, PIZZICATO, UPRIGHT BASS (mono),
+TIMPANI, PIPE ORGAN, CELLOS, SHAKUHACHI (the recorder, a slow vibrato).
 
-17-24, the sampler's tricks: BOW + PLUCK (VEL X: soft notes bowed, hard notes plucked), BASS / PIANO (SPLIT at
-middle C), DEEP CHOIR (the choir and itself an octave down, DRIFT), HIT ARP (the orchestra hit on the arpeggiator),
-EMU 1 KEYS (the piano in EMU 1, a phaser), AIR CHOIR (START past the attack, a band-pass moving), TAPE FLUTE (LOOP
-OFF and DRIFT: a tape replay keyboard), HARP + BELL (CLEAN, the bells a twelfth above).
-
-## The controls
-
-| Control | What it does |
-| --- | --- |
-| SELECT | every page, one after another |
-| KNOB 1-4 | the four parameters on the cards |
-| ALGORITHM | CUTOFF, from any page |
-| PRESETS | the program (it loads as you turn; edits not written are lost, as on the original) |
-| HOME | PERFORM: cutoff, resonance, EG int, LFO 1 rate |
-| EDIT / SCL / ENV / LFO | SOUND A, SOUND B, MIXER, SPLIT (split key, DRIFT) / FILTER, KEY TRACK / FILTER EG, AMP EG / LFO 1, LFO 2, PATCH 1-4 (press again for the next) |
-| GLO / REC / SEQ / FX | AMP, VOICE, GLOBAL, SETUP (FX ORDER, PALETTE, HOME) / the sequencer: PATTERN, SETUP / the arpeggiator: ARP, TIMING, STEPS / MOD FX, DELAY, REVERB |
-| ARP | the arpeggiator on / off |
-| PLAY | the step sequencer: play / stop (LATCH is on SEQ · TIMING) |
-| SAVE | WRITE: PRESETS picks the slot, KNOB 1 the letter, KNOB 2 changes it, SAVE writes, HOME cancels |
-| OCT- / OCT+ | the keys' octave (both held 5 s: update mode, as in Felucca) |
-
-The pages that set a shape draw it above their four knobs, from the values themselves: SOUND A and SOUND B the
-sample the middle C plays, whole (its root and length above it, the loop shaded, START marked), FILTER its response
-curve, FILTER EG and AMP EG the envelope, LFO 1 and LFO 2 the running wave. HOME draws the sound playing, three ways
-(GLO · SETUP · HOME): RIDGE, the default (the last waves stacked), RING (the wave round a circle) and ORBIT (the wave
-against itself a moment later). GLO · SETUP · PALETTE: NIGHT, CRT, PAPER, NEON (kept with the settings).
-
-The screen shows the open page as a tab, "BUTTON · PAGE" in that button's own colour, with the button's other pages
-as dark tabs beside it. The header shows the program, its name and the battery (a bolt on USB power); a thin strip at
-the bottom shows the arpeggiator (a light, ARP, LATCH) on the left and the tempo (BPM, EXT on an external clock) on
-the right.
+17-24, PRESET DEF at work: BOW + PLUCK (VEL X: soft notes bowed, hard notes plucked), BASS / PIANO (SPLIT at middle C),
+DEEP CHOIR (the choir and itself an octave down), HIT ARP (the orchestra hit on the arpeggiator), BRASS / HIT (VEL SW:
+played hard, the orchestra hit), AIR CHOIR (START past the attack, the LFO on the filter), CELLO>CHOIR (POS X: the
+cellos low, the choir high, crossfaded over two octaves), HARP + BELL (CLEAN, the bells a twelfth above).
 
 ## When something goes wrong
 

@@ -12,8 +12,6 @@
 /* GL_ARPTYPE -> seq.c's AM_* (UP, DN, UPDN = ALT1, ALT2, RND, CHORD = TRIGGER; 1.1: ORD = ORDER, CONV = CONVERGE,
  * THUMB = PEDAL, DOUBLE) */
 static const uint8_t GL_AM[10] = {1, 2, 3, 15, 4, 14, 5, 9, 12, 16};
-/* GL_MFX -> fx.c's IT_* (OFF, CHORUS, FLANGER, ENSEMBLE, PHASER, METAL) */
-static const uint8_t GL_IT[6] = {0, 8, 7, 9, 6, 10};
 
 static void gl_defaults(int16_t *p)
 {
@@ -48,13 +46,14 @@ static void gl_defaults(int16_t *p)
 static void gl_sync(track_t *t)
 {
     int16_t *p = t->p;
-    int32_t ty = clamp(p[GL_ARPTYPE], 0, (int32_t)NELEM(GL_AM) - 1), mf = clamp(p[GL_MFX], 0, 5);
+    int32_t ty = clamp(p[GL_ARPTYPE], 0, (int32_t)NELEM(GL_AM) - 1);
     p[P_AMODE] = (int16_t)(p[GL_ARPON] ? GL_AM[ty] : 0);
-    p[P_ITYPE] = (int16_t)GL_IT[mf];
+    p[P_ITYPE] = 0;                     /* Ditto: no MOD FX (delay and reverb only) */
+    p[GL_MFX] = 0;
     p[P_APROB] = 127;
     p[P_LD_PIT] = p[P_LD_FLT] = p[P_LD_SHP] = p[P_LD_AMP] = 0;
     p[P_ED_FLT] = p[P_ED_PIT] = p[P_ED_SHP] = 0;
-    p[GL_ROUTE] = (int16_t)clamp(p[GL_ROUTE], 0, 2);
+    p[GL_ROUTE] = 0;                    /* (the delay into the reverb, as Golana's default) */
     if (t == &trk[0]) {                 /* the delay and the reverb of the program that plays */
         song.g[G_DTIME] = (int16_t)clamp(p[GL_DTIME], 0, 12);
         song.g[G_DFDBK] = (int16_t)clamp(p[GL_DFDBK], 0, 120);
