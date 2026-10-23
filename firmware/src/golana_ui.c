@@ -397,18 +397,48 @@ static void lcd_lr(char *out, const char *a, const char *b)
 }
 
 /* ---- the name strip: DITTO, the preset (P01, a dot when edited), the battery */
+#if DITTO_DIAG
+/* a test build (DITTO_DIAG=1 ./build.sh): the audio's load on the strip instead of SAMPLER: C the average %, M the
+ * worst half of the last 2 s in % of its time, L the halves rendered late since power-on (heard as noise) */
+static uint32_t gu_diag(char *b)
+{
+    static uint32_t t0, pk;
+    uint32_t half = HALF_FRAMES * 1000000u / FS, c = song.cpu_q8 * 100u / 256u, m;
+    if (fm1_ms - t0 > 2000u) {
+        t0 = fm1_ms;
+        pk = audio_max_us;
+        audio_max_us = 0;
+    }
+    m = pk * 100u / half;
+    b[0] = 'C';
+    fmt_int(b + 1, (int32_t)c);
+    str_cpy(b + str_len(b), " M", 3);
+    fmt_int(b + str_len(b), (int32_t)m);
+    str_cpy(b + str_len(b), " L", 3);
+    fmt_int(b + str_len(b), (int32_t)(felucca_dbg.late > 9999u ? 9999u : felucca_dbg.late));
+    return c | m << 8 | felucca_dbg.late << 16;
+}
+#endif
 static void gu_draw_head(void)
 {
     char n[4];
     uint32_t h = gu_hashv(0x811C9DC5u, (int32_t)(gu.prog | gu.dirty << 8 | (uint32_t)batt_shown() << 12 |
                                                (uint32_t)(song.octave + 8) << 16 | (uint32_t)(song.playing != 0) << 20));
     int32_t x;
+#if DITTO_DIAG
+    char dg[24];
+    h = gu_hashv(h, (int32_t)gu_diag(dg));
+#endif
     if (h == gu.sig_head)
         return;
     gu.sig_head = h;
     cv_begin(240, 24, GC_STRIP);
     x = cv_text(8, 3, &AF_M, "DITTO", GC_PRINT);
+#if DITTO_DIAG
+    cv_text(x + 8, 7, &AF_S, dg, RGB(240, 220, 120));
+#else
     cv_text(x + 8, 7, &AF_S, "SAMPLER", RGB(150, 148, 140));
+#endif
     {   /* the battery, right; the preset number before it, in the LEDs' red */
         int32_t lvl = batt_shown();
         cv_icon_mid(240 - 22, 12, 24, batt_icon(lvl), lvl == 1 ? GC_LED : GC_PRINT, GC_STRIP);
