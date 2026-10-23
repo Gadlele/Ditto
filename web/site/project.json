@@ -7,10 +7,10 @@
   "repo": "https://github.com/Gadlele/Ditto",
   "rescue": "DITTO USB RESCUE",
   "fonts": "https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap",
-  "theme": "--bg: #0e1118; --panel: #171b25; --rule: #2a303d; --text: #e8e6e1; --mid: #969cac; --accent: #ffb547; --on-accent: #1a1206; --glow: rgba(255, 181, 71, .16); --warn: #ff805c; --warn-bg: rgba(255, 128, 92, .07); --err: #ff7a6b; --good: #5cceaa; --body: 'IBM Plex Sans', system-ui, sans-serif; --display: DotGothic16, 'IBM Plex Mono', monospace; --mono: 'IBM Plex Mono', ui-monospace, monospace; --stripes-h: 30px;",
+  "theme": "--bg: #b2afa6; --panel: #c4c1b8; --rule: #8f8c84; --text: #242422; --mid: #55534e; --accent: #c8321f; --on-accent: #fffaf2; --glow: rgba(150, 168, 64, .25); --warn: #c8321f; --warn-bg: rgba(200, 50, 31, .08); --err: #b02a1a; --good: #4d6a12; --body: 'IBM Plex Sans', system-ui, sans-serif; --display: DotGothic16, 'IBM Plex Mono', monospace; --mono: 'IBM Plex Mono', ui-monospace, monospace; --stripes-h: 14px;",
   "h1_track": ".08em",
   "h1_extra": "text-transform: uppercase; font-weight: 400;",
-  "stripes": "linear-gradient(180deg, #ffb547 0 16%, transparent 16% 21%, #ff805c 21% 37%, transparent 37% 42%, #ecd660 42% 58%, transparent 58% 63%, #f07a9c 63% 79%, transparent 79% 84%, #b092ff 84% 100%)",
+  "stripes": "linear-gradient(180deg, #363532 0 60%, #96a840 60% 100%)",
   "dot_radius": "2px",
   "device_title": "A panel from 1984",
   "device_sub": "The buttons are the Emulator II's modules: GLO the MASTER, SCL the FILTER, ENV the LFO/VCA, EDIT the VOICE DEFINITION, SEQ the PRESET DEFINITION, REC the SEQUENCER, FX the effects, SAVE the DISK. Press a module again for its next function; KNOB 1–4 are the four sliders; the LCD says where you are.",
@@ -19,47 +19,47 @@
     {
       "t": "A library of sixteen sounds",
       "p": "Strings, a choir, an orchestra hit, piano, brass, flute, cellos, organ, harpsichord, marimba, tubular bells, pizzicato, double bass, timpani, a breathy recorder, harp: 41 zones from CC0 recordings. Three slots for your own samples.",
-      "c": "#ffb547"
+      "c": "#c8321f"
     },
     {
       "t": "Two sounds a note",
       "p": "PRESET DEF assigns SOUND B, as the Emulator II's presets did: stacked, VELOCITY SWITCH, VELOCITY CROSSFADE, a SPLIT or a POSITIONAL CROSSFADE over a range of keys.",
-      "c": "#e0a070"
+      "c": "#4d6a12"
     },
     {
       "t": "Eight bits",
       "p": "<b>EII</b>: 8-bit μ-law and no interpolation, the grain of the Emulator II. Or <b>CLEAN</b>, the recordings as they are.",
-      "c": "#ecd660"
+      "c": "#363532"
     },
     {
       "t": "The Emulator II's voice",
       "p": "A 24 dB low-pass with its ADSR, a VCA with its ADSR, one LFO with a delay to the pitch, the filter and the level; velocity to the level and the filter. No patch bay: the routings are the EII's.",
-      "c": "#f07a9c"
+      "c": "#c8321f"
     },
     {
       "t": "START and LOOP",
       "p": "The notes start further into the sample, past its attack; a sustained sound loops while the key is held, or plays once through.",
-      "c": "#b092ff"
+      "c": "#4d6a12"
     },
     {
       "t": "A grey panel",
       "p": "A two-line LCD in 5 × 7 dots, four sliders and the modules' LEDs: the functions numbered as on the instrument (FILTER 1, VOICE DEF 21, PRESET DEF 25).",
-      "c": "#5cceaa"
+      "c": "#363532"
     },
     {
       "t": "Arpeggiator and sequencer",
       "p": "An arpeggiator in PRESET DEF, as on the EII; a small 16-step sequencer with ties, accents and slides, its steps drawn on the LCD.",
-      "c": "#66aaff"
+      "c": "#c8321f"
     },
     {
       "t": "Delay and reverb",
       "p": "Only these two, as one would have patched them in 1984: a stereo delay in time with the tempo and a room, spring or hall reverb.",
-      "c": "#ff805c"
+      "c": "#4d6a12"
     },
     {
       "t": "32 presets",
       "p": "24 factory sounds (STRINGS, CHOIR, ORCH HIT, PIANO, SHAKUHACHI, BOW + PLUCK, BASS / PIANO, BRASS / HIT, CELLO>CHOIR…) and eight free slots. MIDI Program Change picks them.",
-      "c": "#ffb547"
+      "c": "#363532"
     }
   ],
   "gallery_sub": "Real screens of Ditto 1.0, taken from the emulator.",
