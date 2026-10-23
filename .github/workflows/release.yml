@@ -1,6 +1,6 @@
 name: Release
-# A tag NAME-vX.Y (git tag golana-v1.1 && git push origin golana-v1.1; NAME is project.json's name, lower case:
-# Felucca's own tags v1.0 .. v1.5.1 came with its history) makes the GitHub Release of that version: its notes from
+# A tag NAME-vX.Y (git tag ditto-v1.1 && git push origin ditto-v1.1; NAME is project.json's name, lower case:
+# Felucca's tags v1.0 .. v1.5.1 and Golana's golana-v* came with its history) makes the GitHub Release of that version: its notes from
 # CHANGELOG.md (web/site/changelog.py) and, attached, the package the website serves (gh-pages: firmware/), the very
 # file that was tested and published, not a new build. So: publish the site first (web/site/make_pages.py), then tag.
 # Or by hand (Actions > Release > Run workflow, the version): the tag is made on the branch it runs on, with the Release.

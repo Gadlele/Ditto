@@ -1,49 +1,139 @@
 {
-  "name": "Golana",
-  "version": "1.2",
-  "sounds_sub": "Eight short pieces, each one factory program played as the FM-1 plays it: one synth, its four voices, its arpeggiator, delay and reverb. No effects added afterwards.",
-  "tagline": "One analog-style synth for the M-VAVE FM-1, laid out like the classic microKORG, with a screen that draws the sound.",
-  "lead": "The FM-1 as a single, deep analog-style synthesizer: two oscillators, five filters, two envelopes, two LFOs, a patch bay, an arpeggiator and a step sequencer. Every page draws what it does.",
-  "repo": "https://github.com/Gadlele/Golana",
-  "rescue": "GOLANA USB RESCUE",
+  "name": "Ditto",
+  "version": "1.0",
+  "sounds_sub": "Eight short pieces, each one factory program played as the FM-1 plays it: one sampler, its eight voices, its arpeggiator, delay and reverb. No effects added afterwards.",
+  "tagline": "An eighties sampler for the M-VAVE FM-1, after the E-mu Emulator II: two sounds layered, eight bits, an analog filter.",
+  "lead": "The FM-1 as a sampler of the mid-eighties: a library of sixteen sounds, two of them on every note, through the grain of an 8-bit companded sampler into a 24 dB filter, with envelopes, LFOs, a patch bay, an arpeggiator and a step sequencer. Every page draws what it does.",
+  "repo": "https://github.com/Gadlele/Ditto",
+  "rescue": "DITTO USB RESCUE",
   "fonts": "https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap",
   "theme": "--bg: #0e1118; --panel: #171b25; --rule: #2a303d; --text: #e8e6e1; --mid: #969cac; --accent: #ffb547; --on-accent: #1a1206; --glow: rgba(255, 181, 71, .16); --warn: #ff805c; --warn-bg: rgba(255, 128, 92, .07); --err: #ff7a6b; --good: #5cceaa; --body: 'IBM Plex Sans', system-ui, sans-serif; --display: DotGothic16, 'IBM Plex Mono', monospace; --mono: 'IBM Plex Mono', ui-monospace, monospace; --stripes-h: 30px;",
   "h1_track": ".08em",
   "h1_extra": "text-transform: uppercase; font-weight: 400;",
   "stripes": "linear-gradient(180deg, #ffb547 0 16%, transparent 16% 21%, #ff805c 21% 37%, transparent 37% 42%, #ecd660 42% 58%, transparent 58% 63%, #f07a9c 63% 79%, transparent 79% 84%, #b092ff 84% 100%)",
   "dot_radius": "2px",
-  "device_title": "A synth you can read",
-  "device_sub": "Twelve buttons open the sections, as on the classic microKORG: EDIT the oscillators, SCL the filter, ENV the envelopes, LFO the LFOs and the patch bay, FX the effects. KNOB 1–4 always set the four cards on the screen, ALGORITHM is always the cutoff.",
-  "features_sub": "A single voice architecture, explored in depth, with 32 programs.",
+  "device_title": "A sampler you can read",
+  "device_sub": "Twelve buttons open the sections: EDIT the two sounds and the mixer, SCL the filter, ENV the envelopes, LFO the LFOs and the patch bay, FX the effects. KNOB 1–4 always set the four cards on the screen, ALGORITHM is always the cutoff.",
+  "features_sub": "One sampler voice, explored in depth, with 32 programs.",
   "features": [
-    {"t": "Two oscillators and a sub", "p": "OSC 1: SAW with an octave-up blend, PULSE with width, TRI with a wavefolder, SINE with cross modulation. OSC 2: SAW, SQR or TRI with RING, SYNC or both, semitone and tune. New in 1.2: a SUB oscillator, square or sine, one or two octaves down.", "c": "#ffb547"},
-    {"t": "DRIFT", "p": "New in 1.2: analog age. Every note's oscillators a little out of tune, each its own way, slowly wandering, its filter a little off. From a touch of life to a worn-out tape.", "c": "#e0a070"},
-    {"t": "Five filters", "p": "LPF24, LPF12, BPF, HPF and <b>MS20</b>, a driven 12 dB low-pass whose resonance screams. A FOLD stage before it, key tracking and its own envelope.", "c": "#ecd660"},
-    {"t": "Envelopes and LFOs", "p": "FILTER EG and AMP EG; two LFOs (SAW, SQR, TRI, SIN, S&amp;H) with key sync and tempo sync. Four patch cords route any of them to pitch, cutoff, amp and more.", "c": "#f07a9c"},
-    {"t": "Unison and glide", "p": "POLY, MONO, LEGATO and UNISON: four voices, or eight detuned oscillators in unison. DETUNE, PORTA, EG RESET and SPREAD across the stereo field.", "c": "#b092ff"},
-    {"t": "Arpeggiator and sequencer", "p": "Ten arp types (ORDER, CONVERGE, PEDAL and DOUBLE new in 1.1) over 1–4 octaves with latch, swing and steps on/off; a 16-step sequencer with notes, ties, accents and slides, saved with the program.", "c": "#5cceaa"},
-    {"t": "Effects", "p": "MOD FX (chorus, flanger, ensemble, phaser, or METAL distortion), a stereo delay in time with the tempo and a reverb, in three orders.", "c": "#ff805c"},
-    {"t": "Pages that draw", "p": "Each page draws its shape from the values: the waves, the filter's curve, the envelopes, the LFOs running. HOME draws the sound playing: RIDGE, RING or ORBIT.", "c": "#66aaff"},
-    {"t": "32 programs", "p": "24 factory sounds (FAT BASS, ACID LINE, SYNC PAD, 80S BRASS, SOFT BELLS; new in 1.2: SUB BASS, REESE, WORN TAPE, AGED PAD…) and eight free slots. MIDI Program Change picks them.", "c": "#ffb547"},
-    {"t": "Four palettes", "p": "NIGHT, CRT, PAPER and NEON. And a three-second power-on with the eighties' stripes.", "c": "#96d668"}
+    {
+      "t": "A library of sixteen sounds",
+      "p": "Strings, a choir, an orchestra hit, piano, brass, flute, cellos, organ, harpsichord, marimba, tubular bells, pizzicato, double bass, timpani, a breathy recorder, harp: 41 zones from CC0 recordings. Three slots for your own samples.",
+      "c": "#ffb547"
+    },
+    {
+      "t": "Two sounds a note",
+      "p": "SOUND A and SOUND B stacked, crossfaded by the velocity or split at a key, B with its own semitone and tune. A patch cord moves the balance between them.",
+      "c": "#e0a070"
+    },
+    {
+      "t": "Eight bits",
+      "p": "CHARACTER: <b>EII</b>, 8-bit μ-law and no interpolation, the grain of the Emulator II; <b>EMU 1</b>, 8-bit linear and rougher; or <b>CLEAN</b>, the recordings as they are.",
+      "c": "#ecd660"
+    },
+    {
+      "t": "START and LOOP",
+      "p": "The notes start further into the sample, past its attack; a sustained sound loops while the key is held, or plays once through like tape.",
+      "c": "#f07a9c"
+    },
+    {
+      "t": "Five filters",
+      "p": "LPF24 after the Emulator II's SSM 24 dB, LPF12, BPF, HPF and MS20, with key tracking and their own envelope.",
+      "c": "#b092ff"
+    },
+    {
+      "t": "Envelopes, LFOs, patch",
+      "p": "FILTER EG and AMP EG; two LFOs with key sync and tempo sync; four patch cords from the envelopes, LFOs, velocity or keyboard to pitch, the balance, the cutoff and more. DRIFT ages the clocks.",
+      "c": "#5cceaa"
+    },
+    {
+      "t": "Arpeggiator and sequencer",
+      "p": "Ten arp types over 1–4 octaves with latch, swing and steps on/off; a 16-step sequencer with notes, ties, accents and slides, saved with the program.",
+      "c": "#66aaff"
+    },
+    {
+      "t": "Effects",
+      "p": "MOD FX (chorus, flanger, ensemble, phaser, or METAL distortion), a stereo delay in time with the tempo and a reverb, in three orders.",
+      "c": "#ff805c"
+    },
+    {
+      "t": "32 programs",
+      "p": "24 factory sounds (STRINGS, CHOIR, ORCH HIT, PIANO, BRASS, SHAKUHACHI, BOW + PLUCK, BASS / PIANO, HIT ARP, AIR CHOIR…) and eight free slots. MIDI Program Change picks them.",
+      "c": "#ffb547"
+    },
+    {
+      "t": "Pages that draw",
+      "p": "SOUND A and SOUND B draw their sample, its loop and START; the filter its curve, the envelopes and LFOs their shapes. A record turns at power-on.",
+      "c": "#96d668"
+    }
   ],
-  "gallery_sub": "Real screens of Golana 1.0, taken from the emulator.",
+  "gallery_sub": "Real screens of Ditto 1.0, taken from the emulator.",
   "gallery": [
-    {"img": "home_notes.png", "t": "HOME", "p": "PERFORM: the sound as it plays"},
-    {"img": "edit.png", "t": "EDIT", "p": "OSC 1, OSC 2 and the mixer"},
-    {"img": "scl.png", "t": "SCL", "p": "the filter's response"},
-    {"img": "env.png", "t": "ENV", "p": "the filter and amp envelopes"},
-    {"img": "lfo.png", "t": "LFO", "p": "LFO 1, running"},
-    {"img": "patch.png", "t": "PATCH", "p": "four cords, any source to any destination"},
-    {"img": "fx.png", "t": "FX", "p": "MOD FX, delay, reverb"},
-    {"img": "seq.png", "t": "ARP", "p": "type, range, resolution"},
-    {"img": "glo2.png", "t": "VOICE", "p": "assign, detune, portamento"},
-    {"img": "glo4.png", "t": "SETUP", "p": "FX order, palette, HOME's view"},
-    {"img": "save.png", "t": "WRITE", "p": "name and save a program"}
+    {
+      "img": "home_notes.png",
+      "t": "HOME",
+      "p": "PERFORM: the sound as it plays"
+    },
+    {
+      "img": "edit.png",
+      "t": "EDIT",
+      "p": "SOUND A: the sample, its loop, START"
+    },
+    {
+      "img": "sndb.png",
+      "t": "SOUND B",
+      "p": "a second sound, stacked, crossfaded or split"
+    },
+    {
+      "img": "mixer.png",
+      "t": "MIXER",
+      "p": "the levels and the sampler's character"
+    },
+    {
+      "img": "start.png",
+      "t": "START",
+      "p": "the notes past the sample's attack"
+    },
+    {
+      "img": "scl.png",
+      "t": "SCL",
+      "p": "the filter's response"
+    },
+    {
+      "img": "env.png",
+      "t": "ENV",
+      "p": "the filter and amp envelopes"
+    },
+    {
+      "img": "lfo.png",
+      "t": "LFO",
+      "p": "LFO 1, running"
+    },
+    {
+      "img": "patch.png",
+      "t": "PATCH",
+      "p": "four cords, any source to any destination"
+    },
+    {
+      "img": "fx.png",
+      "t": "FX",
+      "p": "MOD FX, delay, reverb"
+    },
+    {
+      "img": "save.png",
+      "t": "WRITE",
+      "p": "name and save a program"
+    }
   ],
-  "credits": "; the USB rescue after zvenson's <a href=\"https://github.com/zvenson/dinghy\">dinghy</a>. microKORG is a trademark of Korg",
+  "credits": "; the sound library from Versilian Studios' CC0 recordings (<a href=\"https://github.com/sgossner/VSCO-2-CE\">VSCO-2 CE</a>, <a href=\"https://github.com/sgossner/VCSL\">VCSL</a>); the USB rescue after zvenson's <a href=\"https://github.com/zvenson/dinghy\">dinghy</a>. Emulator and E-mu are trademarks of their owners; Ditto contains none of E-mu's samples",
   "emu_replace": [
-    ["<title>Golana</title>", "<title>Golana · in your browser</title>"],
-    ["  <a href=\"https://github.com/Gadlele/Golana\" target=\"_blank\" rel=\"noopener\">Source</a> ·", "  <a href=\"../\">Home</a> · <a href=\"../install/\">Install</a> · <a href=\"https://github.com/Gadlele/Golana\" target=\"_blank\" rel=\"noopener\">Source</a> ·"]
+    [
+      "<title>Ditto</title>",
+      "<title>Ditto · in your browser</title>"
+    ],
+    [
+      "  <a href=\"https://github.com/Gadlele/Ditto\" target=\"_blank\" rel=\"noopener\">Source</a> ·",
+      "  <a href=\"../\">Home</a> · <a href=\"../install/\">Install</a> · <a href=\"https://github.com/Gadlele/Ditto\" target=\"_blank\" rel=\"noopener\">Source</a> ·"
+    ]
   ]
 }

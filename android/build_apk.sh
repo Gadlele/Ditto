@@ -1,15 +1,15 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Golana for Android: the browser emulator inside a WebView app (no FM-1 needed; Web MIDI is not available in a WebView).
+# Ditto for Android: the browser emulator inside a WebView app (no FM-1 needed; Web MIDI is not available in a WebView).
 #   ./build.sh once (the generated tables in build/gen), then
 #   sh android/build_apk.sh      (needs clang, the Android SDK (ANDROID_HOME), JDK 17+ and Gradle)
 #                                ->  android/app/build/outputs/apk/debug/app-debug.apk
 set -e
 cd "$(dirname "$0")/.."
-[ -f build/emu/golana.html ] || sh web/emu/build_wasm.sh
+[ -f build/emu/ditto.html ] || sh web/emu/build_wasm.sh
 rm -rf android/app/src/main/assets/emu
 mkdir -p android/app/src/main/assets/emu
-python3 - build/emu/golana.html android/app/src/main/assets/emu/index.html <<'PY'
+python3 - build/emu/ditto.html android/app/src/main/assets/emu/index.html <<'PY'
 import sys
 s = open(sys.argv[1], encoding="utf-8").read()   # (a page made for the Artifact host: give it a document)
 open(sys.argv[2], "w", encoding="utf-8").write(

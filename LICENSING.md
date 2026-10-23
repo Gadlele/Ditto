@@ -1,3 +1,18 @@
+# Ditto licensing
+
+Ditto (Copyright (C) 2026 Gadlele) is a fork of Golana, itself a fork of Felucca, and is licensed as they are:
+GPL-3.0-only, the code and its own assets. What Ditto adds:
+
+| What | Licence | Where |
+| --- | --- | --- |
+| The DITTO engine, its interface, its programs, its tools | GPL-3.0-only | `firmware/src/eng_golana.c`, `golana_*.c`, `tools/fetch_eii.py`, `tools/gen_ditto_samples.py` |
+| The sound library's recordings (Versilian Studios VSCO-2 Community Edition, VCSL): the DITTO engine's sounds, built into the firmware by `tools/gen_ditto_samples.py` | CC0 1.0 | `assets/samples-eii/`, provenance in `ATTRIBUTION.txt` there |
+| CHOIR (synthesized by `tools/gen_ditto_samples.py`, no recording) and ORCH HIT (mixed there from CC0 recordings) | GPL-3.0-only (the program that makes them) | `tools/gen_ditto_samples.py` |
+
+Ditto contains no samples, code or firmware of E-mu Systems; "Emulator II" names the instrument it is modelled
+after. The rest of this file is Felucca's, and holds for Ditto too (Golana and Ditto build the firmware
+without Felucca's SAMPLE sets: `assets/samples-cc0/` is used by the host tests only).
+
 # Felucca licensing
 
 Felucca is free software, licensed under the GNU General Public License, version 3 only

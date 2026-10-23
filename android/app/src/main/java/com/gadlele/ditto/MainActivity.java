@@ -1,4 +1,4 @@
-package com.gadlele.golana;
+package com.gadlele.ditto;
 
 import android.app.Activity;
 import android.graphics.Color;
@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Golana on Android: the browser emulator (web/emu: the firmware compiled to WebAssembly) in a WebView.
+ * Ditto on Android: the browser emulator (web/emu: the firmware compiled to WebAssembly) in a WebView.
  * The files live in assets/emu/ and are served from https://appassets.androidplatform.net/ (a secure
  * context, which AudioWorklet needs; file:// would not do). Nothing leaves the device.
  */

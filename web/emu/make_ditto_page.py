@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 Gadlele, based on Felucca's web/emu (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments
-"""Golana in the browser as ONE self-contained page: web/emu/index.html's panel, the firmware's WebAssembly
+"""Ditto in the browser as ONE self-contained page: web/emu/index.html's panel, the firmware's WebAssembly
 (build/emu/felucca.wasm, web/emu/build_wasm.sh) and its audio code inlined, so the page needs no server.
 The audio runs in an AudioWorklet loaded from a blob: URL; where that is refused, on the page's own thread
 (a ScriptProcessorNode). Saves (WRITE) are kept in the browser's localStorage.
-  web/emu/make_golana_page.py build/emu/felucca.wasm OUT.html"""
+  web/emu/make_ditto_page.py build/emu/felucca.wasm OUT.html"""
 import base64
 import re
 import sys
@@ -33,7 +33,7 @@ function restoreSectors(nor, sectors) {
   }
 }
 const HOLD_MS = 24;
-class GolanaCore {
+class DittoCore {
   constructor(post) {
     this.post = post; this.ex = null; this.sentDraws = -1; this.sentWrites = -1; this.sentLeds = "";
     this.lastFrame = 0; this.period = 1 / 30; this.queue = []; this.nextOk = 0;
@@ -107,10 +107,10 @@ class GolanaCore {
 """
 
 WORKLET = CORE + r"""
-class GolanaProcessor extends AudioWorkletProcessor {
+class DittoProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.core = new GolanaCore((m, t) => this.port.postMessage(m, t || []));
+    this.core = new DittoCore((m, t) => this.port.postMessage(m, t || []));
     this.port.onmessage = (e) => this.core.onMessage(e.data);
   }
   process(inputs, outputs) {
@@ -119,22 +119,22 @@ class GolanaProcessor extends AudioWorkletProcessor {
     return true;
   }
 }
-registerProcessor("felucca", GolanaProcessor);
+registerProcessor("felucca", DittoProcessor);
 """
 
 # the page's loader: the worklet from a blob, else the page's own thread
 LOADER = r"""
 function b64buf(s) { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u.buffer; }
-async function golanaNode(ac) {
+async function dittoNode(ac) {
   try {
-    const url = URL.createObjectURL(new Blob([document.getElementById("golana-worklet").textContent], { type: "text/javascript" }));
+    const url = URL.createObjectURL(new Blob([document.getElementById("ditto-worklet").textContent], { type: "text/javascript" }));
     await ac.audioWorklet.addModule(url);
     return new AudioWorkletNode(ac, "felucca", { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
   } catch (e) {
-    console.warn("Golana: the audio runs on the page's thread (" + (e && e.message || e) + ")");
-    const GolanaCore = (0, eval)(document.getElementById("golana-core").textContent + ";GolanaCore");
+    console.warn("Ditto: the audio runs on the page's thread (" + (e && e.message || e) + ")");
+    const DittoCore = (0, eval)(document.getElementById("ditto-core").textContent + ";DittoCore");
     const port = { onmessage: null, postMessage(m) { core.onMessage(m); } };
-    const core = new GolanaCore((m) => setTimeout(() => port.onmessage && port.onmessage({ data: m }), 0));
+    const core = new DittoCore((m) => setTimeout(() => port.onmessage && port.onmessage({ data: m }), 0));
     const sp = ac.createScriptProcessor(1024, 0, 2);
     sp.onaudioprocess = (ev) => {
       const L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1);
@@ -157,28 +157,28 @@ def main(wasm_path, out_path):
     page = re.sub(r'<meta (charset|name="viewport")[^>]*>\s*', "", page)
     page = re.sub(r'<link rel="icon"[^>]*>\s*', "", page)
     page = re.sub(r'<meta name="description"[^>]*>\s*', "", page)
-    page = page.replace("<title>Felucca</title>", "<title>Golana</title>")
+    page = page.replace("<title>Felucca</title>", "<title>Ditto</title>")
     page = page.replace('url("fonts/DotGothic16-subset.woff")', f'url("data:font/woff;base64,{woff}")')
     page = page.replace("color-scheme: light; }", "color-scheme: light; }\nbody { background: var(--bg); }", 1)
-    page = page.replace('const STORE = "felucca-emu-flash";', 'const STORE = "golana-emu-flash";')
+    page = page.replace('const STORE = "felucca-emu-flash";', 'const STORE = "ditto-emu-flash";')
     page = page.replace(
         'fetch("felucca.wasm").then((r) => { if (!r.ok) throw new Error(`felucca.wasm: ${r.status}`); return r.arrayBuffer(); }),\n'
         '      ac.audioWorklet.addModule("worklet.js")]);\n'
         '    node = new AudioWorkletNode(ac, "felucca", { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });',
-        'Promise.resolve(b64buf(GOLANA_WASM))]);\n    node = await golanaNode(ac);')
-    assert "golanaNode(ac)" in page, "index.html's loader changed: update make_golana_page.py"
-    page = page.replace("Felucca: this browser", "Golana: this browser").replace("Felucca: the browser", "Golana: the browser")
+        'Promise.resolve(b64buf(DITTO_WASM))]);\n    node = await dittoNode(ac);')
+    assert "dittoNode(ac)" in page, "index.html's loader changed: update make_ditto_page.py"
+    page = page.replace("Felucca: this browser", "Ditto: this browser").replace("Felucca: the browser", "Ditto: the browser")
     page = re.sub(r"<footer>.*?</footer>", """<footer>
-  <strong>Golana</strong> by Gadlele, based on Felucca by Leo Kuroshita (Hügelton Instruments) ·
-  <a href="https://github.com/Gadlele/Golana" target="_blank" rel="noopener">Source</a> ·
+  <strong>Ditto</strong> by Gadlele, based on Golana and Felucca by Leo Kuroshita (Hügelton Instruments) ·
+  <a href="https://github.com/Gadlele/Ditto" target="_blank" rel="noopener">Source</a> ·
   <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0</a><br>
   <small>The same code the FM-1 runs, on a simulated FM-1. M-VAVE and FM-1 are trademarks of their owners;
-  microKORG is a trademark of Korg. Golana is not affiliated with them.</small>
+  Emulator and E-mu are trademarks of their owners. Ditto is not affiliated with them.</small>
 </footer>""", page, flags=re.S)
     # a quick guide under the panel
     page = page.replace('<p class="keys">', """<section class="guide">
   <p><b>SELECT</b> section · <b>KNOB 1–4</b> parameters · <b>ALGORITHM</b> cutoff · <b>PRESETS</b> program 1–32</p>
-  <p><b>HOME</b> perform · <b>EDIT</b> oscillators · <b>SCL</b> filter · <b>ENV</b> envelopes · <b>LFO</b> LFOs ·
+  <p><b>HOME</b> perform · <b>EDIT</b> sounds A and B, mixer · <b>SCL</b> filter · <b>ENV</b> envelopes · <b>LFO</b> LFOs ·
      <b>GLO</b> amp, voice, global · <b>REC</b> patch · <b>SEQ</b> arp pages · <b>FX</b> effects</p>
   <p><b>ARP</b> arp on/off · <b>PLAY</b> latch · <b>SAVE</b> write a program · <b>OCT</b> octave</p>
 </section>
@@ -187,9 +187,9 @@ def main(wasm_path, out_path):
                         "footer small { font-size: 11px; opacity: .8; }\n"
                         ".guide { margin: 14px auto 0; max-width: 46em; color: var(--fg); text-align: center; }\n"
                         ".guide p { margin: 2px 0; }")
-    scripts = (f'<script id="golana-worklet" type="text/plain">{WORKLET}</script>\n'
-               f'<script id="golana-core" type="text/plain">{CORE}</script>\n'
-               f'<script>const GOLANA_WASM = "{wasm}";\n{LOADER}</script>\n')
+    scripts = (f'<script id="ditto-worklet" type="text/plain">{WORKLET}</script>\n'
+               f'<script id="ditto-core" type="text/plain">{CORE}</script>\n'
+               f'<script>const DITTO_WASM = "{wasm}";\n{LOADER}</script>\n')
     page = page.replace('<script type="module">', scripts + '<script type="module">', 1)
     Path(out_path).write_text(page)
     print(f"{out_path}: {len(page)} bytes")

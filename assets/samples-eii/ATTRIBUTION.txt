@@ -1,0 +1,51 @@
+Ditto's sound library - source material
+Retrieved: 2026-10-23 (first ~400 KB of each file)
+Licence: CC0 1.0 Universal (public domain dedication)
+  https://creativecommons.org/publicdomain/zero/1.0/
+Sources: Versilian Studios (Sam Gossner)
+  VSCO-2 Community Edition  https://github.com/sgossner/VSCO-2-CE  (repository licence: CC0-1.0)
+  VCSL                      https://github.com/sgossner/VCSL       (repository licence: CC0-1.0)
+CHOIR is synthesized by tools/gen_ditto_samples.py (no recording); ORCH HIT is mixed there from HIT/.
+
+PIANO/00_GPiano_sus_C2_v2_rr1_Player.wav  <-  sgossner/VCSL: Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C2_v2_rr1_Player.wav
+PIANO/01_GPiano_sus_C3_v2_rr1_Player.wav  <-  sgossner/VCSL: Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C3_v2_rr1_Player.wav
+PIANO/02_GPiano_sus_C4_v2_rr1_Player.wav  <-  sgossner/VCSL: Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C4_v2_rr1_Player.wav
+PIANO/03_GPiano_sus_C5_v2_rr1_Player.wav  <-  sgossner/VCSL: Chordophones/Zithers/Grand Piano, Kawai/Sustains/GPiano_sus_C5_v2_rr1_Player.wav
+STRINGS/00_VlnEns_susVib_A2_v1.wav  <-  sgossner/VSCO-2-CE: Strings/Violin Section/susVib/VlnEns_susVib_A2_v1.wav
+STRINGS/01_VlnEns_susVib_A3_v1.wav  <-  sgossner/VSCO-2-CE: Strings/Violin Section/susVib/VlnEns_susVib_A3_v1.wav
+STRINGS/02_VlnEns_susVib_B4_v1.wav  <-  sgossner/VSCO-2-CE: Strings/Violin Section/susVib/VlnEns_susVib_B4_v1.wav
+BRASS/00_Sum_SHTrumpet_sus_C3_v3_rr1.wav  <-  sgossner/VSCO-2-CE: Brass/Trumpet/sus/Sum_SHTrumpet_sus_C3_v3_rr1.wav
+BRASS/01_Sum_SHTrumpet_sus_A#3_v3_rr1.wav  <-  sgossner/VSCO-2-CE: Brass/Trumpet/sus/Sum_SHTrumpet_sus_A#3_v3_rr1.wav
+BRASS/02_Sum_SHTrumpet_sus_A4_v3_rr1.wav  <-  sgossner/VSCO-2-CE: Brass/Trumpet/sus/Sum_SHTrumpet_sus_A4_v3_rr1.wav
+FLUTE/00_LDFlute_susvib_C4_v1_1.wav  <-  sgossner/VSCO-2-CE: Woodwinds/Flute/susvib/LDFlute_susvib_C4_v1_1.wav
+FLUTE/01_LDFlute_susvib_C5_v1_1.wav  <-  sgossner/VSCO-2-CE: Woodwinds/Flute/susvib/LDFlute_susvib_C5_v1_1.wav
+FLUTE/02_LDFlute_susvib_C6_v1_1.wav  <-  sgossner/VSCO-2-CE: Woodwinds/Flute/susvib/LDFlute_susvib_C6_v1_1.wav
+CELLO/00_susvib_C1_v1_1.wav  <-  sgossner/VSCO-2-CE: Strings/Cello Section/susvib/susvib_C1_v1_1.wav
+CELLO/01_susvib_C3_v1_1.wav  <-  sgossner/VSCO-2-CE: Strings/Cello Section/susvib/susvib_C3_v1_1.wav
+ORGAN/00_NT5_Man3Quiet_128_rr1.wav  <-  sgossner/VSCO-2-CE: Keys/Organ/Quiet/NT5_Man3Quiet_128_rr1.wav
+ORGAN/01_NT5_Man3Quiet_146_rr1.wav  <-  sgossner/VSCO-2-CE: Keys/Organ/Quiet/NT5_Man3Quiet_146_rr1.wav
+ORGAN/02_NT5_Man3Quiet_164_rr1.wav  <-  sgossner/VSCO-2-CE: Keys/Organ/Quiet/NT5_Man3Quiet_164_rr1.wav
+HARPSI/00_ZuckermannKitHarpsi_Normal_Sus_C2_rr1.wav  <-  sgossner/VCSL: Chordophones/Zithers/Harpsichord, English/Sustains/Normal/ZuckermannKitHarpsi_Normal_Sus_C2_rr1.wav
+HARPSI/01_ZuckermannKitHarpsi_Normal_Sus_C3_rr1.wav  <-  sgossner/VCSL: Chordophones/Zithers/Harpsichord, English/Sustains/Normal/ZuckermannKitHarpsi_Normal_Sus_C3_rr1.wav
+HARPSI/02_ZuckermannKitHarpsi_Normal_Sus_C4_rr1.wav  <-  sgossner/VCSL: Chordophones/Zithers/Harpsichord, English/Sustains/Normal/ZuckermannKitHarpsi_Normal_Sus_C4_rr1.wav
+MARIMBA/00_Marimba_hit_Outrigger_C2_loud_01.wav  <-  sgossner/VSCO-2-CE: Percussion/Marimba/Marimba_hit_Outrigger_C2_loud_01.wav
+MARIMBA/01_Marimba_hit_Outrigger_C4_loud_01.wav  <-  sgossner/VSCO-2-CE: Percussion/Marimba/Marimba_hit_Outrigger_C4_loud_01.wav
+MARIMBA/02_Marimba_hit_Outrigger_C6_loud_01.wav  <-  sgossner/VSCO-2-CE: Percussion/Marimba/Marimba_hit_Outrigger_C6_loud_01.wav
+BELLS/00_chimes_C3_f_rr1.wav  <-  sgossner/VCSL: Idiophones/Struck Idiophones/Tubular Bells 1/chimes_C3_f_rr1.wav
+BELLS/01_chimes_C4_ff_rr2.wav  <-  sgossner/VCSL: Idiophones/Struck Idiophones/Tubular Bells 1/chimes_C4_ff_rr2.wav
+PIZZ/00_VlnEns_Pizz_A2_v2_rr1.wav  <-  sgossner/VSCO-2-CE: Strings/Violin Section/Pizz/VlnEns_Pizz_A2_v2_rr1.wav
+PIZZ/01_VlnEns_Pizz_A3_v2_rr1.wav  <-  sgossner/VSCO-2-CE: Strings/Violin Section/Pizz/VlnEns_Pizz_A3_v2_rr1.wav
+PIZZ/02_VlnEns_Pizz_B4_v2_rr1.wav  <-  sgossner/VSCO-2-CE: Strings/Violin Section/Pizz/VlnEns_Pizz_B4_v2_rr1.wav
+BASS/00_BKCtbss_Pizz_E0_v3_rr1.wav  <-  sgossner/VSCO-2-CE: Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E0_v3_rr1.wav
+BASS/01_BKCtbss_Pizz_E1_v3_rr1.wav  <-  sgossner/VSCO-2-CE: Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E1_v3_rr1.wav
+BASS/02_BKCtbss_Pizz_E2_v1_rr1.wav  <-  sgossner/VSCO-2-CE: Strings/Solo Contrabass/Pizz/BKCtbss_Pizz_E2_v1_rr1.wav
+TIMPANI/00_Timpani3_Hit_v4_rr1_Sum.wav  <-  sgossner/VSCO-2-CE: Percussion/Timpani/Timpani3_Hit_v4_rr1_Sum.wav
+RECORDER/00_BassRecorder_SusVib_G2_rr1_Main.wav  <-  sgossner/VCSL: Aerophones/Edge-blown Aerophones/Baroque Bass Recorder/SusVib/BassRecorder_SusVib_G2_rr1_Main.wav
+RECORDER/01_BassRecorder_SusVib_C4_rr1_Main.wav  <-  sgossner/VCSL: Aerophones/Edge-blown Aerophones/Baroque Bass Recorder/SusVib/BassRecorder_SusVib_C4_rr1_Main.wav
+HARP/00_KSHarp_A2_mf.wav  <-  sgossner/VSCO-2-CE: Strings/Harp/KSHarp_A2_mf.wav
+HARP/01_KSHarp_C5_mf.wav  <-  sgossner/VSCO-2-CE: Strings/Harp/KSHarp_C5_mf.wav
+HIT/00_Sum_SHTrumpet_stac_C3_v3_rr1.wav  <-  sgossner/VSCO-2-CE: Brass/Trumpet/stac/Sum_SHTrumpet_stac_C3_v3_rr1.wav
+HIT/01_Sum_SHTrumpet_stac_C5_v3_rr1.wav  <-  sgossner/VSCO-2-CE: Brass/Trumpet/stac/Sum_SHTrumpet_stac_C5_v3_rr1.wav
+HIT/02_VlnEns_Spic_C4_v2_rr1.wav  <-  sgossner/VSCO-2-CE: Strings/Violin Section/Spic/VlnEns_Spic_C4_v2_rr1.wav
+HIT/03_VlnEns_Spic_G2_v2_rr1.wav  <-  sgossner/VSCO-2-CE: Strings/Violin Section/Spic/VlnEns_Spic_G2_v2_rr1.wav
+HIT/04_Timpani2_Hit_v4_rr1_Sum.wav  <-  sgossner/VSCO-2-CE: Percussion/Timpani/Timpani2_Hit_v4_rr1_Sum.wav

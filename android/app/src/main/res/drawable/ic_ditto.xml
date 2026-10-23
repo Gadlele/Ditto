@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DITTO's power-on: the record, its grooves, the amber label and the light on it (NIGHT's colours) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#1A1E28" android:pathData="M54,25 a29,29 0 1,0 0.01,0 Z"/>
+    <path android:strokeColor="#252A36" android:strokeWidth="1.5" android:pathData="M54,30 a24,24 0 1,0 0.01,0 Z M54,35 a19,19 0 1,0 0.01,0 Z"/>
+    <path android:strokeColor="#6A7186" android:strokeWidth="1.6" android:strokeLineCap="round" android:pathData="M64,36 L74,22 M44,72 L34,86"/>
+    <path android:fillColor="#FFB547" android:pathData="M54,44 a10,10 0 1,0 0.01,0 Z"/>
+    <path android:fillColor="#E8E6E1" android:pathData="M54,52 a2,2 0 1,0 0.01,0 Z"/>
+</vector>

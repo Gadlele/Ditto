@@ -1,13 +1,13 @@
 plugins { id "com.android.application" }
 android {
-    namespace "com.gadlele.golana"
+    namespace "com.gadlele.ditto"
     compileSdk 34
     defaultConfig {
-        applicationId "com.gadlele.golana"
+        applicationId "com.gadlele.ditto"
         minSdk 26
         targetSdk 34
-        versionCode 3
-        versionName "1.2"
+        versionCode 1
+        versionName "1.0"
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     androidResources { noCompress "wasm" }

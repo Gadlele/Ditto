@@ -121,9 +121,9 @@ footer p { margin: 0 0 10px; } footer a { color: var(--mid); }
     <h2 id="s2"><span class="n">2</span>Back up <small>recommended</small></h2>
     <div class="card">
       <p>Saves a file with your projects, sounds, samples and settings to this computer. Nothing is written to the FM-1.
-        It works when the FM-1 runs Felucca, Fantasma or Golana; the official M-VAVE firmware has no backup.</p>
+        It works when the FM-1 runs Felucca, Fantasma, Golana or Ditto; the official M-VAVE firmware has no backup.</p>
       <p class="small">A backup is restored in the editor. Projects do not always move between different firmwares
-        (Felucca, Fantasma, Golana): keep the backup of each.</p>
+        (Felucca, Fantasma, Golana, Ditto): keep the backup of each.</p>
       <div class="row"><button id="backup" class="ghost" disabled>Save a backup file</button></div>
     </div>
   </section>
@@ -284,7 +284,7 @@ function parseInfo(a) {
   const backup = /^FELUCCA /i.test(version) && ext[0] === 16 && ext[1] === 0x55 && ext[2] === 1 &&
     ext[4] === 0x4d && ext[5] === 1 && ext[8] === 0x42 && ext[9] === 1 && !!(ext[10] & 1);
   const v = version.replace(/^FELUCCA\s*/i, "");
-  const fw = engines.includes("GOLANA") ? "Golana" : engines.includes("BELL") && engines.includes("AMBI") ? "Fantasma" : "Felucca";
+  const fw = engines.includes("DITTO") ? "Ditto" : engines.includes("GOLANA") ? "Golana" : engines.includes("BELL") && engines.includes("AMBI") ? "Fantasma" : "Felucca";
   return { version, v, engines, backup, fw };
 }
 async function probe(up) {

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Gadlele, based on Felucca's web/emu/native_check.c */
-/* Golana on the simulated FM-1 (web/emu/felucca_web.c built natively): the whole firmware, its main loop and the
+/* Ditto on the simulated FM-1 (web/emu/felucca_web.c built natively): the whole firmware, its main loop and the
  * audio ISR, driven by a script of presses and turns; screenshots (PPM) of every page and the WRITE dialog, the
  * keys played, a program written and read back, and checks.
  *   cc -O2 -w -Ibuild/gen -Ifirmware/src -o build/host/golana_sim tests/golana_sim.c -lm
@@ -56,6 +56,8 @@ static void turn(uint32_t role, int32_t n)
     web_enc(role, n);
     render(40);
 }
+
+static void midi_note(uint32_t on, uint32_t note, uint32_t vel) { web_midi(on ? 0x90u : 0x80u, note, vel); }
 
 static void check(int ok, const char *what)
 {
@@ -119,13 +121,13 @@ int main(int argc, char **argv)
     }
     /* the buttons */
     press(B_EDIT);
-    check(GU_PAGES[gu.page].btn == B_EDIT && gu.page == 1, "EDIT: OSC 1");
+    check(GU_PAGES[gu.page].btn == B_EDIT && gu.page == 1, "EDIT: SOUND A");
     press(B_EDIT);
-    check(GU_PAGES[gu.page].btn == B_EDIT && gu.page == 2, "EDIT again: OSC 2");
+    check(GU_PAGES[gu.page].btn == B_EDIT && gu.page == 2, "EDIT again: SOUND B");
     press(B_EDIT);
-    press(B_EDIT);                                /* (1.2: MIXER, then SUB / DRIFT) */
+    press(B_EDIT);                                /* (MIXER, then SPLIT / DRIFT) */
     press(B_EDIT);
-    check(gu.page == 1, "EDIT wraps to OSC 1");
+    check(gu.page == 1, "EDIT wraps to SOUND A");
     press(B_FX);
     check(GU_PAGES[gu.page].btn == B_FX && !strcmp(GU_PAGES[gu.page].tab, "MOD FX"), "FX: MOD FX");
     press(B_ARP);
@@ -166,7 +168,7 @@ int main(int argc, char **argv)
         shot("33_write");
         press(B_SAVE);
         check(!gu.save && gu.prog == 19, "SAVE writes");
-        check(gu_user(19) && up_rec(19)->engine == ENGI_GOLANA, "slot 20 holds a Golana program");
+        check(gu_user(19) && up_rec(19)->engine == ENGI_GOLANA, "slot 20 holds a Ditto program");
         turn(EN_PRESET, -5);
         turn(EN_PRESET, 5);
         check(gu.prog == 19 && trk[0].p[GL_RESO] == reso, "the written program loads back");
@@ -274,41 +276,78 @@ int main(int argc, char **argv)
             }
         check(seen == 3u, "ASSIGN and LATCH are on the pages");
     }
-    /* 1.2: SUB and DRIFT, the EDIT button's fourth page; a program keeps them past its P_COUNT values, and one of
-     * before (0 there, the SLICER's defaults in their slots) loads with both off */
+    /* Ditto: SPLIT and DRIFT, the EDIT button's fourth page; a program keeps them past its P_COUNT values (Golana's
+     * SUB and DRIFT bytes); the sampler: a split, a one-shot that ends by itself, an empty user slot, START */
     {
         uint32_t i;
         press(B_EDIT);
-        for (i = 0; i < 4u && GU_PAGES[gu.page].k[0].id != GL_SUBTYPE; i++)
+        for (i = 0; i < 4u && GU_PAGES[gu.page].k[0].id != DT_SPLIT; i++)
             press(B_EDIT);
-        check(GU_PAGES[gu.page].btn == B_EDIT && GU_PAGES[gu.page].k[2].id == GL_DRIFT, "EDIT: the SUB / DRIFT page");
-        gu_load(23);
+        check(GU_PAGES[gu.page].btn == B_EDIT && GU_PAGES[gu.page].k[1].id == GL_DRIFT, "EDIT: the SPLIT / DRIFT page");
+        gu_load(17);
         render(80);
-        shot("35_sub_drift");
-        check(!strcmp(gu.name, "AGED PAD") && trk[0].p[GL_DRIFT] == 127 && trk[0].p[GL_SUB] == 40 &&
-              trk[0].p[GL_SUBTYPE] == 3, "program 24, AGED PAD: SUB -2 SINE 40, DRIFT 127");
-        check(gu_store(27, "AGED COPY") == 0, "AGED PAD written to slot 28");
-        check(up_rec(27)->packed[P_COUNT] == 3 && up_rec(27)->packed[P_COUNT + 1u] == 40 &&
-              up_rec(27)->packed[P_COUNT + 2u] == 127, "SUB and DRIFT past the record's values");
-        check(up_value(up_rec(27), GL_SUB) == TP[GL_SUB].def && up_value(up_rec(27), GL_SUBTYPE) == TP[GL_SUBTYPE].def,
-              "their slots in the record: as before 1.2");
+        shot("35_split_drift");
+        check(!strcmp(gu.name, "BASS / PIANO") && trk[0].p[DT_SPLIT] == 60 && trk[0].p[DT_LAYER] == 2 &&
+              trk[0].p[DT_SNDB] == DT_S_BASS + 1, "program 18, BASS / PIANO: SOUND B BASS, SPLIT at C4");
+        trk[0].p[GL_DRIFT] = 77;
+        check(gu_store(27, "SPLIT COPY") == 0, "written to slot 28");
+        check(up_rec(27)->packed[P_COUNT + 1u] == 60 && up_rec(27)->packed[P_COUNT + 2u] == 77,
+              "SPLIT and DRIFT past the record's values");
         gu_load(0);
-        check(trk[0].p[GL_DRIFT] == 0 && trk[0].p[GL_SUB] == 0, "FAT BASS: SUB and DRIFT off");
+        check(trk[0].p[GL_DRIFT] == 0 && trk[0].p[DT_SPLIT] == 60, "STRINGS: no DRIFT, SPLIT at its default");
         gu_load(27);
-        check(trk[0].p[GL_DRIFT] == 127 && trk[0].p[GL_SUB] == 40 && trk[0].p[GL_SUBTYPE] == 3, "loaded back: SUB, DRIFT");
-        for (i = 0; i < 3u; i++)
-            up_rec(27)->packed[P_COUNT + i] = 0;  /* (as Golana 1.1 writes a program) */
-        gu_load(0);
-        gu_load(27);
-        check(trk[0].p[GL_DRIFT] == 0 && trk[0].p[GL_SUB] == 0 && trk[0].p[GL_SUBTYPE] == 0 &&
-              trk[0].p[GL_CUTOFF] == 50, "a program of 1.1: SUB and DRIFT off, the rest as written");
-        peak = 0;
-        gu_load(16);                              /* SUB BASS sounds */
-        web_keys(1u);
-        render(400);
-        web_keys(0);
-        render(200);
-        check(peak > 0.01f, "SUB BASS plays");
+        check(trk[0].p[GL_DRIFT] == 77 && trk[0].p[DT_SPLIT] == 60 && trk[0].p[DT_LAYER] == 2, "loaded back: SPLIT, DRIFT");
+        {   /* SPLIT: a key below C4 plays SOUND B (the bass), one above SOUND A (the piano) */
+            glp_t *g = gl_part(&trk[0]);
+            uint32_t v, below = 0, above = 0;
+            midi_note(1, 48, 100);
+            midi_note(1, 72, 100);
+            render(60);
+            for (v = 0; v < NVOICE; v++) {
+                const voice_t *vo = &trk[0].v[v];
+                if (!vo->active)
+                    continue;
+                below |= vo->note == 48 && !g->v[v].a.on && g->v[v].b.on && g->v[v].b.zi < 0x8000u;
+                above |= vo->note == 72 && g->v[v].a.on && !g->v[v].b.on;
+            }
+            check(below && above, "SPLIT: C3 plays SOUND B alone, C5 SOUND A alone");
+            midi_note(0, 48, 0);
+            midi_note(0, 72, 0);
+            render(1500);
+        }
+        {   /* a one-shot ends with its sample, the key held: its voice is free again */
+            uint32_t v, act = 0;
+            gu_load(2);                           /* ORCH HIT */
+            midi_note(1, 60, 110);
+            render(1500);
+            for (v = 0; v < NVOICE; v++)
+                act += trk[0].v[v].active;
+            check(act == 0, "ORCH HIT held 1.5 s: its sample over, no voice left");
+            midi_note(0, 60, 0);
+            render(100);
+        }
+        {   /* an empty user slot is silent; START past the attack still sounds */
+            gu_load(1);
+            trk[0].p[DT_SNDA] = DT_NSETS;         /* USR1, empty */
+            midi_note(1, 60, 100);
+            render(60);
+            {
+                uint32_t v, act = 0;
+                for (v = 0; v < NVOICE; v++)
+                    act += trk[0].v[v].active;
+                check(act == 0, "SOUND A on an empty USR1: no layer, the voice free at once (silent)");
+            }
+            midi_note(0, 60, 0);
+            render(100);
+            gu_load(1);
+            trk[0].p[DT_START] = 90;
+            peak = 0;
+            midi_note(1, 60, 100);
+            render(400);
+            midi_note(0, 60, 0);
+            render(200);
+            check(peak > 0.01f, "STRINGS from START 90: plays");
+        }
     }
     /* (UPDATE MODE's countdown is main.c's loop: not in the browser build) */
     printf("%s: %d failures\n", fails ? "FAIL" : "ok", fails);

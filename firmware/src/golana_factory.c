@@ -1,238 +1,167 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Gadlele */
-/* Golana's 24 factory sounds (golana_prog.c gl_factory): each one's values that differ from INIT. 1..8 the
- * classic analog palette (basses, leads, brass, an arpeggio, an organ), 9..16 warm and ambient (pads, slow arps,
- * soft bells, a drone, a sweet lead, textures), 17..24 (1.2) made with the SUB oscillator and DRIFT.
+/* Ditto's 24 factory sounds (golana_prog.c gl_factory): each one's values that differ from INIT. 1..16 the
+ * library's sounds as a mid-eighties sampler played them (strings, the choir, the orchestra hit, ..), 17..24 what
+ * the sampler does with two of them: layers, a velocity crossfade, a split, START, the characters, DRIFT.
  * Time values: 40 ~ 20 ms, 60 ~ 80 ms, 80 ~ 0.3 s, 90 ~ 0.7 s, 100 ~ 1.4 s, 110 ~ 3 s, 120 ~ 6 s (gen_tables.py).
  * LFO FREQ: 20 ~ 0.15 Hz, 40 ~ 0.4 Hz, 60 ~ 1.2 Hz, 85 ~ 4.4 Hz, 90 ~ 5.6 Hz.
- * PATCH k (0..3): SRC FEG AEG LFO1 LFO2 VELO KBD, DST PITCH OSC2 CTRL1 NOISE CUTOFF AMP LFO2F, INT +-63 */
+ * SOUND A: DT_S_* (ditto_samples.h); SOUND B: B(DT_S_*) (0 is OFF).
+ * PATCH k (0..3): SRC FEG AEG LFO1 LFO2 VELO KBD, DST PITCH BPITCH BAL NOISE CUTOFF AMP LFO2F, INT +-63 */
 #define S(i, v) {(uint8_t)(i), (int16_t)(v)}
 #define PROG(n, a) {n, a, (uint8_t)NELEM(a)}
 #define PSRC(k) (GL_P1SRC + 3 * (k))
 #define PDST(k) (GL_P1DST + 3 * (k))
 #define PINT(k) (GL_P1INT + 3 * (k))
-enum { W_SAW, W_PULSE, W_TRI, W_SINE };
-enum { X_SAW, X_SQR, X_TRI };
+#define B(s) ((s) + 1)
 enum { L_SAW, L_SQR, L_TRI, L_SIN, L_SH };
-enum { F_LPF24, F_LPF12, F_BPF, F_HPF };
+enum { F_LPF24, F_LPF12, F_BPF, F_HPF, F_MS20 };
 enum { Q_FEG, Q_AEG, Q_LFO1, Q_LFO2, Q_VELO, Q_KBD };
-enum { D_PITCH, D_OSC2, D_CTRL1, D_NOISE, D_CUT, D_AMP, D_LFO2F };
-enum { U_SQR1, U_SQR2, U_SIN1, U_SIN2 };          /* SUB TYPE: -1 SQR, -2 SQR, -1 SINE, -2 SINE */
+enum { D_PITCH, D_BPITCH, D_BAL, D_NOISE, D_CUT, D_AMP, D_LFO2F };
+enum { Y_STACK, Y_VELX, Y_SPLIT };
+enum { C_EII, C_EMU1, C_CLEAN };
 
-/* ------------------------------------------------------------- classic --- */
-static const gl_set_t F_FATBASS[] = {             /* two oscillators an octave apart, a round 24 dB filter */
-    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SQR), S(GL_O2SEMI, -12), S(GL_MIX2, 100),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 42), S(GL_RESO, 30), S(GL_FEGINT, 34), S(GL_KTRK, 20),
-    S(GL_FA, 0), S(GL_FD, 75), S(GL_FS, 25), S(GL_FR, 50),
-    S(P_ATK, 0), S(P_DEC, 80), S(P_SUS, 115), S(P_REL, 45), S(P_GLIDE, 15), S(P_LEVEL, 108), S(P_REV, 0),
-};
-static const gl_set_t F_ACID[] = {                /* a squelchy resonant line: legato notes glide, DIST on */
-    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_SAW), S(GL_MIX1, 127),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 30), S(GL_RESO, 108), S(GL_FEGINT, 46), S(GL_KTRK, 30),
-    S(GL_FA, 0), S(GL_FD, 68), S(GL_FS, 0), S(GL_FR, 55), S(GL_EGRESET, 1), S(GL_DIST, 1),
-    S(P_ATK, 0), S(P_DEC, 90), S(P_SUS, 127), S(P_REL, 40), S(P_GLIDE, 25), S(P_LEVEL, 100),
-    S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 45), S(P_DLY, 30),
-};
-static const gl_set_t F_GLIDELEAD[] = {           /* PWM pulse and a fifth above, portamento, ping-pong echoes */
-    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_PULSE), S(GL_O1C1, 35), S(GL_O1C2, 40),
-    S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, 7), S(GL_O2TUNE, 6), S(GL_MIX2, 70),
-    S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 82), S(GL_RESO, 30), S(GL_FEGINT, 18), S(GL_FD, 80), S(GL_FS, 60),
-    S(GL_L1WAVE, L_TRI), S(GL_L1FREQ, 45), S(GL_L2WAVE, L_SIN), S(GL_L2FREQ, 86), S(GL_L2KEY, 2),
-    S(PSRC(0), Q_LFO2), S(PDST(0), D_PITCH), S(PINT(0), 2),
-    S(P_ATK, 10), S(P_SUS, 120), S(P_REL, 55), S(P_GLIDE, 55), S(P_LEVEL, 100),
-    S(GL_DTYPE, 1), S(GL_DTIME, 1), S(GL_DFDBK, 55), S(P_DLY, 50), S(P_REV, 25),
-};
-static const gl_set_t F_UNISAW[] = {              /* every voice on one note, spread: a wall of saws */
-    S(P_VOICE, V_UNISON), S(P_DETUNE, 70), S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, -12),
-    S(GL_MIX2, 80), S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 92), S(GL_RESO, 18), S(GL_FEGINT, 10), S(GL_FD, 85),
-    S(GL_FS, 80), S(P_ATK, 5), S(P_SUS, 120), S(P_REL, 60), S(P_GLIDE, 10), S(P_LEVEL, 94), S(P_REV, 30),
-};
-static const gl_set_t F_SYNCPAD[] = {             /* OSC 2 synced, its pitch swept by the filter EG */
-    S(GL_O1WAVE, W_SAW), S(GL_MIX1, 30), S(GL_O2WAVE, X_SAW), S(GL_O2MOD, 2), S(GL_O2SEMI, 5), S(GL_MIX2, 127),
-    S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 100), S(GL_RESO, 15),
-    S(GL_FA, 85), S(GL_FD, 100), S(GL_FS, 40), S(GL_FR, 95),
-    S(PSRC(1), Q_FEG), S(PDST(1), D_OSC2), S(PINT(1), 40),
-    S(P_ATK, 45), S(P_DEC, 90), S(P_SUS, 105), S(P_REL, 85), S(P_LEVEL, 96),
-    S(GL_MFX, 1), S(P_IA, 35), S(P_IB, 60), S(P_IMIX, 90), S(P_REV, 45),
-};
-static const gl_set_t F_BRIGHTARP[] = {           /* a plucked pulse, 16ths over two octaves */
-    S(GL_O1WAVE, W_PULSE), S(GL_O1C1, 25), S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, 12), S(GL_MIX2, 45),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 62), S(GL_RESO, 55), S(GL_FEGINT, 32), S(GL_FD, 70), S(GL_FS, 15),
-    S(P_ATK, 0), S(P_DEC, 78), S(P_SUS, 0), S(P_REL, 60), S(P_LEVEL, 110),
-    S(GL_ARPON, 1), S(GL_ARPTYPE, 0), S(P_AOCT, 2), S(P_ARATE, 2), S(P_AGATE, 70),
-    S(GL_DTYPE, 0), S(GL_DTIME, 10), S(GL_DFDBK, 45), S(P_DLY, 45), S(P_REV, 25),
-};
-static const gl_set_t F_BRASS[] = {               /* two detuned saws, a slow filter swell */
-    S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2TUNE, 9), S(GL_MIX2, 110),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 48), S(GL_RESO, 12), S(GL_FEGINT, 40), S(GL_KTRK, 40),
-    S(GL_FA, 62), S(GL_FD, 85), S(GL_FS, 70), S(GL_FR, 70),
-    S(P_ATK, 50), S(P_DEC, 90), S(P_SUS, 112), S(P_REL, 65), S(P_LEVEL, 98),
-    S(GL_MFX, 3), S(P_IA, 30), S(P_IB, 50), S(P_IMIX, 70), S(P_REV, 30),
-};
-static const gl_set_t F_ORGAN[] = {               /* square and its octave, a rotating chorus */
-    S(GL_O1WAVE, W_PULSE), S(GL_O1C1, 0), S(GL_O2WAVE, X_SQR), S(GL_O2SEMI, 12), S(GL_MIX2, 90),
-    S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 105), S(GL_RESO, 5), S(GL_KTRK, 40),
-    S(P_ATK, 2), S(P_DEC, 60), S(P_SUS, 127), S(P_REL, 30), S(P_LEVEL, 98),
-    S(GL_MFX, 1), S(P_IA, 80), S(P_IB, 55), S(P_IMIX, 100), S(P_REV, 30),
-};
+/* a gentle vibrato: LFO 1 (TRI, ~4.4 Hz, from 0 on every note) on the pitch, d of 63 (1 ~ 3 ct) */
+#define VIBRATO(k, d) S(GL_L1WAVE, L_TRI), S(GL_L1FREQ, 85), S(PSRC(k), Q_LFO1), S(PDST(k), D_PITCH), S(PINT(k), d)
 
-/* ---------------------------------------------------------- warm, ambient --- */
-static const gl_set_t F_SOFTPAD[] = {             /* soft triangles, a slowly breathing filter, a long hall */
-    S(GL_O1WAVE, W_TRI), S(GL_O1C1, 12), S(GL_O2WAVE, X_SAW), S(GL_O2TUNE, 10), S(GL_MIX2, 60),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 58), S(GL_RESO, 15), S(GL_FEGINT, 14), S(GL_KTRK, 25),
-    S(GL_FA, 95), S(GL_FD, 105), S(GL_FS, 90), S(GL_FR, 100),
-    S(GL_L1WAVE, L_TRI), S(GL_L1FREQ, 30), S(GL_L1KEY, 0),
-    S(PSRC(2), Q_LFO1), S(PDST(2), D_CUT), S(PINT(2), 8),
-    S(P_ATK, 92), S(P_DEC, 100), S(P_SUS, 120), S(P_REL, 105), S(P_LEVEL, 104),
-    S(GL_MFX, 3), S(P_IA, 25), S(P_IB, 85), S(P_IMIX, 100),
-    S(GL_RTYPE, 2), S(GL_RSIZE, 110), S(GL_RDAMP, 70), S(P_REV, 65),
+/* ------------------------------------------------------------- the library --- */
+static const gl_set_t F_STRINGS[] = {             /* the violins, a slow bow, a hall */
+    S(DT_SNDA, DT_S_STRINGS), S(GL_CUTOFF, 92), S(GL_RESO, 8), S(GL_FEGINT, 14), S(GL_FA, 85), S(GL_FD, 95),
+    S(GL_FS, 90), S(GL_FR, 95), S(P_ATK, 78), S(P_SUS, 127), S(P_REL, 90), S(P_LEVEL, 100),
+    S(PSRC(1), Q_VELO), S(PDST(1), D_CUT), S(PINT(1), 16),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 100), S(P_REV, 50),
 };
-static const gl_set_t F_PHASEPAD[] = {            /* two saws through a slow phaser that breathes */
-    S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2TUNE, 7), S(GL_MIX2, 100),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 66), S(GL_RESO, 18), S(GL_FEGINT, 8), S(GL_FA, 90), S(GL_FD, 100),
-    S(GL_FS, 90), S(GL_FR, 100),
-    S(P_ATK, 88), S(P_DEC, 100), S(P_SUS, 118), S(P_REL, 102), S(P_LEVEL, 96),
-    S(GL_MFX, 4), S(P_IA, 18), S(P_IB, 110), S(P_IMIX, 127),
-    S(GL_RTYPE, 2), S(GL_RSIZE, 105), S(P_REV, 55),
+static const gl_set_t F_CHOIR[] = {               /* the eighties' voices: "ah", a long hall, a slow swell */
+    S(DT_SNDA, DT_S_CHOIR), S(GL_CUTOFF, 96), S(GL_RESO, 6), S(P_ATK, 82), S(P_SUS, 127), S(P_REL, 96),
+    S(P_LEVEL, 104), S(GL_RTYPE, 2), S(GL_RSIZE, 110), S(GL_RDAMP, 50), S(P_REV, 62),
+    S(GL_MFX, 3), S(P_IA, 20), S(P_IB, 50), S(P_IMIX, 60),
 };
-static const gl_set_t F_SLOWARP[] = {             /* a gentle eighth-note arpeggio into long echoes */
-    S(GL_O1WAVE, W_SINE), S(GL_O1C1, 18), S(GL_O2WAVE, X_TRI), S(GL_O2SEMI, 12), S(GL_MIX2, 50),
-    S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 80), S(GL_RESO, 10),
-    S(P_ATK, 15), S(P_DEC, 92), S(P_SUS, 40), S(P_REL, 85), S(P_LEVEL, 108),
-    S(GL_ARPON, 1), S(GL_ARPTYPE, 2), S(P_AOCT, 2), S(P_ARATE, 1), S(P_AGATE, 85),
-    S(GL_DTYPE, 1), S(GL_DTIME, 12), S(GL_DFDBK, 68), S(P_DLY, 70),
-    S(GL_RTYPE, 2), S(GL_RSIZE, 112), S(P_REV, 60),
+static const gl_set_t F_ORCHHIT[] = {             /* the stab: an orchestra struck at once */
+    S(DT_SNDA, DT_S_ORCH_HIT), S(P_ATK, 0), S(P_SUS, 127), S(P_REL, 80), S(P_LEVEL, 112),
+    S(PSRC(1), Q_VELO), S(PDST(1), D_CUT), S(PINT(1), 20), S(GL_CUTOFF, 100),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 90), S(P_REV, 40),
 };
-static const gl_set_t F_SOFTBELLS[] = {           /* a sine rung by an off-ratio OSC 2, the ring fading with the EG */
-    S(GL_O1WAVE, W_SINE), S(GL_O1C1, 10), S(GL_O2WAVE, X_TRI), S(GL_O2SEMI, 19), S(GL_O2TUNE, -14), S(GL_MIX2, 0),
-    S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 108), S(GL_RESO, 0),
-    S(GL_FA, 0), S(GL_FD, 98), S(GL_FS, 0), S(GL_FR, 98),
-    S(PSRC(1), Q_FEG), S(PDST(1), D_CTRL1), S(PINT(1), 45),
-    S(P_ATK, 0), S(P_DEC, 108), S(P_SUS, 0), S(P_REL, 104), S(P_LEVEL, 112),
-    S(GL_DTYPE, 0), S(GL_DTIME, 0), S(GL_DFDBK, 40), S(P_DLY, 30),
-    S(GL_RTYPE, 2), S(GL_RSIZE, 118), S(GL_RDAMP, 55), S(P_REV, 75),
+static const gl_set_t F_PIANO[] = {               /* the grand, as eight bits keep it */
+    S(DT_SNDA, DT_S_PIANO), S(GL_CUTOFF, 108), S(GL_FEGINT, 12), S(GL_FD, 92), S(GL_FS, 40), S(GL_KTRK, 40),
+    S(PSRC(1), Q_VELO), S(PDST(1), D_CUT), S(PINT(1), 28),
+    S(P_SUS, 127), S(P_REL, 72), S(P_LEVEL, 108), S(GL_RTYPE, 0), S(GL_RSIZE, 70), S(P_REV, 22),
 };
-static const gl_set_t F_DRONE[] = {               /* low saws and noise, a resonant filter drifting very slowly */
-    S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, -12), S(GL_O2TUNE, 5), S(GL_MIX2, 110),
-    S(GL_NOISE, 40), S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 38), S(GL_RESO, 70),
-    S(GL_L1WAVE, L_TRI), S(GL_L1FREQ, 15), S(GL_L1KEY, 0), S(GL_L2WAVE, L_SIN), S(GL_L2FREQ, 22),
-    S(PSRC(2), Q_LFO1), S(PDST(2), D_CUT), S(PINT(2), 22),
-    S(PSRC(3), Q_LFO2), S(PDST(3), D_NOISE), S(PINT(3), 20),
-    S(P_ATK, 100), S(P_DEC, 100), S(P_SUS, 127), S(P_REL, 108), S(P_LEVEL, 96),
-    S(GL_RTYPE, 2), S(GL_RSIZE, 120), S(GL_RDAMP, 80), S(P_REV, 70),
+static const gl_set_t F_BRASS[] = {               /* trumpets, the filter opening on each note */
+    S(DT_SNDA, DT_S_BRASS), S(GL_CUTOFF, 58), S(GL_RESO, 12), S(GL_FEGINT, 40), S(GL_FA, 62), S(GL_FD, 88),
+    S(GL_FS, 70), S(GL_FR, 70), S(PSRC(1), Q_VELO), S(PDST(1), D_CUT), S(PINT(1), 24),
+    S(P_ATK, 30), S(P_SUS, 127), S(P_REL, 62), S(P_LEVEL, 104), S(P_REV, 28),
 };
-static const gl_set_t F_WARMLEAD[] = {            /* a round triangle lead, a gentle vibrato, portamento */
-    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_TRI), S(GL_O1C1, 22), S(GL_O2WAVE, X_TRI), S(GL_O2SEMI, 12),
-    S(GL_MIX2, 35), S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 76), S(GL_RESO, 12),
-    S(GL_L2WAVE, L_SIN), S(GL_L2FREQ, 88), S(GL_L2KEY, 2),
-    S(PSRC(0), Q_LFO2), S(PDST(0), D_PITCH), S(PINT(0), 2),
-    S(P_ATK, 30), S(P_SUS, 120), S(P_REL, 70), S(P_GLIDE, 40), S(P_LEVEL, 108),
-    S(GL_DTYPE, 0), S(GL_DTIME, 0), S(GL_DFDBK, 40), S(P_DLY, 35), S(GL_RTYPE, 2), S(P_REV, 45),
+static const gl_set_t F_FLUTE[] = {               /* breathy, a vibrato */
+    S(DT_SNDA, DT_S_FLUTE), S(GL_NOISE, 10), S(GL_CUTOFF, 96), VIBRATO(0, 3), S(P_ATK, 45), S(P_REL, 66),
+    S(GL_L1KEY, 2), S(P_LEVEL, 100), S(GL_DTYPE, 0), S(GL_DTIME, 1), S(GL_DFDBK, 40), S(P_DLY, 25), S(P_REV, 35),
 };
-static const gl_set_t F_DARKUNI[] = {             /* unison saws far down the filter, a slow swell */
-    S(P_VOICE, V_UNISON), S(P_DETUNE, 55), S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, -12),
-    S(GL_MIX2, 70), S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 34), S(GL_RESO, 22), S(GL_FEGINT, 12),
-    S(GL_FA, 100), S(GL_FD, 105), S(GL_FS, 90), S(GL_FR, 105),
-    S(P_ATK, 95), S(P_DEC, 100), S(P_SUS, 124), S(P_REL, 105), S(P_LEVEL, 108),
-    S(GL_MFX, 3), S(P_IA, 20), S(P_IB, 90), S(P_IMIX, 110),
-    S(GL_RTYPE, 2), S(GL_RSIZE, 115), S(GL_RDAMP, 75), S(P_REV, 65),
+static const gl_set_t F_CHOIRSTR[] = {            /* the choir and the strings together: the classic pad */
+    S(DT_SNDA, DT_S_CHOIR), S(DT_SNDB, B(DT_S_STRINGS)), S(DT_LVLA, 120), S(DT_LVLB, 96),
+    S(GL_CUTOFF, 94), S(P_ATK, 84), S(P_REL, 96), S(P_LEVEL, 98), S(GL_RTYPE, 2), S(GL_RSIZE, 108), S(P_REV, 58),
 };
-static const gl_set_t F_SHTEXTURE[] = {           /* a slow sample and hold on the filter, echoes left and right */
-    S(GL_O1WAVE, W_PULSE), S(GL_O1C1, 55), S(GL_O1C2, 35), S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, 7), S(GL_MIX2, 40),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 58), S(GL_RESO, 72),
-    S(GL_L1WAVE, L_SH), S(GL_L1SYNC, 6), S(GL_L1KEY, 0),
-    S(PSRC(2), Q_LFO1), S(PDST(2), D_CUT), S(PINT(2), 30),
-    S(P_ATK, 40), S(P_DEC, 100), S(P_SUS, 110), S(P_REL, 95), S(P_LEVEL, 98),
-    S(GL_DTYPE, 1), S(GL_DTIME, 1), S(GL_DFDBK, 62), S(P_DLY, 55),
-    S(GL_RTYPE, 2), S(GL_RSIZE, 108), S(P_REV, 50),
+static const gl_set_t F_HARPSI[] = {              /* plucked, bright, a small room */
+    S(DT_SNDA, DT_S_HARPSI), S(GL_CUTOFF, 116), S(P_SUS, 127), S(P_REL, 66), S(P_LEVEL, 104),
+    S(GL_RTYPE, 0), S(GL_RSIZE, 60), S(P_REV, 24),
 };
-
-/* ------------------------------------------------------ SUB and DRIFT (1.2) --- */
-static const gl_set_t F_SUBBASS[] = {             /* a saw on a square an octave down: round and deep */
-    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_SAW), S(GL_SUBTYPE, U_SQR1), S(GL_SUB, 110), S(GL_DRIFT, 12),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 38), S(GL_RESO, 22), S(GL_FEGINT, 30), S(GL_KTRK, 20),
-    S(GL_FA, 0), S(GL_FD, 72), S(GL_FS, 30), S(GL_FR, 50),
-    S(P_ATK, 0), S(P_DEC, 80), S(P_SUS, 118), S(P_REL, 45), S(P_GLIDE, 12), S(P_LEVEL, 106), S(P_REV, 0),
+static const gl_set_t F_MARIMBA[] = {             /* wood, soft mallets, echoes */
+    S(DT_SNDA, DT_S_MARIMBA), S(GL_CUTOFF, 104), S(PSRC(1), Q_VELO), S(PDST(1), D_CUT), S(PINT(1), 30),
+    S(P_SUS, 127), S(P_REL, 70), S(P_LEVEL, 110), S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 38), S(P_DLY, 30),
+    S(P_REV, 26),
 };
-static const gl_set_t F_REESE[] = {               /* two saws beating slowly over a sine an octave down */
-    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2TUNE, 16), S(GL_MIX2, 120),
-    S(GL_SUBTYPE, U_SIN1), S(GL_SUB, 100), S(GL_DRIFT, 30),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 52), S(GL_RESO, 25), S(GL_FEGINT, 12), S(GL_FD, 90), S(GL_FS, 70),
-    S(P_ATK, 4), S(P_SUS, 124), S(P_REL, 55), S(P_GLIDE, 20), S(P_LEVEL, 100),
-    S(GL_MFX, 4), S(P_IA, 20), S(P_IB, 70), S(P_IMIX, 70), S(P_REV, 15),
+static const gl_set_t F_BELLS[] = {               /* tubular bells in a church */
+    S(DT_SNDA, DT_S_BELLS), S(GL_CUTOFF, 118), S(P_SUS, 127), S(P_REL, 100), S(P_LEVEL, 100),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 118), S(P_REV, 60),
 };
-static const gl_set_t F_POLYCHORUS[] = {          /* a pulse with PWM on a sub square, a lush chorus: an 80s poly */
-    S(GL_O1WAVE, W_PULSE), S(GL_O1C1, 30), S(GL_O1C2, 35), S(GL_L1WAVE, L_TRI), S(GL_L1FREQ, 42), S(GL_L1KEY, 0),
-    S(GL_SUBTYPE, U_SQR1), S(GL_SUB, 70), S(GL_DRIFT, 25),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 64), S(GL_RESO, 15), S(GL_FEGINT, 22), S(GL_KTRK, 30),
-    S(GL_FA, 10), S(GL_FD, 88), S(GL_FS, 50), S(GL_FR, 80),
-    S(P_ATK, 8), S(P_DEC, 90), S(P_SUS, 110), S(P_REL, 80), S(P_LEVEL, 98),
-    S(GL_MFX, 1), S(P_IA, 35), S(P_IB, 75), S(P_IMIX, 110), S(GL_RTYPE, 2), S(GL_RSIZE, 100), S(P_REV, 35),
+static const gl_set_t F_PIZZ[] = {                /* the violins plucked, short */
+    S(DT_SNDA, DT_S_PIZZ), S(GL_CUTOFF, 110), S(P_SUS, 127), S(P_REL, 56), S(P_LEVEL, 112),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 90), S(P_REV, 36),
 };
-static const gl_set_t F_OLDSTRINGS[] = {          /* two saws an octave apart, slow and well worn, an ensemble */
-    S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, 12), S(GL_O2TUNE, 4), S(GL_MIX2, 80), S(GL_DRIFT, 70),
-    S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 74), S(GL_RESO, 8), S(GL_KTRK, 30),
-    S(P_ATK, 86), S(P_DEC, 100), S(P_SUS, 120), S(P_REL, 100), S(P_LEVEL, 96),
-    S(GL_MFX, 3), S(P_IA, 30), S(P_IB, 100), S(P_IMIX, 120),
-    S(GL_RTYPE, 2), S(GL_RSIZE, 112), S(GL_RDAMP, 70), S(P_REV, 60),
+static const gl_set_t F_BASS[] = {                /* the double bass plucked, one note at a time */
+    S(P_VOICE, V_MONO), S(DT_SNDA, DT_S_BASS), S(GL_CUTOFF, 84), S(GL_KTRK, 20), S(GL_FEGINT, 16), S(GL_FD, 84),
+    S(GL_FS, 30), S(P_SUS, 127), S(P_REL, 60), S(P_LEVEL, 118), S(P_REV, 8),
 };
-static const gl_set_t F_WORNTAPE[] = {            /* soft keys off a warped tape: DRIFT high, a slow wow */
-    S(GL_O1WAVE, W_TRI), S(GL_O1C1, 18), S(GL_O2WAVE, X_SAW), S(GL_O2SEMI, 12), S(GL_MIX2, 22), S(GL_DRIFT, 110),
-    S(GL_SUBTYPE, U_SIN1), S(GL_SUB, 45),
-    S(GL_FTYPE, F_LPF12), S(GL_CUTOFF, 66), S(GL_RESO, 10), S(GL_FEGINT, 16), S(GL_FD, 95), S(GL_FS, 40),
-    S(GL_L2WAVE, L_SIN), S(GL_L2FREQ, 32), S(GL_L2KEY, 0), S(PSRC(0), Q_LFO2), S(PDST(0), D_PITCH), S(PINT(0), 3),
-    S(P_ATK, 4), S(P_DEC, 104), S(P_SUS, 70), S(P_REL, 92), S(P_LEVEL, 108),
-    S(GL_MFX, 1), S(P_IA, 20), S(P_IB, 50), S(P_IMIX, 70),
-    S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 50), S(P_DLY, 35), S(GL_RTYPE, 2), S(GL_RSIZE, 108), S(P_REV, 50),
+static const gl_set_t F_TIMPANI[] = {             /* the kettle drums: the low keys a roll of thunder */
+    S(DT_SNDA, DT_S_TIMPANI), S(GL_CUTOFF, 100), S(P_SUS, 127), S(P_REL, 92), S(P_LEVEL, 116),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 104), S(P_REV, 40),
 };
-static const gl_set_t F_DRIFTLEAD[] = {           /* a saw and a square a fifth up, never quite in tune, gliding */
-    S(P_VOICE, V_LEGATO), S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SQR), S(GL_O2SEMI, 7), S(GL_MIX2, 55), S(GL_DRIFT, 55),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 76), S(GL_RESO, 35), S(GL_FEGINT, 20), S(GL_FD, 85), S(GL_FS, 60),
-    S(P_ATK, 6), S(P_SUS, 122), S(P_REL, 60), S(P_GLIDE, 45), S(P_LEVEL, 98),
-    S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 55), S(P_DLY, 45), S(GL_RTYPE, 2), S(P_REV, 30),
+static const gl_set_t F_ORGAN[] = {               /* pipes, quiet stops, a cathedral */
+    S(DT_SNDA, DT_S_ORGAN), S(GL_CUTOFF, 100), S(P_ATK, 40), S(P_REL, 82), S(P_LEVEL, 100),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 120), S(GL_RDAMP, 40), S(P_REV, 55),
 };
-static const gl_set_t F_SUBARP[] = {              /* DOUBLE: each note twice, then its octave, over a sub square */
-    S(GL_O1WAVE, W_PULSE), S(GL_O1C1, 40), S(GL_SUBTYPE, U_SQR1), S(GL_SUB, 85), S(GL_DRIFT, 18),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 56), S(GL_RESO, 48), S(GL_FEGINT, 34), S(GL_FD, 66), S(GL_FS, 10),
-    S(P_ATK, 0), S(P_DEC, 76), S(P_SUS, 0), S(P_REL, 58), S(P_LEVEL, 104),
-    S(GL_ARPON, 1), S(GL_ARPTYPE, 9), S(P_AOCT, 1), S(P_ARATE, 2), S(P_AGATE, 65),
-    S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 40), S(P_DLY, 35), S(P_REV, 20),
+static const gl_set_t F_CELLO[] = {               /* the cellos, low and slow */
+    S(DT_SNDA, DT_S_CELLO), S(GL_CUTOFF, 90), S(GL_FEGINT, 10), S(GL_FA, 82), S(P_ATK, 70), S(P_REL, 88),
+    S(P_LEVEL, 106), S(GL_RTYPE, 2), S(GL_RSIZE, 96), S(P_REV, 40),
 };
-static const gl_set_t F_AGEDPAD[] = {             /* saws and a breath of noise, DRIFT all the way: an old machine */
-    S(GL_O1WAVE, W_SAW), S(GL_O2WAVE, X_SAW), S(GL_O2TUNE, 6), S(GL_MIX2, 100), S(GL_NOISE, 18), S(GL_DRIFT, 127),
-    S(GL_SUBTYPE, U_SIN2), S(GL_SUB, 40),
-    S(GL_FTYPE, F_LPF24), S(GL_CUTOFF, 50), S(GL_RESO, 20), S(GL_FEGINT, 14),
-    S(GL_FA, 100), S(GL_FD, 105), S(GL_FS, 90), S(GL_FR, 105),
-    S(P_ATK, 98), S(P_DEC, 100), S(P_SUS, 122), S(P_REL, 108), S(P_LEVEL, 100),
-    S(GL_MFX, 4), S(P_IA, 12), S(P_IB, 100), S(P_IMIX, 110),
-    S(GL_RTYPE, 2), S(GL_RSIZE, 118), S(GL_RDAMP, 75), S(P_REV, 70),
+static const gl_set_t F_SHAKU[] = {               /* a bamboo flute after the famous one: breath, a bent attack */
+    S(DT_SNDA, DT_S_RECORDER), S(GL_NOISE, 30), S(GL_CUTOFF, 86), S(GL_RESO, 18), S(GL_FTYPE, F_LPF12),
+    S(PSRC(1), Q_FEG), S(PDST(1), D_PITCH), S(PINT(1), -6), S(GL_FA, 0), S(GL_FD, 70), S(GL_FS, 0),
+    VIBRATO(0, 4), S(GL_L1KEY, 2), S(P_ATK, 50), S(P_REL, 70), S(P_LEVEL, 106),
+    S(GL_DTYPE, 0), S(GL_DTIME, 0), S(GL_DFDBK, 50), S(P_DLY, 34), S(GL_RTYPE, 2), S(P_REV, 48),
+};
+/* ------------------------------------------------------------ the sampler --- */
+static const gl_set_t F_BOWPLUCK[] = {            /* VEL X: soft notes bowed, hard notes plucked */
+    S(DT_SNDA, DT_S_STRINGS), S(DT_SNDB, B(DT_S_PIZZ)), S(DT_LAYER, Y_VELX), S(DT_LVLB, 127),
+    S(GL_CUTOFF, 100), S(P_ATK, 50), S(P_REL, 80), S(P_LEVEL, 108), S(GL_RTYPE, 2), S(P_REV, 42),
+};
+static const gl_set_t F_BASSPNO[] = {             /* SPLIT: the double bass below middle C, the piano from it */
+    S(DT_SNDA, DT_S_PIANO), S(DT_SNDB, B(DT_S_BASS)), S(DT_LAYER, Y_SPLIT), S(DT_SPLIT, 60), S(DT_BSEMI, -12),
+    S(DT_LVLB, 127), S(GL_CUTOFF, 106), S(P_REL, 70), S(P_LEVEL, 108), S(P_REV, 20),
+};
+static const gl_set_t F_DEEPCHOIR[] = {           /* the choir and itself an octave down: monks */
+    S(DT_SNDA, DT_S_CHOIR), S(DT_SNDB, B(DT_S_CHOIR)), S(DT_BSEMI, -12), S(DT_BTUNE, 6), S(DT_LVLB, 110),
+    S(GL_CUTOFF, 80), S(P_ATK, 86), S(P_REL, 100), S(P_LEVEL, 100), S(GL_DRIFT, 30),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 120), S(P_REV, 66),
+};
+static const gl_set_t F_HITARP[] = {              /* the orchestra hit in 16ths, up and down two octaves */
+    S(DT_SNDA, DT_S_ORCH_HIT), S(GL_CUTOFF, 104), S(P_REL, 60), S(P_LEVEL, 108),
+    S(GL_ARPON, 1), S(GL_ARPTYPE, 2), S(P_AOCT, 2), S(P_AGATE, 70),
+    S(GL_DTYPE, 1), S(GL_DTIME, 4), S(GL_DFDBK, 40), S(P_DLY, 30), S(P_REV, 30),
+};
+static const gl_set_t F_EMUKEYS[] = {             /* EMU 1: the piano rougher, a phaser, a tape-like wobble */
+    S(DT_SNDA, DT_S_PIANO), S(DT_CHAR, C_EMU1), S(GL_CUTOFF, 96), S(GL_DRIFT, 50),
+    S(PSRC(1), Q_VELO), S(PDST(1), D_CUT), S(PINT(1), 24), S(P_REL, 70), S(P_LEVEL, 108),
+    S(GL_MFX, 4), S(P_IA, 30), S(P_IB, 60), S(P_IMIX, 80), S(P_REV, 26),
+};
+static const gl_set_t F_AIRCHOIR[] = {            /* START in the middle: the choir without its attack, filtered */
+    S(DT_SNDA, DT_S_CHOIR), S(DT_START, 60), S(GL_CUTOFF, 60), S(GL_RESO, 40), S(GL_FTYPE, F_BPF),
+    S(PSRC(3), Q_LFO2), S(PDST(3), D_CUT), S(PINT(3), 26), S(GL_L2WAVE, L_TRI), S(GL_L2FREQ, 30),
+    S(P_ATK, 92), S(P_REL, 104), S(P_LEVEL, 112), S(GL_RTYPE, 2), S(GL_RSIZE, 124), S(P_REV, 76),
+};
+static const gl_set_t F_TAPEFLUTE[] = {           /* the flute as a tape replay keyboard would play it */
+    S(DT_SNDA, DT_S_FLUTE), S(DT_SNDB, B(DT_S_STRINGS)), S(DT_LVLB, 50), S(DT_LOOP, 0), S(GL_DRIFT, 80),
+    S(GL_CUTOFF, 78), S(P_ATK, 30), S(P_REL, 72), S(P_LEVEL, 104), S(GL_MFX, 1), S(P_IA, 18), S(P_IB, 40),
+    S(P_IMIX, 70), S(P_REV, 34),
+};
+static const gl_set_t F_HARPBELL[] = {            /* the harp and the bells a twelfth above, glass */
+    S(DT_SNDA, DT_S_HARP), S(DT_SNDB, B(DT_S_BELLS)), S(DT_BSEMI, 19), S(DT_LVLB, 56), S(DT_CHAR, C_CLEAN),
+    S(GL_CUTOFF, 112), S(P_REL, 92), S(P_LEVEL, 104), S(GL_DTYPE, 1), S(GL_DTIME, 5), S(GL_DFDBK, 50), S(P_DLY, 36),
+    S(GL_RTYPE, 2), S(GL_RSIZE, 112), S(P_REV, 52),
 };
 
 static const gl_prog_t GL_FACTORY[] = {
-    PROG("FAT BASS", F_FATBASS),
-    PROG("ACID LINE", F_ACID),
-    PROG("GLIDE LEAD", F_GLIDELEAD),
-    PROG("UNISON SAW", F_UNISAW),
-    PROG("SYNC PAD", F_SYNCPAD),
-    PROG("BRIGHT ARP", F_BRIGHTARP),
-    PROG("80S BRASS", F_BRASS),
-    PROG("ORGAN", F_ORGAN),
-    PROG("SOFT PAD", F_SOFTPAD),
-    PROG("PHASE PAD", F_PHASEPAD),
-    PROG("SLOW ARP", F_SLOWARP),
-    PROG("SOFT BELLS", F_SOFTBELLS),
-    PROG("DRONE", F_DRONE),
-    PROG("WARM LEAD", F_WARMLEAD),
-    PROG("DARK UNISON", F_DARKUNI),
-    PROG("S&H TEXTURE", F_SHTEXTURE),
-    PROG("SUB BASS", F_SUBBASS),
-    PROG("REESE", F_REESE),
-    PROG("POLY CHORUS", F_POLYCHORUS),
-    PROG("OLD STRINGS", F_OLDSTRINGS),
-    PROG("WORN TAPE", F_WORNTAPE),
-    PROG("DRIFT LEAD", F_DRIFTLEAD),
-    PROG("SUB ARP", F_SUBARP),
-    PROG("AGED PAD", F_AGEDPAD),
+    PROG("STRINGS", F_STRINGS),
+    PROG("CHOIR", F_CHOIR),
+    PROG("ORCH HIT", F_ORCHHIT),
+    PROG("PIANO", F_PIANO),
+    PROG("BRASS", F_BRASS),
+    PROG("FLUTE", F_FLUTE),
+    PROG("CHOIR STRING", F_CHOIRSTR),
+    PROG("HARPSICHORD", F_HARPSI),
+    PROG("MARIMBA", F_MARIMBA),
+    PROG("TUBULAR BELL", F_BELLS),
+    PROG("PIZZICATO", F_PIZZ),
+    PROG("UPRIGHT BASS", F_BASS),
+    PROG("TIMPANI", F_TIMPANI),
+    PROG("PIPE ORGAN", F_ORGAN),
+    PROG("CELLOS", F_CELLO),
+    PROG("SHAKUHACHI", F_SHAKU),
+    PROG("BOW + PLUCK", F_BOWPLUCK),
+    PROG("BASS / PIANO", F_BASSPNO),
+    PROG("DEEP CHOIR", F_DEEPCHOIR),
+    PROG("HIT ARP", F_HITARP),
+    PROG("EMU 1 KEYS", F_EMUKEYS),
+    PROG("AIR CHOIR", F_AIRCHOIR),
+    PROG("TAPE FLUTE", F_TAPEFLUTE),
+    PROG("HARP + BELL", F_HARPBELL),
 };
 _Static_assert(NELEM(GL_FACTORY) == GL_NFACT, "24 factory sounds");
 #undef S
@@ -240,3 +169,5 @@ _Static_assert(NELEM(GL_FACTORY) == GL_NFACT, "24 factory sounds");
 #undef PSRC
 #undef PDST
 #undef PINT
+#undef B
+#undef VIBRATO

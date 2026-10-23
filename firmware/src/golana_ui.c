@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Gadlele, based on Felucca (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
-/* Golana's interface: the MATRIX. In place of Felucca's UI (main.c and the browser build call gu_input, gu_leds and
+/* Ditto's interface, Golana's MATRIX. In place of Felucca's UI (main.c and the browser build call gu_input, gu_leds and
  * gu_draw instead of ui_input, ui_leds and ui_draw; the rest of Felucca's UI code is never called).
  *
  * The screen (240 x 240): a header (the program, its name, PLAY / the octave, the battery), the tabs, four cards and a
@@ -9,7 +9,7 @@
  *   KNOB 1..4  the four parameters on the cards
  *   ALGORITHM  CUTOFF, whatever the page (as the original's cutoff knob)
  *   PRESETS    the program, 1..32: it loads as the knob turns (edits not written are lost, as on the original)
- *   HOME       the PERFORM page; EDIT OSC 1 / OSC 2 / MIXER; SCL FILTER; ENV FILTER EG / AMP EG; LFO LFO 1 / LFO 2 /
+ *   HOME       the PERFORM page; EDIT SOUND A / SOUND B / MIXER / SPLIT; SCL FILTER; ENV FILTER EG / AMP EG; LFO LFO 1 / LFO 2 /
  *              PATCH 1..4; GLO AMP / VOICE / GLOBAL / ROUTE; SEQ the ARP pages; REC the sequencer; FX MOD FX / DELAY / REVERB
  *              (a second press: the next one of the group)
  *   ARP        the arpeggiator on / off;  PLAY  the step sequencer: play / stop;  OCT- OCT+  the keys' octave
@@ -79,12 +79,13 @@ static const char *const N_GSFLAG[] = {"OFF", "ACCENT", "SLIDE", "BOTH"};
 static const gu_page_t GU_PAGES[] = {
     {B_HOME, "PERFORM", "PERFORM",
      {{GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}, {GL_L1FREQ, "LFO 1", 0}}},
-    {B_EDIT, "OSC 1", "OSC 1", {{GL_O1WAVE, "WAVE", 0}, {GL_O1C1, "CTRL 1", 0}, {GL_O1C2, "CTRL 2", 0}, {GV_NONE, 0, 0}}},
-    {B_EDIT, "OSC 2", "OSC 2",
-     {{GL_O2WAVE, "WAVE", 0}, {GL_O2MOD, "MOD", 0}, {GL_O2SEMI, "SEMI", 0}, {GL_O2TUNE, "TUNE", 0}}},
-    {B_EDIT, "MIXER", "MIXER", {{GL_MIX1, "OSC 1", 0}, {GL_MIX2, "OSC 2", 0}, {GL_NOISE, "NOISE", 0}, {GL_FOLD, "FOLD", 0}}},
-    {B_EDIT, "SUB/DRIFT", "SUB",                     /* (1.2) */
-     {{GL_SUBTYPE, "SUB TYPE", 0}, {GL_SUB, "SUB LEVEL", 0}, {GL_DRIFT, "DRIFT", 0}, {GV_NONE, 0, 0}}},
+    {B_EDIT, "SOUND A", "SND A", {{DT_SNDA, "SOUND", 0}, {DT_START, "START", 0}, {DT_LOOP, "LOOP", 0}, {GV_NONE, 0, 0}}},
+    {B_EDIT, "SOUND B", "SND B",
+     {{DT_SNDB, "SOUND", 0}, {DT_LAYER, "LAYER", 0}, {DT_BSEMI, "SEMI", 0}, {DT_BTUNE, "TUNE", 0}}},
+    {B_EDIT, "MIXER", "MIXER",
+     {{DT_LVLA, "SOUND A", 0}, {DT_LVLB, "SOUND B", 0}, {GL_NOISE, "NOISE", 0}, {DT_CHAR, "CHARACTER", 0}}},
+    {B_EDIT, "SPLIT", "SPLIT",                       /* (the split key and DRIFT) */
+     {{DT_SPLIT, "SPLIT KEY", 0}, {GL_DRIFT, "DRIFT", 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}}},
     {B_SCL, "FILTER", "FILTER",
      {{GL_FTYPE, "TYPE", 0}, {GL_CUTOFF, "CUTOFF", 0}, {GL_RESO, "RESO", 0}, {GL_FEGINT, "EG INT", 0}}},
     {B_SCL, "KEY TRACK", "KEY TRK", {{GL_KTRK, "KEY TRACK", 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}, {GV_NONE, 0, 0}}},
@@ -183,10 +184,6 @@ static void gu_load(uint32_t k)
     } else {
         static const uint8_t NONE[16];
         const uint8_t *nt = NONE, *fl = NONE;
-        if (k == 1u) {                                /* ACID LINE: Felucca's ACID pattern */
-            nt = PATTERNS[0].note;
-            fl = PATTERNS[0].flags;
-        }
         load_pat16(gu_t(), nt, fl);
     }
     gu_t()->p[P_SLEN] = (int16_t)clamp(v[P_SLEN], 1, 16);
@@ -384,9 +381,9 @@ static void gu_text(const gu_par_t *q, char *b)
         str_cpy(b, q->id == GV_PAL ? N_GPAL[v & 3] : N_GVIEW[v % 3], 8);
         return;
     }
-    if (q->id == GV_SNOTE) {                           /* a note name (C4 = 60), "--" on a rest or a tie */
+    if (q->id == GV_SNOTE || q->id == DT_SPLIT) {      /* a note name (C4 = 60), "--" on a rest or a tie */
         static const char *const NN[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-        if (gu_stype(gu_sst()) != 1) {
+        if (q->id == GV_SNOTE && gu_stype(gu_sst()) != 1) {
             str_cpy(b, "--", 4);
             return;
         }

@@ -32,7 +32,7 @@ const unit = (p) => p.textContent("#unit");
 const waitUnit = (p, re) => p.waitForFunction((r) => new RegExp(r).test(document.getElementById("unit").textContent), re.source, { timeout: 20000 });
 
 { // official firmware -> check, backup refused, gate, install
-  const { p, ctx } = await page({ identity: "FM-1_015", name: "FM-1", product: "FM-1_910", after: name === "Golana" ? ["ANALOG", "GOLANA"] : ["ANALOG", "FM6", "AMBI", "BELL"] });
+  const { p, ctx } = await page({ identity: "FM-1_015", name: "FM-1", product: "FM-1_910", after: name === "Ditto" ? ["ANALOG", "DITTO"] : name === "Golana" ? ["ANALOG", "GOLANA"] : ["ANALOG", "FM6", "AMBI", "BELL"] });
   ok(await p.isDisabled("#go"), "install off until the checklist is ticked");
   await p.click("#check"); await waitUnit(p, /official/); ok(/official M-VAVE firmware \(FM-1_015\)/.test(await unit(p)), "check: official firmware named");
   await p.click("#backup"); await waitUnit(p, /cannot make a complete backup/); ok(true, "backup: refused on the official firmware");
@@ -49,7 +49,7 @@ const waitUnit = (p, re) => p.waitForFunction((r) => new RegExp(r).test(document
   await ctx.close();
 }
 { // the other fork and Felucca are named
-  for (const [eng, want] of [[["ANALOG", "FM6", "PHASE", "SAMPLE", "GOLANA"], "Golana v1.0"], [["ANALOG", "FM6", "AMBI", "BELL"], "Fantasma"], [["ANALOG", "FM6", "LOFI", "SLICE"], "Felucca v1.0"]]) {
+  for (const [eng, want] of [[["ANALOG", "FM6", "PHASE", "SAMPLE", "DITTO"], "Ditto v1.0"], [["ANALOG", "FM6", "PHASE", "SAMPLE", "GOLANA"], "Golana v1.0"], [["ANALOG", "FM6", "AMBI", "BELL"], "Fantasma"], [["ANALOG", "FM6", "LOFI", "SLICE"], "Felucca v1.0"]]) {
     const { p, ctx } = await page({ identity: "FM-1_910", name: "Felucca", engines: eng });
     await p.click("#check"); await waitUnit(p, /runs/); ok((await unit(p)).includes(want), `check: ${want} recognised`);
     await ctx.close();

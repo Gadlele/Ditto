@@ -75,10 +75,12 @@ int main(int argc, char **argv)
     }
     gu_view = 0;
     gu_load(0);
-    go_page(B_EDIT, 0); render(100); shot("osc1_saw");
-    setv(GL_O1WAVE, 1); setv(GL_O1C1, 80); ui.force = 1; render(100); shot("osc1_pulse");
-    setv(GL_O1WAVE, 2); setv(GL_O1C1, 100); ui.force = 1; render(100); shot("osc1_trifold");
-    go_page(B_EDIT, 1); setv(GL_O2MOD, 2); setv(GL_O2SEMI, 7); setv(GL_O2WAVE, 0); ui.force = 1; render(100); shot("osc2_sync");
+    go_page(B_EDIT, 0); render(100); shot("sound_a");
+    setv(DT_SNDA, DT_S_CHOIR); setv(DT_START, 60); ui.force = 1; render(100); shot("sound_a_choir_start");
+    setv(DT_SNDA, DT_S_ORCH_HIT); setv(DT_START, 0); ui.force = 1; render(100); shot("sound_a_orchhit");
+    go_page(B_EDIT, 1); setv(DT_SNDB, DT_S_PIZZ + 1); setv(DT_LAYER, 1); ui.force = 1; render(100); shot("sound_b_velx");
+    go_page(B_EDIT, 2); setv(DT_CHAR, 1); ui.force = 1; render(100); shot("mixer");
+    go_page(B_EDIT, 3); render(100); shot("split_drift");
     go_page(B_SCL, 0);
     {
         static const char *const FT[5] = {"lpf24", "lpf12", "bpf", "hpf", "ms20"};

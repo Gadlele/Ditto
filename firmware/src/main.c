@@ -78,7 +78,7 @@ static void fm1_fault(const fm1_crash_t *c)
     fm1_audio_stop();
     scr_wake_now();                                   /* (MENU > SCREEN OFF: the panel on first) */
     lcd_fill(0, 0, 240, 240, UI_CRASH_BG);            /* fixed, outside the palettes */
-    draw_text_line(0, 8, 240, &AF_M, GOLANA ? "GOLANA CRASH" : "FELUCCA CRASH", UI_CRASH_INK, UI_CRASH_BG, 1);
+    draw_text_line(0, 8, 240, &AF_M, GOLANA ? "DITTO CRASH" : "FELUCCA CRASH", UI_CRASH_INK, UI_CRASH_BG, 1);
     hexs(b, c->vec);
     draw_text_line(10, 40, 220, &AF_M, b, UI_CRASH_INK, UI_CRASH_BG, 0);
     hexs(b, c->pc);
@@ -345,7 +345,7 @@ static void golana_rescue(void)
     flash_ok = FL_FAR(fl_jedec_ram)() == 0x856014u;
     lcd_init();
     lcd_fill(0, 0, 240, 240, RGB(0, 0, 0));
-    rescue_text(56, "GOLANA USB RESCUE", RGB(255, 181, 71));
+    rescue_text(56, "DITTO USB RESCUE", RGB(255, 181, 71));
     rescue_text(96, "CONNECT USB", RGB(232, 230, 225));
     rescue_text(120, flash_ok ? "OPEN THE INSTALLER" : "UNKNOWN FLASH", RGB(232, 230, 225));
     rescue_text(160, "AUDIO OFF", RGB(150, 156, 172));
@@ -370,7 +370,7 @@ static void golana_rescue(void)
             if (flash_ok)
                 ota_session();                  /* the same checked updater as always (ota_commit: pending 0) */
             lcd_fill(0, 0, 240, 240, RGB(0, 0, 0));
-            rescue_text(56, "GOLANA USB RESCUE", RGB(255, 181, 71));
+            rescue_text(56, "DITTO USB RESCUE", RGB(255, 181, 71));
             rescue_text(96, "CONNECT USB", RGB(232, 230, 225));
         }
     }

@@ -82,7 +82,7 @@ static const char *const N_ENGNAME[] = {"ANALOG", FELUCCA_FM4 ? "DIGITAL" : "-",
                                              "SLICE",
 #endif
 #if GOLANA
-                                             "GOLANA",
+                                             "DITTO",
 #endif
 };
 

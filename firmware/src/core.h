@@ -14,7 +14,8 @@
 #define NSTEP 64
 #define HALF_FRAMES 128          /* I2S half buffer: 2.9 ms at 44.1 kHz (a key waits 0..1 half, then plays 1 half later) */
 #ifndef GOLANA
-#define GOLANA 1                 /* Golana: a single analog-style synth (eng_golana.c) with its own interface
+#define GOLANA 1                 /* Golana's frame, which Ditto keeps: one instrument (eng_golana.c, in Ditto the DITTO
+                                  * sampler) with its own interface
                                   * (golana_ui.c); the other engines stay in the tree, none can be picked */
 #endif
 #ifndef GOLANA_RESCUE                   /* main.c golana_rescue: the USB rescue (the device build, with the updater) */
@@ -159,6 +160,19 @@ enum {                          /* per-track parameters */
 #define GL_SUBTYPE P_SLPAT                       /* -1 SQR, -2 SQR, -1 SINE, -2 SINE (an octave or two below OSC 1) */
 #define GL_SUB P_SLRATE                          /* its level into the mixer */
 #define GL_DRIFT P_SLDEPTH                       /* analog age: each note's oscillators and filter a little off */
+/* Ditto: what Golana's slots hold in the DITTO engine (eng_golana.c): the oscillators' slots are the two
+ * sounds', FOLD the sampler's character, SUB LEVEL the SPLIT key (SUB TYPE unused). The rest as Golana's */
+#define DT_SNDA GL_O1WAVE                        /* SOUND A: a sound of the library or USR1-3 */
+#define DT_START GL_O1C1                         /* where the notes start in the sample (0..127) */
+#define DT_LOOP GL_O1C2                          /* LOOP OFF / ON */
+#define DT_SNDB GL_O2WAVE                        /* SOUND B: OFF, a sound */
+#define DT_LAYER GL_O2MOD                        /* STACK, VEL X, SPLIT */
+#define DT_BSEMI GL_O2SEMI
+#define DT_BTUNE GL_O2TUNE
+#define DT_LVLA GL_MIX1
+#define DT_LVLB GL_MIX2
+#define DT_CHAR GL_FOLD                          /* EII, EMU 1, CLEAN */
+#define DT_SPLIT GL_SUB                          /* SPLIT: SOUND B below this key, A from it */
 #endif
 
 enum {                          /* global parameters */

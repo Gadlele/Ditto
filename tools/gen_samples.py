@@ -36,6 +36,9 @@ no data of its own, only its slice table (one AUTO slice, the note's attack): SL
 Without the CC0 library (no PIANO set) it has no material (SLICE plays a sine there).
 
   gen_samples.py OUT.h                                       the header (tools/build.py)
+  gen_samples.py --lite OUT.h                                Ditto's firmware: no sets, no BREAK (its DITTO
+                                                             engine has its own library, tools/gen_ditto_samples.py;
+                                                             only the user slots USR1-3 are SAMPLE's)
   gen_samples.py --user-slot PIANO "PIANO HD" build/piano_hd/PIANO_HD
                   a CC0 set as built from its own files (PIANO: the 5 zones of 1.0 .. 1.1.5, 1.5) as a user slot:
                   PREFIX.hdr / .bin (the editor's SMP_END header / SMP_WRITE data), PREFIX.slot (as in flash).
@@ -434,14 +437,15 @@ def input_key(have_cc0):
     return h.hexdigest()
 
 
-def main(out):
+def main(out, lite=False):
     subprocess.run([sys.executable, str(Path(__file__).with_name("gen_waves.py")), str(GENDIR)], check=True)
-    have_cc0 = CC0.exists() and any(CC0.glob("*/*.wav"))
-    if not have_cc0:
+    have_cc0 = not lite and CC0.exists() and any(CC0.glob("*/*.wav"))
+    if not have_cc0 and not lite:
         print("samples: CC0 library not fetched (tools/fetch_cc0.py) - no SAMPLE sets")
-    key = input_key(have_cc0)
+    key = input_key(have_cc0) + ("-lite" if lite else "")
+    cache = CACHE.with_suffix(".lite") if lite else CACHE
     try:
-        ck, summary, text = CACHE.read_text().split("\n", 2)
+        ck, summary, text = cache.read_text().split("\n", 2)
         if ck == key:
             Path(out).write_text(text)
             print(summary + " (cached)")
@@ -455,14 +459,14 @@ def main(out):
                 b.alias_set(name)
             else:
                 b.cc0_set(name, kind)
-    if slice_on():                                  # SLICE's BREAK: only when that engine is built
+    if slice_on() and not lite:                     # SLICE's BREAK: only when that engine is built
         b.slice_break()                             # last: the sets' offsets stay as they were
         b.slice_piano()                             # (no data of its own: the PIANO set's)
     text = b.header()
     Path(out).write_text(text)
-    CACHE.parent.mkdir(parents=True, exist_ok=True)
-    CACHE.write_text(f"{key}\n{b.summary()}\n{text}")
-    print(b.summary())
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_text(f"{key}\n{b.summary()}\n{text}")
+    print(b.summary() + (" (lite)" if lite else ""))
 
 
 def user_slot_file(setname, slotname, prefix):
@@ -498,5 +502,7 @@ if __name__ == "__main__":
         if len(sys.argv) != 5:
             sys.exit('gen_samples.py --user-slot SET NAME PREFIX   (e.g. PIANO "PIANO HD" build/piano_hd/PIANO_HD)')
         user_slot_file(*sys.argv[2:5])
+    elif sys.argv[1:2] == ["--lite"]:
+        main(sys.argv[2], lite=True)
     else:
         main(sys.argv[1])

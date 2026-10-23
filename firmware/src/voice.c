@@ -77,9 +77,16 @@ static void track_lfo_tick(track_t *t)
 }
 
 /* voices the engine may use (POLY and UNISON): its cap, else all of them */
+#if GOLANA
+static uint32_t dt_nvoice(const track_t *t);            /* (eng_golana.c: Ditto's cap, by its layers) */
+#endif
 static uint32_t trk_nvoice(const track_t *t)
 {
     uint32_t c = ENGINES[t->engine]->poly;
+#if GOLANA
+    if (t->engine == ENGI_GOLANA)
+        c = dt_nvoice(t);
+#endif
     return c && c < NVOICE ? c : NVOICE;
 }
 

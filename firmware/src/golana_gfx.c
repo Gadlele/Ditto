@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Gadlele */
-/* Golana's drawings (golana_ui.c): above the cards of the pages that have one, a picture of what the page sets, from
+/* Ditto's drawings (golana_ui.c): above the cards of the pages that have one, a picture of what the page sets, from
  * the values themselves, redrawn as they change:
  *   HOME       the sound playing, from the scope buffer (fx.c scope_buf: what goes out), three ways (GLO SETUP HOME):
  *              RING the wave wrapped round a circle, ORBIT the wave against itself a moment later (a phase portrait:
  *              every timbre draws its own figure), RIDGE the last waves stacked, the newest in front
- *   OSC 1/2    a cycle and a half of the oscillator as its WAVE, CTRL 1, MOD and SEMITONE make it
+ *   SOUND A/B  the sample the middle C plays, whole: its peaks, the loop shaded, START marked
  *   FILTER     the response, dB over a log frequency axis (30 Hz .. 16 kHz), the cutoff marked
  *   FILTER EG, AMP EG   the four stages, their lengths as the times, the sustain as its level
  *   LFO 1/2    the wave, as many cycles as its rate, running
@@ -153,55 +153,63 @@ static void gu_home_ridge(int32_t w, int32_t h, uint16_t acc, uint16_t surf)
     }
 }
 
-/* -------------------------------------------------------------- OSC 1 / 2 --- */
-static int32_t gu_osc1_at(const int16_t *p, uint32_t ph, uint32_t ph2)
-{
-    int32_t c1 = clamp(p[GL_O1C1], 0, 127);
-    switch (clamp(p[GL_O1WAVE], 0, 3)) {
-    case 1:
-        return ph < 0x80000000u + (uint32_t)c1 * 0xF00000u ? 26000 : -26000;
-    case 2: {
-        int32_t u = (osc_tri(ph) * ((32768 + c1 * 768) >> 4)) >> 11;
-        u = (int32_t)((uint32_t)(u + 32768) & 0x1FFFFu);
-        return u < 65536 ? u - 32768 : 98303 - u;
-    }
-    case 3:
-        return osc_sine(ph + (((uint32_t)gl_osc2(0, ph2, 0) * (uint32_t)(c1 * 380)) << 1));
-    default: {
-        int32_t a = (int32_t)(ph >> 16) - 32768, b = (int32_t)((ph << 1) >> 16) - 32768;
-        return a + (((b - a) * c1) >> 8);
-    }
-    }
-}
-static void gu_osc(int32_t w, int32_t h, uint32_t two, uint16_t acc, uint16_t surf)
+/* ---------------------------------------------------------- SOUND A / B --- */
+/* the sample the middle C plays (SOUND B: its sounding key), the whole of it: its peaks per column, the loop shaded,
+ * START marked; OFF or an empty user slot said in words */
+static void gu_sample(int32_t w, int32_t h, uint32_t two, uint16_t acc, uint16_t surf)
 {
     const int16_t *p = gu_t()->p;
-    int16_t y[224];
-    int32_t i, cy = h / 2, k = h / 2 - 8;
-    int32_t semi = clamp(p[GL_O2SEMI], -24, 24), md = clamp(p[GL_O2MOD], 0, 3);
-    uint32_t r2 = pitch_inc((uint32_t)(60 * 16 + semi * 16)), r1 = pitch_inc(60u * 16u);
-    cv_rect(8, cy, w - 16, 1, ux_mix(surf, acc, 25));
-    {
-        uint32_t ratio = (r2 >> 8) * 256u / ((r1 >> 16) | 1u);   /* OSC 2 / OSC 1, Q16 (32-bit: no 64-bit divide) */
-        for (i = 0; i < 224; i++) {                    /* 1.5 cycles of OSC 1 */
-            uint64_t tot = (uint64_t)(uint32_t)i * (0xFFFFFFFFu / 149u);
-            uint32_t ph = (uint32_t)tot, ph2;
-            int32_t v;
-            ph2 = md >= 2 ? (uint32_t)(((uint64_t)ph * ratio) >> 16)     /* SYNC: from OSC 1's start, every cycle */
-                          : (uint32_t)((tot * ratio) >> 16);
-            if (!two) {
-                v = gu_osc1_at(p, ph, ph2);
-            } else {
-                v = gl_osc2((uint32_t)clamp(p[GL_O2WAVE], 0, 2), ph2, 0);
-                if (md == 1 || md == 3)
-                    v = mulq15(v, gu_osc1_at(p, ph, ph2));
-            }
-            y[i] = (int16_t)(cy - (clamp(v, -32767, 32767) * k >> 15));
+    int32_t si = two ? p[DT_SNDB] - 1 : p[DT_SNDA], cy = h / 2 + 6, k = h / 2 - 14, x, lo = 0, hi = 0;
+    uint32_t zi, i, col = 0, nc = (uint32_t)w - 16u, loop = p[DT_LOOP] != 0;
+    const smp_zone_t *z;
+    fo_lay_t l;
+    if (si < 0 || si >= DT_NSND) {
+        cv_text_on((w - text_w(&AF_M, "OFF")) / 2, cy - 10, &AF_M, "OFF", GC_DIM, surf);
+        return;
+    }
+    zi = fo_pick((uint32_t)si, two ? clamp(60 + p[DT_BSEMI], 0, 127) : 60);
+    z = zi == 0xFFFFu ? 0 : fo_zone(zi);
+    if (!z || !z->n) {
+        cv_text_on((w - text_w(&AF_M, "EMPTY SLOT")) / 2, cy - 10, &AF_M, "EMPTY SLOT", GC_DIM, surf);
+        return;
+    }
+    {   /* above the wave: the zone's root and length left, LOOP right (over the loop, shaded below) */
+        static const char *const NN[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        char b[16];
+        int32_t r = (z->root16 + 8) >> 4, ms = (int32_t)((uint64_t)z->n * 1000u * 65536u / 44100u / z->rate);
+        str_cpy(b, NN[clamp(r, 0, 127) % 12], 4);
+        fmt_int(b + str_len(b), clamp(r, 0, 127) / 12 - 1);
+        str_cpy(b + str_len(b), "  ", 4);
+        fmt_int(b + str_len(b), ms / 1000);
+        str_cpy(b + str_len(b), ".", 2);
+        fmt_int(b + str_len(b), ms % 1000 / 100);
+        str_cpy(b + str_len(b), "S", 2);
+        cv_text_on(10, 2, &AF_S, b, GC_MID, surf);
+        if (z->looped && loop) {
+            int32_t x0 = 8 + (int32_t)((uint64_t)z->ls * nc / z->n), x1 = 8 + (int32_t)((uint64_t)z->le * nc / z->n);
+            cv_rect(x0, 20, x1 - x0, h - 24, ux_mix(surf, acc, 18));
+            cv_text_on(x1 - text_w(&AF_S, "LOOP"), 2, &AF_S, "LOOP", ux_mix(surf, acc, 80), surf);
         }
     }
-    for (i = 1; i < 224; i++) {
-        cv_line(8 + i - 1, y[i - 1], 8 + i, y[i], acc);
-        cv_line(8 + i - 1, y[i - 1] + 1, 8 + i, y[i] + 1, acc);
+    cv_rect(8, cy, w - 16, 1, ux_mix(surf, acc, 25));
+    memset(&l, 0, sizeof l);
+    l.on = 1;
+    for (i = 0; i < z->n; i++) {                        /* the whole zone decoded: its peaks per column */
+        int32_t v = fo_next(&l, z, fo_data(zi), 0, FC_CLEAN);
+        uint32_t c = (uint32_t)((uint64_t)i * nc / z->n);
+        if (c != col) {
+            cv_rect(8 + (int32_t)col, cy - (hi * k >> 15), 1, ((hi - lo) * k >> 15) + 1, acc);
+            col = c;
+            lo = hi = 0;
+        }
+        lo = v < lo ? v : lo;
+        hi = v > hi ? v : hi;
+    }
+    cv_rect(8 + (int32_t)col, cy - (hi * k >> 15), 1, ((hi - lo) * k >> 15) + 1, acc);
+    if (p[DT_START] > 0 && zi < 0x8000u) {              /* START (as fo_start places it) */
+        uint32_t lim = z->looped && loop ? z->le : z->n - z->n / 8u, at = (uint32_t)p[DT_START] * lim / 128u;
+        x = 8 + (int32_t)((uint64_t)at * nc / z->n);
+        cv_rect(x, 20, 2, h - 24, GC_TEXT);
     }
 }
 
@@ -304,13 +312,13 @@ static void gu_draw_graph(uint32_t g)
     int32_t h = gu_graph_h(g), w = 240;
     uint16_t acc = gu_btn_col(GU_PAGES[gu.page].btn), surf = GC_SURF;
     uint32_t sig = 0x811C9DC5u, live = g == GG_HOME || g == GG_LFO1 || g == GG_LFO2, i;
-    static const uint8_t IDS[] = {GL_O1WAVE, GL_O1C1, GL_O2WAVE, GL_O2MOD, GL_O2SEMI, GL_FTYPE, GL_CUTOFF, GL_RESO,
+    static const uint8_t IDS[] = {GL_O1WAVE, GL_O1C1, GL_O1C2, GL_O2WAVE, GL_O2MOD, GL_O2SEMI, GL_FTYPE, GL_CUTOFF, GL_RESO,
                                   GL_FA, GL_FD, GL_FS, GL_FR, P_ATK, P_DEC, P_SUS, P_REL, GL_L1WAVE, GL_L1FREQ, GL_L1SYNC,
                                   GL_L2WAVE, GL_L2FREQ, GL_L2SYNC};
     gu_frame++;
     for (i = 0; i < sizeof IDS; i++)
         sig = gu_hashv(sig, p[IDS[i]]);
-    sig = gu_hashv(sig, (int32_t)(g | gu_pi << 8 | gu_view << 12));
+    sig = gu_hashv(sig, (int32_t)(g | gu_pi << 8 | gu_view << 12 | smp_user_gen << 16));   /* (an upload) */
     if (live ? gu_frame % GU_LIVE_FRAMES && sig == gu_sig_graph : sig == gu_sig_graph)
         return;
     gu_sig_graph = sig;
@@ -325,7 +333,7 @@ static void gu_draw_graph(uint32_t g)
         else
             gu_home_ring(w, h, acc, surf);
         break;
-    case GG_OSC1: case GG_OSC2: gu_osc(w, h, g == GG_OSC2, acc, surf); break;
+    case GG_OSC1: case GG_OSC2: gu_sample(w, h, g == GG_OSC2, acc, surf); break;
     case GG_FILT: gu_filter(w, h, acc, surf); break;
     case GG_FEG: case GG_AEG: gu_eg(w, h, g == GG_AEG, acc, surf); break;
     default: gu_lfo(w, h, g == GG_LFO2, acc, surf); break;
@@ -334,20 +342,27 @@ static void gu_draw_graph(uint32_t g)
 }
 
 /* ---------------------------------------------------------------- SPLASH --- */
-/* The power-on splash (3 s, NIGHT's colours whatever the palette): five stripes come in from the left one after the
- * other, slanted at their ends, as on the synths of the eighties; GOLANA in block letters is uncovered by a wipe and a
- * chrome glint crosses it; the stripes close into a frame, top and bottom, and the version comes up. Drawn at ~30
- * frames a second in two halves of 240 x 120 (the canvas). main.c and the browser build run it (gu_splash_step); a key
- * or a button pressed skips it (the key stays silent: seq.c kb_boot_hold) */
+/* The power-on splash (3 s, NIGHT's colours whatever the palette): a record comes up and turns, the light on its
+ * grooves going round; the tone arm swings in and sets the needle down; DITTO in block letters is uncovered by a
+ * wipe and a chrome glint crosses it, and the version comes up. Drawn at ~30 frames a second in two halves of
+ * 240 x 120 (the canvas). main.c and the browser build run it (gu_splash_step); a key or a button pressed skips it
+ * (the key stays silent: seq.c kb_boot_hold) */
 #define GSP_MS 3000u
-static const uint32_t GSP_STRIPE[5] = {0xFFB547, 0xFF805C, 0xECD660, 0xF07A9C, 0xB092FF};   /* NIGHT's buttons */
 #define GSP_BG 0x0E1118u
 #define GSP_TEXT 0xE8E6E1u
 #define GSP_MID 0x969CACu
-static const uint8_t GSP_GLYPH[6][7] = {                /* G O L A N A, 5 x 7 (bit 4 the left column) */
-    {0x0E, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0F}, {0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E},
-    {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F}, {0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11},
-    {0x11, 0x19, 0x15, 0x15, 0x13, 0x11, 0x11}, {0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11},
+#define GSP_DISC 0x1A1E28u                              /* the vinyl, its grooves, the light on them */
+#define GSP_GROOVE 0x252A36u
+#define GSP_SHEEN 0x6A7186u
+#define GSP_LABEL 0xFFB547u                             /* NIGHT's HOME amber */
+#define GSP_ARM 0xC9CCD6u
+#define GSP_CX 120
+#define GSP_CY 82
+#define GSP_R 60
+static const uint8_t GSP_GLYPH[5][7] = {                /* D I T T O, 5 x 7 (bit 4 the left column) */
+    {0x1E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1E}, {0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E},
+    {0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04}, {0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04},
+    {0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E},
 };
 static uint16_t gsp_rgb(uint32_t c) { return RGB((c >> 16) & 255u, (c >> 8) & 255u, c & 255u); }
 static uint16_t gsp_mix(uint32_t a, uint32_t b, int32_t k)   /* a .. b, k 0..1000 */
@@ -365,37 +380,82 @@ static int32_t gsp_ease(int32_t t, int32_t t0, int32_t len)  /* smoothstep of (t
     int32_t p = clamp((t - t0) * 1000 / len, 0, 1000);
     return p * p / 1000 * (3000 - 2 * p) / 1000;
 }
+static int32_t gsp_isqrt(int32_t v)                    /* floor(sqrt(v)), v >= 0 */
+{
+    uint32_t r = 0, b = 1u << 14, x = (uint32_t)v;
+    for (; b; b >>= 2) {
+        if (x >= r + b) {
+            x -= r + b;
+            r = (r >> 1) + b;
+        } else {
+            r >>= 1;
+        }
+    }
+    return (int32_t)r;
+}
+static void gsp_disc(int32_t cx, int32_t cy, int32_t r, uint16_t c)   /* a filled circle, row by row */
+{
+    int32_t dy;
+    for (dy = -r; dy <= r; dy++) {
+        int32_t hw = gsp_isqrt(r * r - dy * dy);
+        cv_rect(cx - hw, cy + dy, 2 * hw + 1, 1, c);
+    }
+}
+/* the point at radius r, angle ph (a full turn 2^32, 0 to the right, clockwise on the screen) from cx, cy */
+static void gsp_at(int32_t cx, int32_t cy, int32_t r, uint32_t ph, int32_t *x, int32_t *y)
+{
+    *x = cx + ((sine_i(ph + 0x40000000u) * r) >> 15);
+    *y = cy + ((sine_i(ph) * r) >> 15);
+}
 /* the whole picture at t ms, on the canvas (cv_oy: the half drawn) */
 static void gsp_draw(int32_t t)
 {
-    int32_t i, r, frame = gsp_ease(t, 2000, 600), wipe = gsp_ease(t, 900, 600) * 240 / 1000;
-    for (i = 0; i < 5; i++) {                           /* the stripes, 9 px, 4 apart, from y 150 */
-        int32_t y = 150 + i * 13, x1 = -40 + gsp_ease(t, i * 120, 550) * 320 / 1000;
-        uint16_t c = gsp_rgb(GSP_STRIPE[i]);
-        if (frame <= 0) {
-            for (r = 0; r < 9; r++)                     /* (the right end slanted: 18 px over the stripe) */
-                cv_rect(0, y + r, x1 - 18 * r / 9, 1, c);
-        } else {                                        /* each thins to a 2 px line of the frame, 3 on top, 2 below */
-            int32_t th = 9 - 9 * frame / 1000, fy = i < 3 ? 18 + i * 5 : 222 - (i - 3) * 5;
-            cv_rect(0, y + (fy - y) * frame / 1000, 240, th < 2 ? 2 : th, c);
+    int32_t grow = gsp_ease(t, 0, 700), r = GSP_R * grow / 1000, wipe = gsp_ease(t, 1300, 600) * 240 / 1000, i;
+    uint32_t turn = (uint32_t)t * 0x1C71C7u;           /* 33 1/3 turns a minute: 2^32 / 1800 ms, a turn per 1.8 s */
+    if (r > 2) {                                        /* the record: grooves, the light on them, the label */
+        for (i = r; i > r / 3; i -= 3)
+            gsp_disc(GSP_CX, GSP_CY, i, gsp_rgb((i / 3) & 1 ? GSP_DISC : GSP_GROOVE));
+        for (i = 0; i < 2; i++) {                       /* two lights opposite, turning with it */
+            int32_t k, x0, y0, x1, y1;
+            for (k = -2; k <= 2; k++) {
+                uint32_t ph = turn + (uint32_t)i * 0x80000000u + (uint32_t)k * 0x01000000u;
+                gsp_at(GSP_CX, GSP_CY, r / 3 + 4, ph, &x0, &y0);
+                gsp_at(GSP_CX, GSP_CY, r - 3, ph, &x1, &y1);
+                cv_line(x0, y0, x1, y1, gsp_mix(GSP_DISC, GSP_SHEEN, 1000 - (k < 0 ? -k : k) * 300));
+            }
         }
+        gsp_disc(GSP_CX, GSP_CY, r / 3, gsp_rgb(GSP_LABEL));
+        {   /* a mark on the label, turning, and the spindle */
+            int32_t x, y;
+            gsp_at(GSP_CX, GSP_CY, r / 5, turn, &x, &y);
+            gsp_disc(x, y, 2, gsp_rgb(GSP_BG));
+        }
+        gsp_disc(GSP_CX, GSP_CY, 2, gsp_rgb(GSP_TEXT));
     }
-    if (t > 900) {                                      /* GOLANA: 6 x 6 px blocks (5 lit), 36 px a letter, from 15, 75 */
-        int32_t sweep = t < 1500 ? -30 : t > 2000 ? 400 : (t - 1500) * 300 / 500 - 30, k, x, y;
-        for (k = 0; k < 6; k++)
+    if (t > 500) {                                      /* the tone arm: from its rest (down the right edge) onto the */
+        int32_t sw = gsp_ease(t, 500, 700), x, y;      /* record's outer grooves */
+        uint32_t ph = 0x40000000u + (uint32_t)sw * 310000u;   /* straight down, then 26 degrees on: the needle */
+        gsp_disc(214, 18, 7, gsp_rgb(GSP_MID));                /* near (170, 108), 56 px from the centre */
+        gsp_at(214, 18, 100, ph, &x, &y);
+        cv_line_t(214, 18, x, y, gsp_rgb(GSP_ARM), 3);
+        cv_rect(x - 4, y - 3, 9, 7, gsp_rgb(GSP_ARM));  /* the head */
+    }
+    if (t > 1300) {                                     /* DITTO: 6 x 6 px blocks (5 lit), 36 px a letter, from 33 */
+        int32_t sweep = t < 1800 ? -30 : t > 2300 ? 400 : (t - 1800) * 300 / 500 - 30, k, x, y;
+        for (k = 0; k < 5; k++)
             for (y = 0; y < 7; y++)
                 for (x = 0; x < 5; x++) {
-                    int32_t px = 15 + k * 36 + x * 6, d = px - sweep;
+                    int32_t px = 33 + k * 36 + x * 6, d = px - sweep;
                     if (!((GSP_GLYPH[k][y] >> (4 - x)) & 1u) || px > wipe)
                         continue;
                     /* silver until the glint (a white band, 14 px each side) has passed over it, then the text's */
-                    cv_rect(px, 75 + y * 6, 5, 5, d > -14 && d < 14 ? gsp_mix(GSP_TEXT, 0xFFFFFFu, 1000 - (d < 0 ? -d : d) * 1000 / 14)
+                    cv_rect(px, 156 + y * 6, 5, 5, d > -14 && d < 14 ? gsp_mix(GSP_TEXT, 0xFFFFFFu, 1000 - (d < 0 ? -d : d) * 1000 / 14)
                                                   : d >= 14 ? gsp_mix(GSP_TEXT, GSP_BG, 420) : gsp_rgb(GSP_TEXT));
                 }
     }
     if (t > 2300) {                                     /* the version, faded in under the name */
         static const char V[] = FELUCCA_VERSION " \xB7 by Gadlele";
-        cv_text(120 - text_w(&AF_S, V) / 2, 128, &AF_S, V, gsp_mix(GSP_BG, GSP_MID, gsp_ease(t, 2300, 400)));
+        cv_text(120 - text_w(&AF_S, V) / 2, 206, &AF_S, V, gsp_mix(GSP_BG, GSP_MID, gsp_ease(t, 2300, 400)));
     }
 }
 static void gu_splash_frame(uint32_t t)
