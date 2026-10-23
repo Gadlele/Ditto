@@ -4,14 +4,14 @@
 
 /* ---------------------------------------------------------------- SPLASH --- */
 /* The power-on splash (3 s, NIGHT's colours whatever the palette): a record comes up and turns, the light on its
- * grooves going round; the tone arm swings in and sets the needle down; DITTO in block letters is uncovered by a
+ * grooves going round; the tone arm swings in and sets the needle down; DITTO in wide heavy letters is uncovered by a
  * wipe and a chrome glint crosses it, and the version comes up. Drawn at ~30 frames a second in two halves of
  * 240 x 120 (the canvas). main.c and the browser build run it (gu_splash_step); a key or a button pressed skips it
  * (the key stays silent: seq.c kb_boot_hold) */
 #define GSP_MS 3000u
-#define GSP_BG 0x0E1118u
+#define GSP_BG 0x1C346Eu                               /* the panel's blue */
 #define GSP_TEXT 0xE8E6E1u
-#define GSP_MID 0x969CACu
+#define GSP_MID 0xAABEE6u
 #define GSP_DISC 0x1A1E28u                              /* the vinyl, its grooves, the light on them */
 #define GSP_GROOVE 0x252A36u
 #define GSP_SHEEN 0x6A7186u
@@ -20,11 +20,7 @@
 #define GSP_CX 120
 #define GSP_CY 82
 #define GSP_R 60
-static const uint8_t GSP_GLYPH[5][7] = {                /* D I T T O, 5 x 7 (bit 4 the left column) */
-    {0x1E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1E}, {0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E},
-    {0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04}, {0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04},
-    {0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E},
-};
+#include "ditto_logo.h"                                /* DITTO, wide and heavy (tools/gen_logo.py) */
 static uint16_t gsp_rgb(uint32_t c) { return RGB((c >> 16) & 255u, (c >> 8) & 255u, c & 255u); }
 static uint16_t gsp_mix(uint32_t a, uint32_t b, int32_t k)   /* a .. b, k 0..1000 */
 {
@@ -101,22 +97,24 @@ static void gsp_draw(int32_t t)
         cv_line_t(214, 18, x, y, gsp_rgb(GSP_ARM), 3);
         cv_rect(x - 4, y - 3, 9, 7, gsp_rgb(GSP_ARM));  /* the head */
     }
-    if (t > 1300) {                                     /* DITTO: 6 x 6 px blocks (5 lit), 36 px a letter, from 33 */
-        int32_t sweep = t < 1800 ? -30 : t > 2300 ? 400 : (t - 1800) * 300 / 500 - 30, k, x, y;
-        for (k = 0; k < 5; k++)
-            for (y = 0; y < 7; y++)
-                for (x = 0; x < 5; x++) {
-                    int32_t px = 33 + k * 36 + x * 6, d = px - sweep;
-                    if (!((GSP_GLYPH[k][y] >> (4 - x)) & 1u) || px > wipe)
-                        continue;
-                    /* silver until the glint (a white band, 14 px each side) has passed over it, then the text's */
-                    cv_rect(px, 156 + y * 6, 5, 5, d > -14 && d < 14 ? gsp_mix(GSP_TEXT, 0xFFFFFFu, 1000 - (d < 0 ? -d : d) * 1000 / 14)
-                                                  : d >= 14 ? gsp_mix(GSP_TEXT, GSP_BG, 420) : gsp_rgb(GSP_TEXT));
-                }
+    if (t > 1300) {                                     /* DITTO, uncovered by the wipe, the glint crossing it */
+        int32_t sweep = t < 1800 ? -30 : t > 2300 ? 400 : (t - 1800) * 300 / 500 - 30, x, y;
+        int32_t x0 = (240 - LOGO_W) / 2, y0 = 150;
+        for (y = 0; y < LOGO_H; y++)
+            for (x = 0; x < LOGO_W && x0 + x <= wipe; x++) {
+                uint32_t a = (LOGO[(y * LOGO_W + x) >> 1] >> ((x & 1) * 4)) & 15u, c;
+                int32_t d = x0 + x - sweep;
+                if (!a)
+                    continue;
+                /* silver until the glint (a white band, 14 px each side) has passed over it, then the text's */
+                c = d > -14 && d < 14 ? 0xFFFFFFu : GSP_TEXT;
+                cv_rect(x0 + x, y0 + y, 1, 1, d >= 14 ? gsp_mix(GSP_BG, GSP_TEXT, (int32_t)a * 580 / 15)
+                                                       : gsp_mix(GSP_BG, c, (int32_t)a * 1000 / 15));
+            }
     }
     if (t > 2300) {                                     /* the version, faded in under the name */
         static const char V[] = FELUCCA_VERSION " \xB7 by Gadlele";
-        cv_text(120 - text_w(&AF_S, V) / 2, 206, &AF_S, V, gsp_mix(GSP_BG, GSP_MID, gsp_ease(t, 2300, 400)));
+        cv_text(120 - text_w(&AF_S, V) / 2, 200, &AF_S, V, gsp_mix(GSP_BG, GSP_MID, gsp_ease(t, 2300, 400)));
     }
 }
 static void gu_splash_frame(uint32_t t)

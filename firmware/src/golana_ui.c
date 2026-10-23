@@ -27,7 +27,8 @@
 #define GC_PANEL RGB(178, 175, 166)                 /* the panel's grey */
 #define GC_PANEL2 RGB(160, 157, 148)                /* its grooves, recesses */
 #define GC_EDGE RGB(206, 203, 195)                  /* a lit edge */
-#define GC_STRIP RGB(54, 53, 50)                    /* the dark strips: name, LEDs */
+#define GC_STRIP RGB(28, 52, 110)                   /* the blue strips: name, LEDs */
+#define GC_SLOT RGB(54, 53, 50)                     /* a slider's slot */
 #define GC_INK RGB(36, 36, 34)                      /* printing on the panel */
 #define GC_MIDI RGB(96, 94, 88)
 #define GC_PRINT RGB(214, 211, 202)                 /* printing on the dark strips */
@@ -550,7 +551,7 @@ static void gu_draw_card(uint32_t k)
     cv_text(cx - text_w(&AF_S, q->label) / 2, 2, &AF_S, q->label, GC_INK);
     {   /* the slot, ticks beside it every eighth */
         int32_t t;
-        cv_rect(cx - 3, top, 6, bot - top, GC_STRIP);
+        cv_rect(cx - 3, top, 6, bot - top, GC_SLOT);
         for (t = 0; t <= 8; t++)
             cv_rect(cx + 8, top + (bot - top) * t / 8, t % 4 ? 4 : 7, 1, GC_MIDI);
     }
