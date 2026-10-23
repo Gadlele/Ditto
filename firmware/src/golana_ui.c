@@ -5,12 +5,13 @@
  * instead of ui_input, ui_leds and ui_draw; the rest of Felucca's UI code is never called).
  *
  * The screen (240 x 240): the name strip (DITTO, the preset, the battery); the LCD, 2 lines of 16 characters (the
- * module and its function, or the preset; under it what the function sets, the value just turned, or a message);
+ * module and its function, or the preset; under it the function's name, then the value of the slider turned (it stays
+ * until another function opens), or a message);
  * the four sliders (KNOB 1-4); the modules' LEDs.
  *   the modules (a button opens its first function, again the next):
- *     HOME  PERFORM      FREQ, Q, ENV, LFO RATE
+ *     HOME  PERFORM      FREQ, RES, ENV, LFO RATE
  *     GLO   MASTER       1 TEMPO/TUNE, 2 ASSIGN, 3 OUTPUT
- *     SCL   FILTER       1 FREQ Q ENV, 2 LFO KBD, 3 ADSR
+ *     SCL   FILTER       1 FREQ RES ENV, 2 LFO KBD, 3 ADSR
  *     ENV   LFO/VCA      1 VCA ADSR, 2 LFO, 3 LFO SYNC (LFO: straight to 2 LFO)
  *     EDIT  VOICE DEF    11 SAMPLE, 21 VELOCITY, 23 VIBRATO
  *     SEQ   PRESET DEF   22 SOUND B, 25 LAYER, 29 ARP, 30 ARP TIME, 31 ARP STEPS
@@ -55,13 +56,13 @@ static const char *const N_GSTYPE[] = {"REST", "NOTE", "TIE"};
 static const char *const N_GSFLAG[] = {"OFF", "ACCENT", "SLIDE", "BOTH"};
 #define NO {GV_NONE, 0, 0}
 static const gu_page_t GU_PAGES[] = {
-    {B_HOME, "PERFORM", "", {{GL_CUTOFF, "FREQ", 0}, {GL_RESO, "Q", 0}, {GL_FEGINT, "ENV", 0}, {GL_L1FREQ, "RATE", 0}}},
+    {B_HOME, "PERFORM", "", {{GL_CUTOFF, "FREQ", 0}, {GL_RESO, "RES", 0}, {GL_FEGINT, "ENV", 0}, {GL_L1FREQ, "RATE", 0}}},
     {B_GLO, "MASTER", "1 TEMPO TUNE",
      {{GV_BPM, "TEMPO", 0}, {GV_TUNE, "TUNE", 0}, {GV_CLOCK, "CLOCK", GN(N_GCLOCK)}, {GV_MIDI, "MIDI", GN(N_GMIDI)}}},
     {B_GLO, "MASTER", "2 ASSIGN",
      {{P_VOICE, "MODE", GN(N_GVOICE)}, {P_DETUNE, "DETUNE", 0}, {P_GLIDE, "PORTA", 0}, {GL_EGRESET, "RESET", 0}}},
     {B_GLO, "MASTER", "3 OUTPUT", {{P_LEVEL, "LEVEL", 0}, {P_PAN, "PAN", 0}, {P_SPRD, "SPREAD", 0}, NO}},
-    {B_SCL, "FILTER", "1 FREQ Q ENV", {{GL_CUTOFF, "FREQ", 0}, {GL_RESO, "Q", 0}, {GL_FEGINT, "ENV", 0}, NO}},
+    {B_SCL, "FILTER", "1 FREQ RES ENV", {{GL_CUTOFF, "FREQ", 0}, {GL_RESO, "RES", 0}, {GL_FEGINT, "ENV", 0}, NO}},
     {B_SCL, "FILTER", "2 LFO KBD", {{DT_LFOCUT, "LFO", 0}, {GL_KTRK, "KBD", 0}, NO, NO}},
     {B_SCL, "FILTER", "3 ADSR", {{GL_FA, "ATTACK", 0}, {GL_FD, "DECAY", 0}, {GL_FS, "SUSTAIN", 0}, {GL_FR, "RELEASE", 0}}},
     {B_ENV, "LFO/VCA", "1 VCA ADSR", {{P_ATK, "ATTACK", 0}, {P_DEC, "DECAY", 0}, {P_SUS, "SUSTAIN", 0}, {P_REL, "RELEASE", 0}}},
@@ -446,7 +447,7 @@ static void gu_draw_lcd(void)
     const gu_page_t *pg = &GU_PAGES[gu.page];
     char l1[17], l2[17], v[16], b[24];
     uint32_t inv = 0, h;
-    int hot = gu.hot >= 0 && fm1_ms - gu.hot_t < 1200u && pg->k[gu.hot & 3].id != GV_NONE;
+    int hot = gu.hot >= 0 && pg->k[gu.hot & 3].id != GV_NONE;   /* (the last slider moved, until another function) */
     if (ui.uboot) {
         char d[2] = {(char)('0' + ui.uboot % 10u), 0};
         lcd_lr(l1, "UPDATE MODE IN", d);
@@ -482,7 +483,7 @@ static void gu_draw_lcd(void)
         }
         if (gu_toast_on()) {
             lcd_lr(l2, gu.toast, "");
-        } else if (hot) {                               /* the slider just moved: its name = its value */
+        } else if (hot) {                               /* the slider last moved: its name, its value right */
             const gu_par_t *q = &pg->k[gu.hot & 3];
             gu_text(q, v);
             str_cpy(b, q->label, 12);
@@ -518,7 +519,7 @@ static void gu_draw_lcd(void)
     cv_blit(4, 28);
 }
 
-/* ---- the sliders (KNOB 1-4): the name printed above, a slot with its cap at the value, the value under it */
+/* ---- the sliders (KNOB 1-4): the name printed above, a slot with its cap at the value (the value: on the LCD) */
 #define GU_SL_Y 88
 #define GU_SL_H 110
 static void gu_draw_card(uint32_t k)
@@ -526,7 +527,7 @@ static void gu_draw_card(uint32_t k)
     const gu_page_t *pg = &GU_PAGES[gu.page];
     const gu_par_t *q = &pg->k[k];
     char b[16];
-    int32_t v = 0, lo = 0, hi = 0, top = 28, bot = 82, cy, w = 60, cx = 30;
+    int32_t v = 0, lo = 0, hi = 0, top = 28, bot = 100, cy, w = 60, cx = 30;
     uint32_t h = 0x811C9DC5u;
     int hot = gu.hot == (int8_t)k && fm1_ms - gu.hot_t < 1200u;
     if (q->id != GV_NONE) {
@@ -560,11 +561,7 @@ static void gu_draw_card(uint32_t k)
     cv_rect(cx - 13, cy - 5, 26, 1, GC_EDGE);
     cv_rect(cx - 13, cy + 5, 26, 1, GC_MIDI);
     cv_rect(cx - 9, cy, 18, 1, GC_INK);
-    {
-        int32_t tw = text_w(&AF_S, b);
-        cv_text(cx - (tw < w - 2 ? tw : w - 2) / 2, 88, &AF_S, b, hot ? GC_LED : GC_INK);
-    }
-    cv_blit(k * 60u, GU_SL_Y);
+    cv_blit(k * 60u, GU_SL_Y);                          /* (its value: on the LCD, as it turns) */
 }
 
 /* ---- the modules' LEDs: the one whose function is open lit */
@@ -692,6 +689,7 @@ static void gu_leds(void)
 static void gu_go(uint32_t page)
 {
     gu.page = (uint8_t)(page % GU_NPAGE);
+    gu.hot = -1;                                        /* (the LCD names the function again) */
 }
 
 /* a page button: its first page, or (on one of its pages) the next of them, round */
@@ -722,12 +720,11 @@ static void gu_button(uint32_t b)
     }
 }
 
+/* a knob's detents -> a slider's steps: always the same per detent, however fast it turns (a slider moves evenly);
+ * 2 a detent over the long ranges (0..127: a full travel in ~64 detents) */
 static int32_t gu_accel(int32_t s, int32_t range)
 {
-    int32_t a = s < 0 ? -s : s;
-    if (range > 32 && a >= 2)
-        s *= a >= 4 ? 4 : 2;
-    return s;
+    return range > 64 ? s * 2 : s;
 }
 
 static void gu_turn(uint32_t k, int32_t s)
@@ -825,7 +822,7 @@ static void gu_input(void)
             gu_set(&CUT, gu_get(&CUT) + gu_accel(s, 127));
             gu_text(&CUT, v);
             if (GU_PAGES[gu.page].k[1].id != GL_CUTOFF && GU_PAGES[gu.page].k[0].id != GL_CUTOFF)
-                gu_say("CUTOFF ", v);
+                gu_say("FREQ ", v);
         }
     }
     for (id = 0; id < 32u; id++) {

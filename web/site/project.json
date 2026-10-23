@@ -92,7 +92,7 @@
     {
       "img": "scl.png",
       "t": "FILTER 1",
-      "p": "frequency, Q, envelope"
+      "p": "frequency, resonance, envelope"
     },
     {
       "img": "env.png",

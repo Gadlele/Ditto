@@ -10,7 +10,7 @@
  *               VELOCITY -> LEVEL and -> FILTER; VIBRATO (the LFO on the pitch)
  *   PRESET DEF  SOUND B (OFF or a sound) with its SEMI and TUNE; LAYER: STACK (both), VEL SW (B from a velocity on),
  *               VEL X (crossfaded by the velocity), SPLIT (B below a key), POS X (crossfaded over a range of keys)
- *   FILTER      FREQ, Q, ENV AMOUNT, KEYBOARD, LFO AMOUNT; its ADSR
+ *   FILTER      FREQ, RES (resonance: the EII's Q), ENV AMOUNT, KEYBOARD, LFO AMOUNT; its ADSR
  *   LFO / VCA   the VCA's ADSR; the LFO: WAVE, RATE (or a note value of the tempo), DELAY, KEY SYNC; LFO -> VCA
  * The slots: core.h GL_* (Golana's names) and DT_* (what they mean here). 8 voices, 5 when two sounds play (dt_nvoice). */
 
@@ -42,7 +42,7 @@ static const param_desc_t GOL_TP[P_COUNT] = {
     [DT_LVLA] = GPD("LVL A", F_PCT, 0, 127, 127),
     [DT_CHAR] = GPE("CHAR", N_FOCHAR, FC_EII),
     [DT_LVLB] = GPD("LVL B", F_PCT, 0, 127, 100),
-    [GL_RESO] = GPD("Q", F_PCT, 0, 127, 10),
+    [GL_RESO] = GPD("RES", F_PCT, 0, 127, 10),
     [GL_FEGINT] = GPD("ENV", F_BIPCT, -63, 63, 0),
     [GL_KTRK] = GPD("KBD", F_BIPCT, -63, 63, 32),
     [GL_FA] = GPD("ATK", F_TIME, 0, 127, 0),

@@ -33,9 +33,9 @@ arpeggiator and a small step sequencer. It is a fork of [Golana](https://github.
 
 | Button | Module | Functions (press again for the next) |
 | --- | --- | --- |
-| **HOME** | PERFORM | FREQ, Q, ENV, LFO RATE |
+| **HOME** | PERFORM | FREQ, RES, ENV, LFO RATE |
 | **GLO** | MASTER | 1 TEMPO TUNE · 2 ASSIGN (POLY, MONO, LEGATO, UNISON; DETUNE, PORTA) · 3 OUTPUT |
-| **SCL** | FILTER | 1 FREQ Q ENV · 2 LFO KBD · 3 ADSR (the Emulator II's SSM 24 dB low-pass) |
+| **SCL** | FILTER | 1 FREQ RES ENV · 2 LFO KBD · 3 ADSR (the Emulator II's SSM 24 dB low-pass) |
 | **ENV** / **LFO** | LFO/VCA | 1 VCA ADSR · 2 LFO (WAVE, RATE, DELAY, VCA) · 3 LFO SYNC (LFO opens 2 directly) |
 | **EDIT** | VOICE DEF | 11 SAMPLE (SOUND, START, LOOP, CHARACTER: EII 8-bit μ-law or CLEAN) · 21 VELOCITY (to level, to filter) · 23 VIBRATO |
 | **SEQ** | PRESET DEF | 22 SOUND B (SEMI, TUNE, LEVEL) · 25 LAYER (STACK, VEL SW, VEL X, SPLIT, POS X) · 29–31 the arpeggiator |

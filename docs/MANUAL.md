@@ -16,17 +16,17 @@ and the only effects are a delay and a reverb.
 
 The screen is the Emulator II's panel: a dark strip (DITTO, the preset in red, the battery), a two-line LCD of 16
 characters in 5 × 7 dots, four sliders (KNOB 1–4), and the modules' LEDs. The LCD's first line names the module and
-its function's number (`FILTER 1`), the second the function (`FREQ Q ENV`); a slider moved shows its value there for a
-moment (`FREQ 64`), and messages appear there too. On HOME the first line is the preset (`P01 STRINGS`), the second
+its function's number (`FILTER 1`), the second the function (`FREQ RES ENV`); a slider turned shows its name and value there
+(`FREQ 64`) until another function opens; the sliders themselves carry no numbers. Messages appear there too. On HOME the first line is the preset (`P01 STRINGS`), the second
 the tempo and the arpeggiator.
 
 | Button | Module | Function | Sliders (KNOB 1 2 3 4) |
 | --- | --- | --- | --- |
-| HOME | PERFORM | | FREQ, Q, ENV, LFO RATE |
+| HOME | PERFORM | | FREQ, RES, ENV, LFO RATE |
 | GLO | MASTER | 1 TEMPO TUNE | TEMPO, TUNE, CLOCK (INT, USB, TRS), MIDI (ALL, CH 1) |
 | | | 2 ASSIGN | MODE (POLY, MONO, LEGATO, UNISON), DETUNE, PORTA, RESET (both envelopes from 0 on a retrigger) |
 | | | 3 OUTPUT | LEVEL, PAN, SPREAD |
-| SCL | FILTER | 1 FREQ Q ENV | FREQ, Q, ENV (the filter ADSR's amount, ±) |
+| SCL | FILTER | 1 FREQ RES ENV | FREQ, RES (the resonance: the EII's Q), ENV (the filter ADSR's amount, ±) |
 | | | 2 LFO KBD | LFO (the LFO on the cutoff), KBD (key tracking, ±; +63 follows the keys) |
 | | | 3 ADSR | ATTACK, DECAY, SUSTAIN, RELEASE |
 | ENV | LFO/VCA | 1 VCA ADSR | ATTACK, DECAY, SUSTAIN, RELEASE (a one-shot sound ends with its sample, the key held or not) |
