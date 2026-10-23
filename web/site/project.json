@@ -13,7 +13,7 @@
   "stripes": "linear-gradient(180deg, #ffb547 0 16%, transparent 16% 21%, #ff805c 21% 37%, transparent 37% 42%, #ecd660 42% 58%, transparent 58% 63%, #f07a9c 63% 79%, transparent 79% 84%, #b092ff 84% 100%)",
   "dot_radius": "2px",
   "device_title": "A panel from 1984",
-  "device_sub": "The buttons are the Emulator II's modules: GLO the MASTER, SCL the FILTER, ENV the LFO/VCA, EDIT the VOICE DEFINITION, SEQ the PRESET DEFINITION, REC the SEQUENCER, FX the effects, SAVE the DISK. Press a module again for its next function; KNOB 1–4 are the sliders A–D; the LCD says where you are.",
+  "device_sub": "The buttons are the Emulator II's modules: GLO the MASTER, SCL the FILTER, ENV the LFO/VCA, EDIT the VOICE DEFINITION, SEQ the PRESET DEFINITION, REC the SEQUENCER, FX the effects, SAVE the DISK. Press a module again for its next function; KNOB 1–4 are the four sliders; the LCD says where you are.",
   "features_sub": "One sampler voice, the Emulator II's, with 32 presets.",
   "features": [
     {

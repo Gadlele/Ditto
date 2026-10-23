@@ -15,12 +15,12 @@ and the only effects are a delay and a reverb.
 ## The panel
 
 The screen is the Emulator II's panel: a dark strip (DITTO, the preset in red, the battery), a two-line LCD of 16
-characters in 5 × 7 dots, four sliders A–D (KNOB 1–4), and the modules' LEDs. The LCD's first line names the module and
+characters in 5 × 7 dots, four sliders (KNOB 1–4), and the modules' LEDs. The LCD's first line names the module and
 its function's number (`FILTER 1`), the second the function (`FREQ Q ENV`); a slider moved shows its value there for a
 moment (`FREQ 64`), and messages appear there too. On HOME the first line is the preset (`P01 STRINGS`), the second
 the tempo and the arpeggiator.
 
-| Button | Module | Function | Sliders A B C D |
+| Button | Module | Function | Sliders (KNOB 1 2 3 4) |
 | --- | --- | --- | --- |
 | HOME | PERFORM | | FREQ, Q, ENV, LFO RATE |
 | GLO | MASTER | 1 TEMPO TUNE | TEMPO, TUNE, CLOCK (INT, USB, TRS), MIDI (ALL, CH 1) |

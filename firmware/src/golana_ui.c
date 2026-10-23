@@ -6,7 +6,7 @@
  *
  * The screen (240 x 240): the name strip (DITTO, the preset, the battery); the LCD, 2 lines of 16 characters (the
  * module and its function, or the preset; under it what the function sets, the value just turned, or a message);
- * the four sliders A-D (KNOB 1-4); the modules' LEDs.
+ * the four sliders (KNOB 1-4); the modules' LEDs.
  *   the modules (a button opens its first function, again the next):
  *     HOME  PERFORM      FREQ, Q, ENV, LFO RATE
  *     GLO   MASTER       1 TEMPO/TUNE, 2 ASSIGN, 3 OUTPUT
@@ -17,7 +17,7 @@
  *     REC   SEQUENCER    1 PATTERN (a key writes its note into the step), 2 SETUP
  *     FX    EFFECTS      1 DELAY, 2 REVERB
  *     SAVE  DISK         WRITE: PRESETS the slot, KNOB 1 the letter, KNOB 2 changes it, SAVE writes, HOME cancels
- *   SELECT every function in turn; KNOB 1..4 sliders A-D; ALGORITHM the filter's FREQ from anywhere; PRESETS the
+ *   SELECT every function in turn; KNOB 1..4 the four sliders; ALGORITHM the filter's FREQ from anywhere; PRESETS the
  *   preset (it loads as the knob turns); ARP on / off; PLAY the sequencer; OCT- OCT+ the keys' octave.
  * Presets: 32 slots in the user preset store (upreset.c); 1..24 play the factory sounds until written over, 25..32
  * INIT. MIDI Program Change 0..31 loads a preset. */
@@ -518,7 +518,7 @@ static void gu_draw_lcd(void)
     cv_blit(4, 28);
 }
 
-/* ---- the sliders A-D: the name printed above, a slot with its cap at the value, the value under it */
+/* ---- the sliders (KNOB 1-4): the name printed above, a slot with its cap at the value, the value under it */
 #define GU_SL_Y 88
 #define GU_SL_H 110
 static void gu_draw_card(uint32_t k)
@@ -529,7 +529,6 @@ static void gu_draw_card(uint32_t k)
     int32_t v = 0, lo = 0, hi = 0, top = 28, bot = 82, cy, w = 60, cx = 30;
     uint32_t h = 0x811C9DC5u;
     int hot = gu.hot == (int8_t)k && fm1_ms - gu.hot_t < 1200u;
-    static const char *const AB[4] = {"A", "B", "C", "D"};
     if (q->id != GV_NONE) {
         v = gu_get(q);
         gu_range(q, &lo, &hi);
@@ -560,7 +559,7 @@ static void gu_draw_card(uint32_t k)
     cv_rect(cx - 13, cy - 5, 26, 11, hot ? GC_EDGE : GC_CAP);   /* the cap, its grip line */
     cv_rect(cx - 13, cy - 5, 26, 1, GC_EDGE);
     cv_rect(cx - 13, cy + 5, 26, 1, GC_MIDI);
-    cv_text(cx - text_w(&AF_S, AB[k]) / 2, cy - 7, &AF_S, AB[k], GC_INK);   /* the slider's letter on its cap */
+    cv_rect(cx - 9, cy, 18, 1, GC_INK);
     {
         int32_t tw = text_w(&AF_S, b);
         cv_text(cx - (tw < w - 2 ? tw : w - 2) / 2, 88, &AF_S, b, hot ? GC_LED : GC_INK);

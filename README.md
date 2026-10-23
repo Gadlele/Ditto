@@ -43,7 +43,7 @@ arpeggiator and a small step sequencer. It is a fork of [Golana](https://github.
 | **FX** | EFFECTS | 1 DELAY · 2 REVERB |
 | **SAVE** | DISK | write a preset: PRESETS the slot, KNOB 1 / 2 the name |
 
-KNOB 1–4 are the sliders A–D, ALGORITHM is the filter's FREQ from anywhere, PRESETS picks the preset (32: 24 factory
+KNOB 1–4 are the four sliders, ALGORITHM is the filter's FREQ from anywhere, PRESETS picks the preset (32: 24 factory
 sounds and eight free), ARP and PLAY as printed. Eight voices; five when SOUND B is stacked or crossfaded.
 
 ## The library
