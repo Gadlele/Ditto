@@ -113,7 +113,11 @@ static void gsp_draw(int32_t t)
             }
     }
     if (t > 2300) {                                     /* the version, faded in under the name */
+#if GSP_NO_VERSION                                       /* the website's GIF (tools/site_shots.sh): no number to keep up */
+        static const char V[] = "by Gadlele";
+#else
         static const char V[] = FELUCCA_VERSION " \xB7 by Gadlele";
+#endif
         cv_text(120 - text_w(&AF_S, V) / 2, 200, &AF_S, V, gsp_mix(GSP_BG, GSP_MID, gsp_ease(t, 2300, 400)));
     }
 }
