@@ -27,7 +27,9 @@
  * (up_fm6.c upf_boot); the first write of the new object goes to the sector that does not hold the bank's newest
  * copy (st_save_to), so a power cut never loses both.
  * The FM6 voice bank (1.4.1, fm6_vbank.c): 0xE7000, the sector above the autosave, with a commit record of the same
- * kind (type OBJ_FM6VB, not an st_load object); a new bank is first staged in the autosave's older copy (fm6_vbank.c). */
+ * kind (type OBJ_FM6VB, not an st_load object); a new bank is first staged in the autosave's older copy (fm6_vbank.c).
+ * Ditto (GOLANA): the user sample slots begin at 0x97000 (3 x 92 KiB, to 0xDBFFF): the projects and the FM6 patches'
+ * copy A are not Ditto's, and an object is never written between ST_DITTO_LO and ST_DITTO_HI. */
 enum { OBJ_SETTINGS, OBJ_PROJECT0, OBJ_UPRESET0 = OBJ_PROJECT0 + 4, OBJ_FM6BANK = OBJ_UPRESET0 + 2, OBJ_UPFM6,
        OBJ_AUTOSAVE, OBJ_COUNT };
 #define OBJ_FM6VB 32u                          /* the voice bank's commit records (fm6_vbank.c; >= OBJ_COUNT: st_load
@@ -133,6 +135,8 @@ static int st_load(uint32_t obj, void *dst, uint32_t max)
 }
 
 /* save into copy `to` (0 A, 1 B; -1: the one that is not the current copy, as st_save) */
+#define ST_DITTO_LO 0x97000u                   /* Ditto's user sample slots begin here (eng_sample.c SMP_USER_BASE) */
+#define ST_DITTO_HI 0xA0000u                   /* (from 0xA0000 they were the slots already) */
 static int st_save_to(uint32_t obj, const void *src, uint32_t len, int to)
 {
     uint32_t seq, base, off;
@@ -145,6 +149,10 @@ static int st_save_to(uint32_t obj, const void *src, uint32_t len, int to)
     if (to < 0)
         to = cur == 0 ? 1 : 0;                        /* write the other copy */
     base = st_sector(obj, (uint32_t)to);
+#if GOLANA
+    if (base >= ST_DITTO_LO && base < ST_DITTO_HI)   /* Ditto: its user sample slots (eng_sample.c), not a project's */
+        return -8;                                    /* or the FM6 patches' (Felucca's objects there: never written) */
+#endif
     for (off = 0; off < len; off++)
         st_buf[off] = ((const uint8_t *)src)[off];    /* the driver wants RAM sources */
     if ((rc = st_erase(base)) != 0)

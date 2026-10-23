@@ -6,6 +6,8 @@
   install/index.html         the web installer (web/site/install.html with Felucca's fm1pkg.js, fm1ota.js,
                              fm1backup.js inlined), the package's identity, size and SHA-256 checked in the page
   try/                       the browser emulator (a build of web/emu)
+  sounds/index.html          the SOUNDS page: your files into a user slot (web/site/sounds.html, web/ditto_sounds.js
+                             inlined)
   firmware/NAME-VER.fwsc     the package, with SHA256SUMS, LICENSE, LICENSING.md and LICENSES/
   img/                       web/site/img
 
@@ -142,6 +144,13 @@ def main(pkg, emu, out, sounds=None):
         (out / "sounds").mkdir()
         for f in Path(sounds).glob("*.mp3"):
             shutil.copy(f, out / "sounds" / f.name)
+
+    # the SOUNDS page (Ditto's sound library maker)
+    sp = fill((HERE / "sounds.html").read_text(encoding="utf-8"), common)
+    assert sp.count("/*LIB*/") == 1
+    sp = sp.replace("/*LIB*/", strip_module((WEB / "ditto_sounds.js").read_text(encoding="utf-8")))
+    (out / "sounds").mkdir()
+    (out / "sounds" / "index.html").write_text(sp, encoding="utf-8")
 
     # the emulator: a directory (index.html, felucca.wasm, worklet.js, fonts/) or one self-contained page
     try_dir = out / "try"

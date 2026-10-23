@@ -351,6 +351,46 @@ int main(int argc, char **argv)
             check(peak > 0.01f, "STRINGS from START 90: plays");
         }
     }
+    /* the user slots: 3 x 92 KiB from 0x97000 (over Felucca's projects); USR3, the last, ends where the user presets
+     * begin (0xDC000): a sound there plays, and writing a preset leaves it whole */
+    {
+        uint32_t k = 2u, base = SMP_USER_BASE + k * SMP_USER_SIZE, i, n = 40000u, act = 0;
+        smp_user_hdr_t h;
+        check(SMP_USER_BASE == 0x97000u && SMP_USER_SIZE == 0x17000u && base + SMP_USER_SIZE == 0xDC000u,
+              "USR1-3: 3 x 92 KiB from 0x97000, USR3 ending at the user presets");
+        memset(&h, 0, sizeof h);
+        h.magic = SMP_USER_MAGIC;
+        h.version = 1;
+        h.nz = 1;
+        memcpy(h.name, "TEST", 4);
+        h.data_len = SMP_USER_SIZE - SMP_USER_DATA;  /* (the whole slot: its last byte too) */
+        h.zone[0] = (smp_zone_t){0, n, 0, 0, 1u << 15, 60 * 16, 0, 0, 0, 127, 0};   /* 22,050 Hz, root C4, one-shot */
+        memcpy(nor + base, &h, sizeof h);
+        for (i = 0; i < h.data_len; i++)              /* a rough square wave in ADPCM */
+            nor[base + SMP_USER_DATA + i] = (uint8_t)((i >> 2) & 1u ? 0xFF : 0x77);
+        smp_user_scan(k);
+        check(usr_nz[k] == 1u, "USR3: its header read, one zone");
+        gu_load(0);
+        trk[0].p[DT_SNDA] = (int16_t)(DT_NSETS + k);
+        peak = 0;
+        midi_note(1, 60, 100);
+        render(200);
+        for (i = 0; i < NVOICE; i++)
+            act += trk[0].v[i].active;
+        midi_note(0, 60, 0);
+        render(300);
+        check(act >= 1u && peak > 0.01f, "USR3 plays");
+        {
+            uint8_t before[64], after[64];
+            memcpy(before, nor + 0xDC000u - 64u, 64);
+            check(gu_store(29, "AFTER USR") == 0, "a preset written (0xDC000..)");
+            memcpy(after, nor + 0xDC000u - 64u, 64);
+            check(!memcmp(before, after, 64) && usr_nz[k] == 1u, "  USR3's last bytes untouched");
+        }
+        check(st_save(OBJ_PROJECT0, nor, 64) != 0 && st_save(OBJ_UPFM6, nor, 64) != 0 &&
+              ((smp_user_hdr_t *)(void *)(nor + SMP_USER_BASE))->magic != ST_MAGIC,
+              "a project or the FM6 patches never written over USR1 (refused)");
+    }
     /* (UPDATE MODE's countdown is main.c's loop: not in the browser build) */
     printf("%s: %d failures\n", fails ? "FAIL" : "ok", fails);
     return fails ? 1 : 0;

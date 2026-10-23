@@ -78,9 +78,16 @@ eight: each note plays one).
 Each zone covers the keys halfway to its neighbours; a note far from its zone's root is pitched up or down by
 playing the sample faster or slower, as a sampler does (up to three octaves up).
 
-USR1-3 are the SAMPLE engine's user slots of Felucca: samples sent from the web editor (`web/editor.html`, or
-`tools/fm1_sample_upload.py`) into the FM-1's flash, up to 80 KB each, kept across updates. A slot with nothing in it
-is silent, and the SOUND page says EMPTY SLOT. START works on the library's sounds only.
+USR1-3 hold your own sounds, made on the **[SOUNDS page](https://gadlele.github.io/Ditto/sounds/)** (Chrome or Edge,
+the FM-1 on USB): drop your files (WAV, AIFF, MP3, OGG, FLAC; one a note, its root from the name, like `vox_C3.wav`,
+or heard), up to 16 zones. The page cuts the silence, evens the levels, finds a loop for the sustained sounds (its
+END and LOOP can be dragged on the waveform), splits the keys between the zones, and plays them on its keyboard (or a
+MIDI one) as the FM-1 will, EII or CLEAN. QUALITY picks the rate: 22 kHz (about 8 s), 16 kHz (about 11 s) or 11 kHz
+(about 16 s) in the 92 KB of a slot. **Send** writes it into a slot, **Empty** clears one; **Save to a file** keeps a
+sound as a `.ditto` file to send again later. On the FM-1: EDIT · VOICE DEF 11 · SOUND → USR1, USR2 or USR3.
+
+The slots are kept across updates. A slot with nothing in it is silent, and the SOUND page says EMPTY SLOT. START
+works on the library's sounds only.
 
 ## The presets
 

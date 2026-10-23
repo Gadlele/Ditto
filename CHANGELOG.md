@@ -10,7 +10,9 @@ mid-eighties after the E-mu Emulator II, as dry as it was:
 
 - **A library of sixteen sounds**: PIANO, STRINGS, CHOIR, BRASS, FLUTE, CELLO, ORGAN, HARPSI, MARIMBA, BELLS, PIZZ,
   BASS, TIMPANI, ORCH HIT, RECORDER, HARP; 41 zones from CC0 recordings, the choir synthesized, the orchestra hit
-  struck together from trumpets, violins and a timpani. Three user slots for your own samples.
+  struck together from trumpets, violins and a timpani. Three user slots of 92 KB for your own samples.
+- **The SOUNDS page**: your files turned into a sound for the FM-1 in the browser (trimmed, levelled, looped,
+  split over the keys, 22, 16 or 11 kHz), heard as the FM-1 plays it, sent to USR1-3 over USB, kept as `.ditto` files.
 - **The Emulator II's voice**: SOUND A, 8-bit μ-law with each sample held (EII) or CLEAN, START and LOOP; a 24 dB
   low-pass and a VCA, each with its ADSR; one LFO with a delay to the pitch, the filter and the level; velocity to
   the level and the filter. The routings fixed, no patch bay.

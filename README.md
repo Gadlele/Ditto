@@ -26,7 +26,8 @@
 library of sixteen sounds (strings, a choir, an orchestra hit, piano, brass, flute…), one or two of them on every note,
 through an 8-bit companded sample player into a 24 dB low-pass and a VCA, each with its ADSR, and one LFO. A grey panel
 with a two-line LCD, the Emulator II's modules and their numbered functions, four sliders. Delay and reverb, an
-arpeggiator and a small step sequencer. It is a fork of [Golana](https://github.com/Gadlele/Golana), itself a fork of
+arpeggiator and a small step sequencer. Your own sounds too: the
+[SOUNDS page](https://gadlele.github.io/Ditto/sounds/) turns your files into samples for its three user slots. It is a fork of [Golana](https://github.com/Gadlele/Golana), itself a fork of
 [Felucca](https://github.com/hugelton/Felucca).
 
 ## The modules

@@ -292,6 +292,12 @@ if [ -f build/gen/felucca_tables.h ]; then
     $CC $G1 -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_preview" tests/golana_preview.c -lm
     mkdir -p build/golana_preview
     run "Ditto's screens (PPM in build/golana_preview)" "$OUT/golana_preview" build/golana_preview
+    if command -v node >/dev/null 2>&1; then              # the SOUNDS page's conversion, and its slot played by the firmware
+        run "Ditto's SOUNDS page: files read, analysed, prepared, built into a slot (web/ditto_sounds.js)" \
+            node web/test_sounds.mjs build/sounds_test.slot
+        $CC $G1 -O1 -w -Ibuild/gen -Ifirmware/src -o "$OUT/sounds_slot_test" tests/sounds_slot_test.c -lm
+        run "  its slot in USR1: taken by the firmware, the loop held, the one-shot ended" "$OUT/sounds_slot_test" build/sounds_test.slot
+    fi
     $CC $G1 -O2 -w -Ibuild/gen -Ifirmware/src -o "$OUT/golana_sound" tests/golana_sound.c -lm
     mkdir -p build/golana_sound
     run "Ditto's 24 factory programs: no clipping, not silent, their tails end" "$OUT/golana_sound" build/golana_sound

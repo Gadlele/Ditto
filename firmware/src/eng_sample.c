@@ -48,8 +48,15 @@ static uint32_t pow2_q16(int32_t d16)
  * smp_zone_t layout (off relative to the slot's data at +512) + IMA ADPCM data. */
 #include "../hal/fm1_xip.h"   /* relative: hostsim includes this file too */
 #define SMP_USER_SLOTS 3
+#if GOLANA                                          /* Ditto: 3 slots of 92 KiB from 0x97000, over Felucca's projects and
+                                                     * the user presets' FM6 patches (copy A), which Ditto has none of
+                                                     * (storage.c refuses to write an object there: ST_DITTO_LO..HI) */
+#define SMP_USER_BASE 0x97000u
+#define SMP_USER_SIZE 0x17000u
+#else
 #define SMP_USER_BASE 0xA0000u
 #define SMP_USER_SIZE 0x14000u
+#endif
 #define SMP_USER_DATA 512u
 #define SMP_USER_MAGIC 0x504D5346u                  /* "FSMP" */
 #define SMP_NALL (SMP_NSETS + SMP_USER_SLOTS)
