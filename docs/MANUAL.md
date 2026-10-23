@@ -17,7 +17,8 @@ and the only effects are a delay and a reverb.
 The screen is the Emulator II's panel: a dark strip (DITTO, the preset in red, the battery), a two-line LCD of 16
 characters in 5 × 7 dots, four sliders (KNOB 1–4), and the modules' LEDs. The LCD's first line names the module and
 its function's number (`FILTER 1`), the second the function (`FREQ RES ENV`); a slider turned shows its name and value there
-(`FREQ 64`) until another function opens; the sliders themselves carry no numbers. Messages appear there too. On HOME the first line is the preset (`P01 STRINGS`), the second
+(`FREQ 64`) until another function opens; the sliders themselves carry no numbers. Messages appear there too. A preset chosen (PRESETS, or a
+MIDI Program Change) shows on the LCD for 2 s whatever the function open: `PRESET P03`, `ORCH HIT`. On HOME the first line is the preset (`P01 STRINGS`), the second
 the tempo and the arpeggiator.
 
 | Button | Module | Function | Sliders (KNOB 1 2 3 4) |

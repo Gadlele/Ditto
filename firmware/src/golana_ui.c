@@ -7,7 +7,7 @@
  * The screen (240 x 240): the name strip (DITTO, the preset, the battery); the LCD, 2 lines of 16 characters (the
  * module and its function, or the preset; under it the function's name, then the value of the slider turned (it stays
  * until another function opens), or a message);
- * the four sliders (KNOB 1-4); the modules' LEDs.
+ * the four sliders (KNOB 1-4); the modules' LEDs. A preset chosen shows on the LCD for 2 s, whatever the function.
  *   the modules (a button opens its first function, again the next):
  *     HOME  PERFORM      FREQ, RES, ENV, LFO RATE
  *     GLO   MASTER       1 TEMPO/TUNE, 2 ASSIGN, 3 OUTPUT
@@ -95,6 +95,7 @@ static struct {
     char name[13], sname[13];
     char toast[24];
     uint32_t toast_t, hot_t;
+    uint32_t pshow_t;                            /* a preset chosen (PRESETS, Program Change): the LCD says it */
     int8_t hot;                                  /* the slider last moved (its value on the LCD a moment), -1 none */
     uint32_t sig_head, sig_lcd, sig_card[4], sig_foot;
     uint8_t shown_save, shown_uboot;
@@ -453,6 +454,10 @@ static void gu_draw_lcd(void)
         char d[2] = {(char)('0' + ui.uboot % 10u), 0};
         lcd_lr(l1, "UPDATE MODE IN", d);
         lcd_lr(l2, "RELEASE OCT-/+", "");
+    } else if (!gu.save && gu.pshow_t && fm1_ms - gu.pshow_t < 2000u) {   /* a preset just chosen: on any function, */
+        char n[4] = {'P', (char)('0' + (gu.prog + 1u) / 10u), (char)('0' + (gu.prog + 1u) % 10u), 0};   /* 2 s */
+        lcd_lr(l1, "PRESET", n);
+        lcd_lr(l2, gu.name, "");
     } else if (gu.save) {
         static const char BL[] = "                ";
         lcd_lr(l1, "WRITE PRESET", "");
@@ -779,6 +784,7 @@ static void gu_input(void)
             ui.mpc[k] = 0;
             fm1_irq_on();
             gu_load((v & 127u) % GL_NPROG);
+            gu.pshow_t = fm1_ms | 1u;
         }
     if (ui.uboot)
         return;
@@ -797,6 +803,7 @@ static void gu_input(void)
                                      (int32_t)GL_NPROG);
         } else {
             gu_load((uint32_t)(((int32_t)gu.prog + s % (int32_t)GL_NPROG + (int32_t)GL_NPROG) % (int32_t)GL_NPROG));
+            gu.pshow_t = fm1_ms | 1u;
         }
     }
     if (gu.save) {
