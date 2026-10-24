@@ -97,7 +97,7 @@ typedef struct {
 
 static inline const smp_zone_t *fo_zone(uint32_t zi)
 {
-    return zi < 0x8000u ? &DT_ZONES[zi % NELEM(DT_ZONES)] : &usr_zone[(zi >> 5) & 3u][zi & 15u];
+    return zi < 0x8000u ? &DT_ZONES[zi % NELEM(DT_ZONES)] : &usr_zone[((zi >> 5) & 3u) % NELEM(usr_zone)][zi & 15u];
 }
 static inline const uint8_t *fo_data(uint32_t zi) { return zi < 0x8000u ? DT_DATA : SMP_DATA; }
 

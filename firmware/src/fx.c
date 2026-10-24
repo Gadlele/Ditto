@@ -491,7 +491,13 @@ static __attribute__((noinline)) void rev_hall(const int32_t *rev_in, int32_t *o
         sp = ss;
     }
     hl.m = mp, hl.s = sp;
+#if GOLANA
+    hl.side = 0;            /* Ditto: HALL in mono, its mid alone (as the Emulator II's outputs). With its stereo part
+                             * mixed in, Ditto 1.0 on the FM-1 gave a loud hiss while playing (not on the host, nor
+                             * in the emulator; the mid alone, the test build's HALL-M, was clean) */
+#else
     hl.side = hl_var != 1;
+#endif
 }
 
 /* the reverb's buffers and states to silence (the model changed) */

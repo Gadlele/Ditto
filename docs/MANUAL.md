@@ -44,7 +44,7 @@ the tempo and the arpeggiator.
 | REC | SEQUENCER | 1 PATTERN | STEP, NOTE, TYPE (REST, NOTE, TIE), ACC/SLD; a key writes its note into the step and moves on. The 16 steps on the LCD: `#` a note, `-` a tie, `.` a rest, `>` the one playing |
 | | | 2 SETUP | LENGTH 1-16, RES, GATE, SWING |
 | FX | EFFECTS | 1 DELAY | TYPE (STEREO, CROSS, L/R), TIME (tempo), FDBK, LEVEL |
-| | | 2 REVERB | TYPE (ROOM, SPRING, HALL), SIZE, DAMP, LEVEL |
+| | | 2 REVERB | TYPE (ROOM, SPRING, HALL; all three mono), SIZE, DAMP, LEVEL |
 | SAVE | DISK | | WRITE PRESET: PRESETS the slot, KNOB 1 the letter (blinking on the LCD), KNOB 2 changes it, SAVE writes, HOME cancels |
 
 A button opens its module's first function, pressed again the next; SELECT walks every function; LFO opens LFO/VCA 2

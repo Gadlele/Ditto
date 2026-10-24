@@ -3,6 +3,12 @@
 Ditto's versions, newest first. The numbers: **X.Y** adds something (saved presets still open), **X.Y.Z** only
 fixes, a new **X** may change how things are saved.
 
+## 1.0.1 — 2026-10-24
+
+- **HALL is mono**: its stereo part made a loud hiss on the FM-1 while playing (not in the emulator). Now the hall
+  is mono, as the Emulator II's outputs were; ROOM and SPRING are unchanged.
+- A user slot's sound no longer looks one slot past the last when a layer has no zone (no sound changes).
+
 ## 1.0 — 2026-10-23
 
 The first release. Ditto is [Golana](https://github.com/Gadlele/Golana) 1.2 turned into a sampler of the
