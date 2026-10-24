@@ -59,7 +59,7 @@ static void gl_sync(track_t *t)
         song.g[G_DFDBK] = (int16_t)clamp(p[GL_DFDBK], 0, 120);
         song.g[G_DMIX] = 110;
         song.g[G_DCOLOR] = 70;
-        song.g[G_RTYPE] = (int16_t)clamp(p[GL_RTYPE], 0, 2);
+        song.g[G_RTYPE] = (int16_t)clamp(p[GL_RTYPE], 0, (int32_t)NELEM(N_GRTYPE) - 1);
         song.g[G_RSIZE] = (int16_t)clamp(p[GL_RSIZE], 0, 127);
         song.g[G_RDAMP] = (int16_t)clamp(p[GL_RDAMP], 0, 127);
     }

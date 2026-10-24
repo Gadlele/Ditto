@@ -27,7 +27,11 @@ static const uint8_t GL_SYNC_DIV[11] = {0, 9, 8, 7, 6, 0, 1, 4, 2, 5, 3};   /* N
 static const char *const N_GARPT[] = {"UP", "DOWN", "ALT1", "ALT2", "RANDOM", "TRIGGER",
                                       "ORDER", "CONVERGE", "PEDAL", "DOUBLE"};
 static const char *const N_GDTYPE[] = {"STEREO", "CROSS", "L/R"};
+#if DITTO_DIAG                                           /* the test build: HALL with a part of it left out (fx.c hl_var) */
+static const char *const N_GRTYPE[] = {"ROOM", "SPRING", "HALL", "HALL-M", "HALL-D", "HALL-S"};
+#else
 static const char *const N_GRTYPE[] = {"ROOM", "SPRING", "HALL"};
+#endif
 static const char *const N_GONOFF[] = {"OFF", "ON"};
 static const char *const N_GDTIME[] = {"1/4", "1/8", "1/16", "1/32", "1/8T", "16T", "1/2", "1/1", "2BAR", "4BAR",
                                        "1/8D", "16D", "1/4D"};

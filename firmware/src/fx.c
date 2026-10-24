@@ -400,6 +400,12 @@ static inline void hall_end_lp(const int16_t *b, int16_t *y, uint32_t n, int32_t
  * sample, low cut, diffusers (hl.bx); the lines' ends at their drifting taps, low-passed, scaled (hl.y); the
  * outputs and the matrix; back into the lines; the outputs back to 44.1 kHz. */
 #define HL_LFO ((uint32_t)(0.37 * CTL / FS * 4294967296.0))   /* the drift: 0.37 Hz (even lines), 0.74 Hz (odd) */
+#if DITTO_DIAG
+static uint8_t hl_var;                                  /* the test build: 1 M no stereo, 2 D no diffusers and no drift,
+                                                         * 3 S the shortest decay (SIZE 0) */
+#else
+#define hl_var 0
+#endif
 static __attribute__((noinline)) void rev_hall(const int32_t *rev_in, int32_t *out, uint32_t n)
 {
     int16_t *b = rev_comb, *a = rev_ap;
@@ -407,8 +413,8 @@ static __attribute__((noinline)) void rev_hall(const int32_t *rev_in, int32_t *o
     int32_t kd = HL_KD(song.g[G_RDAMP]);
     int32_t xp = hl.x, hp = hl.hp, he = hl.he, mp = hl.m, sp = hl.s;
     (void)n;
-    if (hl.sz != song.g[G_RSIZE] + 1)
-        hall_gains(song.g[G_RSIZE]);
+    if (hl.sz != (hl_var == 3 ? 0 : song.g[G_RSIZE]) + 1)
+        hall_gains(hl_var == 3 ? 0 : song.g[G_RSIZE]);
     for (i = 0; i < HL_NC; i++) {
         int32_t x = (xp + 2 * rev_in[2u * i] + rev_in[2u * i + 1u]) >> 2, v;   /* every other sample, 1 2 1 */
         xp = rev_in[2u * i + 1u];
@@ -419,7 +425,7 @@ static __attribute__((noinline)) void rev_hall(const int32_t *rev_in, int32_t *o
         hl.bx[i] = x - hp;
     }
     hl.x = xp, hl.hp = hp, hl.he = he;
-    for (k = 0; k < HL_NAP; k++) {                      /* the diffusers */
+    for (k = 0; k < (hl_var == 2 ? 0u : HL_NAP); k++) {   /* the diffusers */
         d = hl.d[k];
         HL_RUNS(d, HL_AP[k], m, s, hall_ap(a + d, HL_APG[k], hl.bx + s, m));
         hl.d[k] = (uint16_t)d;
@@ -428,7 +434,7 @@ static __attribute__((noinline)) void rev_hall(const int32_t *rev_in, int32_t *o
     hl.ph += HL_LFO;
     for (k = 0; k < HL_NL; k++) {                       /* the lines' ends */
         int32_t g = hl.g[k], f = 0, lo;
-        if ((HL_LPM >> k) & 1u)
+        if (((HL_LPM >> k) & 1u) || hl_var == 2)
             d = hl.i[k];                                /* (low-passed: the line's end) */
         else {                                          /* (drifting: HL_MOD + 2 +- HL_MOD samples short of it) */
             uint32_t r = (uint32_t)(((HL_MOD + 2) << 8) +
@@ -485,7 +491,7 @@ static __attribute__((noinline)) void rev_hall(const int32_t *rev_in, int32_t *o
         sp = ss;
     }
     hl.m = mp, hl.s = sp;
-    hl.side = 1;
+    hl.side = hl_var != 1;
 }
 
 /* the reverb's buffers and states to silence (the model changed) */
@@ -570,6 +576,10 @@ static uint32_t gl_dtype(void)
 static __attribute__((noinline)) void fx_reverb(const int32_t *rev_in, int32_t *out, uint32_t n)
 {
     int32_t rt = song.g[G_RTYPE];
+#if DITTO_DIAG
+    hl_var = (uint8_t)(rt >= 3 && rt <= 5 ? rt - 2 : 0);
+    rt = rt >= 3 && rt <= 5 ? 2 : rt;
+#endif
     rt = rt == 1 || rt == 2 ? rt : 0;
     hl.side = 0;
     if (rt != fx.rtype)
