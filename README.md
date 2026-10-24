@@ -13,11 +13,11 @@
   <a href="https://gadlele.github.io/Ditto/install/"><b>Install</b></a> ·
   <a href="https://gadlele.github.io/Ditto/try/"><b>Try it in your browser</b></a> ·
   <a href="https://gadlele.github.io/Ditto/">Website</a> ·
-  <a href="https://gadlele.github.io/Ditto/firmware/Ditto-1.0.2.fwsc">Download 1.0.2</a>
+  <a href="https://gadlele.github.io/Ditto/firmware/Ditto-1.0.1.fwsc">Download 1.0.1</a>
 </p>
 
 <p align="center">
-  <img alt="version 1.0.2" src="https://img.shields.io/badge/version-1.0.2-ffb547?style=flat-square&labelColor=0e1118">
+  <img alt="version 1.0.1" src="https://img.shields.io/badge/version-1.0.1-ffb547?style=flat-square&labelColor=0e1118">
   <img alt="FM-1" src="https://img.shields.io/badge/for-M--VAVE%20FM--1-f07a9c?style=flat-square&labelColor=0e1118">
   <img alt="GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-b092ff?style=flat-square&labelColor=0e1118">
 </p>
@@ -61,7 +61,7 @@ Ditto plays them.
 2. Connect the FM-1 with a USB **data** cable, straight into the computer.
 3. Follow the five steps: the checklist, a backup, the build, connect, install. About two minutes.
 
-From a terminal instead: `python3 tools/fm1_install.py Ditto-1.0.2.fwsc` (needs `pip install mido python-rtmidi`).
+From a terminal instead: `python3 tools/fm1_install.py Ditto-1.0.1.fwsc` (needs `pip install mido python-rtmidi`).
 
 **If something goes wrong:** switch the FM-1 on while holding **OCT−**. It starts **DITTO USB RESCUE**, with only
 USB, ready for a new install (it also starts by itself after two failed starts). The firmware never writes the FM-1's
@@ -71,14 +71,14 @@ boot code, and the installer can put the official M-VAVE firmware back at any ti
 
 | | |
 | --- | --- |
-| `main` | the latest release, now **1.0.2** |
+| `main` | the latest release, now **1.0.1** |
 | `next` | the work on the next version |
 | [Releases](https://github.com/Gadlele/Ditto/releases) | every version: its notes and its package |
 | [`gh-pages`](https://github.com/Gadlele/Ditto/tree/gh-pages) | the website: project page, installer, emulator, package |
 
 - [The manual](docs/MANUAL.md): every section, page and control
 - [What changed](CHANGELOG.md), version by version · [How a version is released](RELEASING.md)
-- Building: [BUILDING.md](BUILDING.md) (`./build.sh --release 1.0.2`); the tests: `sh tests/run_tests.sh`
+- Building: [BUILDING.md](BUILDING.md) (`./build.sh --release 1.0.1`); the tests: `sh tests/run_tests.sh`
 - The sound library: `tools/fetch_eii.py` (the CC0 recordings), `tools/gen_ditto_samples.py` (the library, at build time)
 
 Inside, Ditto keeps the frame it shares with Golana under Golana's names (`eng_golana.c`, `golana_ui.c`, the

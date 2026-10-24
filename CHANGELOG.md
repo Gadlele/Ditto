@@ -3,7 +3,7 @@
 Ditto's versions, newest first. The numbers: **X.Y** adds something (saved presets still open), **X.Y.Z** only
 fixes, a new **X** may change how things are saved.
 
-## 1.0.2 — 2026-10-24
+## 1.0.2 — not released
 
 - **The delay's LEVEL tops out lower**: at 127 the first echo is about half as loud as the sound (it was nearly as
   loud). The factory presets sound as before.
