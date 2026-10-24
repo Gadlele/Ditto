@@ -1,6 +1,6 @@
 {
   "name": "Ditto",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "sounds_sub": "Eight short pieces, each one factory program played as the FM-1 plays it: one sampler, its eight voices, its arpeggiator, delay and reverb. No effects added afterwards.",
   "tagline": "An eighties sampler for the M-VAVE FM-1, after the E-mu Emulator II: two sounds layered, eight bits, an analog filter.",
   "lead": "The FM-1 as a sampler of the mid-eighties, after the Emulator II and as dry as it was: a library of sixteen sounds, one or two on every note, through an 8-bit companded sample player into a 24 dB filter and a VCA, each with its ADSR, and one LFO. A grey panel, a two-line LCD, modules and their numbered functions.",

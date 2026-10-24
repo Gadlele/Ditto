@@ -955,6 +955,12 @@ static int ins_apply(ins_t *s, const track_t *t, int32_t *b, uint32_t n)
  * -> dist -> INSERT -> SLICER -> level / pan / sends -> buses -> master; out: stereo Q15 */
 static void events_block(uint32_t n);                    /* seq.c */
 static int32_t send_c[CTL], send_d[CTL], send_r[CTL], wet[CTL], mix_l[CTL], mix_r[CTL];
+#if GOLANA
+#define DLY_SEND 129        /* Ditto: the delay's LEVEL at half Felucca's range (127: the first echo ~7 dB under the
+                             * sound, not as loud as it); the factory presets' values doubled (golana_factory.c) */
+#else
+#define DLY_SEND 258
+#endif
 
 /* Golana's ROUTING (core.h GL_ROUTE, of part 1's program): 0 MFX>DLY>REV, the MOD FX on part 1 before its sends, as
  * always; 1 DLY>MFX>REV, the MOD FX on part 1's dry sound with its echoes, the reverb fed from what comes out of it;
@@ -984,7 +990,7 @@ static __attribute__((noinline)) void mix_spread(track_t *t, int32_t *b, uint32_
     int32_t gla = 4096 - (pa > 0 ? pa * 64 : 0), gra = 4096 + (pa < 0 ? pa * 64 : 0);
     int32_t glb = 4096 - (pb > 0 ? pb * 64 : 0), grb = 4096 + (pb < 0 ? pb * 64 : 0);
     int32_t glm = (gla + glb) >> 1, grm = (gra + grb) >> 1, gld = (gla - glb) >> 1, grd = (gra - grb) >> 1;
-    int32_t c = t->p[P_CHOR] * 258, dl = t->p[P_DLY] * 258, r = t->p[P_REV] * 258, pk = t->peak;
+    int32_t c = t->p[P_CHOR] * 258, dl = t->p[P_DLY] * DLY_SEND, r = t->p[P_REV] * 258, pk = t->peak;
     int32_t xmax = c > dl ? c : dl;
     xmax = 0x7FFFFFFF / ((xmax > r ? xmax : r) | 1);
     for (i = 0; i < n; i++)
@@ -1045,7 +1051,7 @@ static void mix_part(track_t *t, uint32_t n)
                                                          * them, no spill in the loop: the ISR's cost as before 1.5) */
         int32_t lvl = LEVEL_Q12[t->p[P_LEVEL] & 127], pan = t->p[P_PAN];
         int32_t gl = 4096 - (pan > 0 ? pan * 64 : 0), gr = 4096 + (pan < 0 ? pan * 64 : 0);
-        int32_t c = t->p[P_CHOR] * 258, d = t->p[P_DLY] * 258, r = t->p[P_REV] * 258, pk = t->peak;
+        int32_t c = t->p[P_CHOR] * 258, d = t->p[P_DLY] * DLY_SEND, r = t->p[P_REV] * 258, pk = t->peak;
         int32_t xmax = c > d ? c : d;
         xmax = 0x7FFFFFFF / ((xmax > r ? xmax : r) | 1);   /* sends: loud chords at a high LEVEL */
         for (i = 0; i < n; i++) {

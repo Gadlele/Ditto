@@ -42,7 +42,7 @@ static const gl_set_t F_BRASS[] = {               /* trumpets, the filter openin
 };
 static const gl_set_t F_FLUTE[] = {               /* a vibrato that comes in */
     S(DT_SNDA, DT_S_FLUTE), S(GL_CUTOFF, 96), VIBRATO(6, 90), S(P_ATK, 45), S(P_REL, 66), S(P_LEVEL, 100),
-    S(GL_DTYPE, 0), S(GL_DTIME, 1), S(GL_DFDBK, 40), S(P_DLY, 25), S(P_REV, 35),
+    S(GL_DTYPE, 0), S(GL_DTIME, 1), S(GL_DFDBK, 40), S(P_DLY, 50), S(P_REV, 35),
 };
 static const gl_set_t F_CHOIRSTR[] = {            /* the choir and the strings together: the classic pad */
     S(DT_SNDA, DT_S_CHOIR), S(DT_SNDB, B(DT_S_STRINGS)), S(DT_LVLA, 120), S(DT_LVLB, 96),
@@ -54,7 +54,7 @@ static const gl_set_t F_HARPSI[] = {              /* plucked, bright, a small ro
 };
 static const gl_set_t F_MARIMBA[] = {             /* wood, soft mallets, echoes */
     S(DT_SNDA, DT_S_MARIMBA), S(GL_CUTOFF, 104), S(DT_VELCUT, 30), S(P_SUS, 127), S(P_REL, 70), S(P_LEVEL, 110),
-    S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 38), S(P_DLY, 30), S(P_REV, 26),
+    S(GL_DTYPE, 1), S(GL_DTIME, 10), S(GL_DFDBK, 38), S(P_DLY, 60), S(P_REV, 26),
 };
 static const gl_set_t F_BELLS[] = {               /* tubular bells in a church */
     S(DT_SNDA, DT_S_BELLS), S(GL_CUTOFF, 118), S(P_SUS, 127), S(P_REL, 100), S(P_LEVEL, 100),
@@ -82,7 +82,7 @@ static const gl_set_t F_CELLO[] = {               /* the cellos, low and slow */
 };
 static const gl_set_t F_SHAKU[] = {               /* a bamboo flute after the famous one: breathy, a slow vibrato */
     S(DT_SNDA, DT_S_RECORDER), S(GL_CUTOFF, 86), S(GL_RESO, 18), VIBRATO(8, 100), S(GL_L1FREQ, 80), S(P_ATK, 50),
-    S(P_REL, 70), S(P_LEVEL, 106), S(GL_DTYPE, 0), S(GL_DTIME, 0), S(GL_DFDBK, 50), S(P_DLY, 34), S(GL_RTYPE, 2),
+    S(P_REL, 70), S(P_LEVEL, 106), S(GL_DTYPE, 0), S(GL_DTIME, 0), S(GL_DFDBK, 50), S(P_DLY, 68), S(GL_RTYPE, 2),
     S(P_REV, 48),
 };
 /* ------------------------------------------------------------ the sampler --- */
@@ -102,7 +102,7 @@ static const gl_set_t F_DEEPCHOIR[] = {           /* the choir and itself an oct
 static const gl_set_t F_HITARP[] = {              /* the orchestra hit in 16ths, up and down two octaves */
     S(DT_SNDA, DT_S_ORCH_HIT), S(GL_CUTOFF, 104), S(P_REL, 60), S(P_LEVEL, 108),
     S(GL_ARPON, 1), S(GL_ARPTYPE, 2), S(P_AOCT, 2), S(P_AGATE, 70),
-    S(GL_DTYPE, 1), S(GL_DTIME, 4), S(GL_DFDBK, 40), S(P_DLY, 30), S(P_REV, 30),
+    S(GL_DTYPE, 1), S(GL_DTIME, 4), S(GL_DFDBK, 40), S(P_DLY, 60), S(P_REV, 30),
 };
 static const gl_set_t F_BRASSHIT[] = {            /* VEL SW: the brass, and played hard the orchestra hit */
     S(DT_SNDA, DT_S_BRASS), S(DT_SNDB, B(DT_S_ORCH_HIT)), S(DT_LAYER, Y_VELSW), S(DT_VELSW, 110), S(DT_LVLB, 120),
@@ -121,7 +121,7 @@ static const gl_set_t F_CELLOCHOIR[] = {          /* POS X: the cellos low, the 
 };
 static const gl_set_t F_HARPBELL[] = {            /* the harp and the bells a twelfth above, glass */
     S(DT_SNDA, DT_S_HARP), S(DT_SNDB, B(DT_S_BELLS)), S(DT_BSEMI, 19), S(DT_LVLB, 56), S(DT_CHAR, C_CLEAN),
-    S(GL_CUTOFF, 112), S(P_REL, 92), S(P_LEVEL, 104), S(GL_DTYPE, 1), S(GL_DTIME, 5), S(GL_DFDBK, 50), S(P_DLY, 36),
+    S(GL_CUTOFF, 112), S(P_REL, 92), S(P_LEVEL, 104), S(GL_DTYPE, 1), S(GL_DTIME, 5), S(GL_DFDBK, 50), S(P_DLY, 72),
     S(GL_RTYPE, 2), S(GL_RSIZE, 112), S(P_REV, 52),
 };
 
